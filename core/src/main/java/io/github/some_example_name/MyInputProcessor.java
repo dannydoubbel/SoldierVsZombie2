@@ -6,19 +6,24 @@ import com.badlogic.gdx.InputProcessor;
 public class MyInputProcessor implements InputProcessor {
     @Override
     public boolean  keyDown(int keycode) {
+        SharedVariables sharedVariables = SharedVariables.getInstance();
+        int indexSoldier = sharedVariables.getTextureIndexSoldier();
         switch (keycode) {
             case Input.Keys.LEFT:
-
-                handleAction("leftAction");
+                sharedVariables.setCurrentSolderDirection(Directions.lt);
+                indexSoldier++;
                 break;
             case Input.Keys.RIGHT:
-                handleAction("rightAction");
+                sharedVariables.setCurrentSolderDirection(Directions.rt);
+                indexSoldier++;
                 break;
             case Input.Keys.UP:
-                handleAction("upAction");
+                sharedVariables.setCurrentSolderDirection(Directions.up);
+                indexSoldier++;
                 break;
             case Input.Keys.DOWN:
-                handleAction("downAction");
+                sharedVariables.setCurrentSolderDirection(Directions.dn);
+                indexSoldier++;
                 break;
             case Input.Keys.ENTER:
                 handleAction("enterAction");
@@ -35,6 +40,10 @@ public class MyInputProcessor implements InputProcessor {
             default:
                 break;
         }
+        if (indexSoldier>6) {
+            indexSoldier = 0;
+        }
+        sharedVariables.setTextureIndexSoldier(indexSoldier);
         return false;
     }
 
