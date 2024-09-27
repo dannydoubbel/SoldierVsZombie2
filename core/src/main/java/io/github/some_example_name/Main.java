@@ -2,12 +2,15 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-
+import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -19,76 +22,96 @@ public class Main extends ApplicationAdapter {
     private static final int WIDTH_SOLDIER = 1650 / MAX_SOLDIER_PER_DIRECTION ;
     private static final int HEIGHT_SOLDIER = 468 / MAX_SOLDIER_DIRECTIONS;
 
+    private static final int TILE_MAP_COLS = 64;
+    private static final int TILE_MAP_ROWS = 30;
+
+    private final int[][] tileMapId = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
+
 
 
     private SpriteBatch batch;
-    private Texture image;
-    private TextureRegion textureRegion;
-    private float rotationAngle = 0;
 
-    private TextureRegion[][] SolderTextureRegion;
+    private Sprite[][] solderTextureRegion;
+    private Sprite[] sourceTilesTextures;
+
+    private OrthographicCamera camera;
+    private Viewport viewport;
+    private Music backgroundMusic;
+    private Sound soundEffect;
 
     @Override
     public void create() {
+        backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("sound/music.mp3"));
+        soundEffect = Gdx.audio.newSound(Gdx.files.internal("sound/gun_single.mp3"));
+
+        camera = new OrthographicCamera();
+        viewport = new FitViewport(800, 480, camera);
         SharedVariables.getInstance().setCurrentSolderDirection(Directions.dn);
-        SolderTextureRegion = loadMainCharacter();
+        solderTextureRegion = loadMainCharacter();
+        sourceTilesTextures = loadSourceTilesTextures();
+        loadTileMap();
         Gdx.input.setInputProcessor(new MyInputProcessor());
         batch = new SpriteBatch();
-//        image = new Texture("libgdx.png");
-        image = new Texture(Gdx.files.internal("images/tank.png"));
 
         // FileHandle fileHandle = Gdx.files.internal( "maze/doolhof.json");
         // System.out.println(fileHandle.readString());
 
+        backgroundMusic.play();
+        backgroundMusic.setLooping(true); // Loop the background music
+    }
 
-        textureRegion = new TextureRegion(image);
+    @Override
+    public void resize(int width, int height) {
+        camera.zoom = 1;
+        camera.update();
+        viewport.update(width, height);
     }
 
     @Override
     public void render() {
         SharedVariables sharedVariables = SharedVariables.getInstance();
+        viewport.apply();
 
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         batch.begin();
-        batch.draw(textureRegion,
-            Gdx.graphics.getWidth() / 2 - image.getWidth() / 2,
-            Gdx.graphics.getHeight() / 2 - image.getHeight() / 2,
-            textureRegion.getRegionWidth() / 2,
-            textureRegion.getRegionHeight() / 2,
-            textureRegion.getRegionWidth(),
-            textureRegion.getRegionHeight(),
-            1,1,
-            rotationAngle
-        );
 
-        batch.draw(SolderTextureRegion[sharedVariables.getCurrentSolderDirection().getValue()][sharedVariables.getTextureIndexSoldier()],100,100);
 
+        for (int lus=0;lus<sourceTilesTextures.length;lus++) {
+            batch.draw(sourceTilesTextures[lus],lus*18,50,18,18);
+        }
+
+        for (int col = 0;col < TILE_MAP_COLS;col++) {
+            for (int row = 0;row<TILE_MAP_ROWS;row++) {
+                int tileNr = tileMapId[col][row];
+                batch.draw(sourceTilesTextures[tileNr],col*16,row*16);//,16,16);
+            }
+        }
+
+        batch.draw(
+            solderTextureRegion[sharedVariables.getCurrentSolderDirection().getValue()]
+                [sharedVariables.getTextureIndexSoldier()],
+            100,100,
+            WIDTH_SOLDIER,HEIGHT_SOLDIER);
 
 
         batch.end();
-
-        if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
-            rotationAngle += 1;
-            //System.out.println("Spacebar pressed, rotationAngle: " + rotationAngle);
-
-        }
     }
 
     @Override
     public void dispose() {
         batch.dispose();
-        image.dispose();
     }
 
-    TextureRegion[][] loadMainCharacter() {
+    Sprite[][] loadMainCharacter() {
         Texture spriteSheet = new Texture(Gdx.files.internal("images/top down soldier.png"));
-        TextureRegion[][] spriteRegions = new TextureRegion[MAX_SOLDIER_DIRECTIONS][MAX_SOLDIER_PER_DIRECTION];
+      Sprite[][] spriteRegions =
+            new Sprite[MAX_SOLDIER_DIRECTIONS][MAX_SOLDIER_PER_DIRECTION];
         for (int row = 0; row < MAX_SOLDIER_DIRECTIONS; row++) {
             for (int col = 0; col < MAX_SOLDIER_PER_DIRECTION; col++) {
                 spriteRegions[row][col] =
-                    new TextureRegion(
+                    new Sprite(
                         spriteSheet,
                         col * WIDTH_SOLDIER,
                         row * HEIGHT_SOLDIER,
@@ -99,5 +122,99 @@ public class Main extends ApplicationAdapter {
         return spriteRegions;
     }
 
+    Sprite[]  loadSourceTilesTextures() {
+        int tileSourceCols = 18;
+        int tileSourceRows = 11;
+        int tileWidth = 16;
+        int tileHeight = 16;
+        Sprite[] slicedTiles = new Sprite[tileSourceCols*tileSourceRows];
+        Texture fullFile = new Texture(Gdx.files.internal( "images/platform1.jpg"));
+            for (int row = 0; row < tileSourceRows; row++) {
+                for (int col = 0; col < tileSourceCols; col++) {
+                    // the image is here, transfer writeable image to image
+                    slicedTiles[col+row*tileSourceCols] =
+                        new Sprite(
+                            fullFile,
+                            col * (tileWidth+1),
+                            row * (tileHeight+1),
+                            tileWidth,
+                            tileHeight);
+                }
+
+            }
+
+
+        return slicedTiles;
+    }
+    void loadTileMap() {
+    int[] tileMapSingle = {
+        20, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 175, 20, 21, 22, 23, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 20, 21,
+        22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 175, 20, 21, 22, 23, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 21, 187, 187, 187, 187, 187, 187, 187, 109, 187,
+        187, 187, 109, 109, 187, 109, 187, 187, 187, 187, 187, 109, 187, 187, 187, 187, 187, 187, 187, 187, 187, 21, 104, 187, 187, 187, 104, 104, 104, 187, 186,
+        186, 187, 187, 104, 186, 104, 104, 187, 186, 187, 187, 104, 186, 187, 187, 187, 104, 187, 104, 187, 187, 187, 21, 21, 187, 109, 109, 109, 187, 109, 187, 109,
+        187, 109, 187, 109, 109, 187, 109, 109, 109, 187, 109, 187, 109, 187, 109, 109, 109, 109, 109, 109, 109, 187, 21, 104, 187, 104, 186, 104, 186, 104, 187, 104,
+        104, 104, 187, 186, 186, 186, 104, 186, 104, 104, 104, 104, 104, 186, 104, 104, 104, 186, 186, 186, 104, 187, 21, 21, 187, 109, 187, 187, 187, 109, 187, 187,
+        187, 109, 187, 187, 187, 187, 187, 187, 187, 187, 109, 187, 109, 187, 187, 187, 187, 109, 187, 187, 187, 187, 21, 104, 187, 104, 187, 104, 187, 186, 186, 186,
+        186, 104, 104, 104, 104, 187, 104, 187, 104, 104, 186, 187, 186, 187, 187, 187, 104, 186, 104, 186, 186, 187, 21, 20, 187, 109, 187, 109, 109, 109, 187, 109,
+        109, 109, 109, 109, 109, 109, 187, 109, 109, 109, 109, 187, 109, 109, 109, 187, 109, 109, 187, 109, 109, 187, 22, 104, 187, 104, 186, 104, 186, 104, 186, 104,
+        186, 186, 186, 104, 186, 186, 104, 186, 186, 186, 186, 104, 186, 104, 104, 187, 104, 186, 104, 104, 104, 104, 22, 21, 187, 187, 187, 187, 187, 187, 187, 187,
+        187, 187, 187, 187, 187, 109, 187, 187, 187, 187, 187, 187, 187, 109, 187, 187, 187, 187, 187, 187, 109, 187, 21, 104, 187, 104, 187, 104, 104, 104, 186, 104,
+        104, 104, 187, 187, 187, 104, 104, 104, 104, 104, 186, 104, 187, 104, 186, 186, 104, 186, 187, 187, 186, 187, 21, 6, 109, 109, 109, 109, 109, 187, 109, 109,
+        109, 109, 109, 109, 187, 109, 109, 109, 109, 109, 187, 109, 187, 187, 187, 109, 187, 109, 109, 187, 187, 187, 22, 104, 186, 104, 186, 186, 186, 186, 186, 186,
+        104, 186, 186, 104, 186, 186, 186, 186, 104, 104, 187, 104, 187, 104, 187, 104, 104, 104, 104, 187, 104, 187, 22, 20, 187, 187, 187, 187, 187, 187, 187, 187,
+        187, 187, 187, 109, 187, 109, 181, 181, 181, 109, 187, 109, 109, 109, 109, 109, 187, 109, 187, 187, 109, 109, 21, 104, 187, 104, 104, 104, 104, 187, 104, 187,
+        104, 186, 104, 104, 186, 186, 104, 186, 186, 104, 187, 186, 186, 186, 186, 186, 187, 186, 186, 186, 104, 186, 21, 175, 187, 109, 109, 109, 109, 109, 109, 109,
+        109, 109, 187, 109, 187, 109, 181, 175, 181, 109, 187, 109, 187, 187, 187, 109, 187, 109, 187, 109, 109, 186, 186, 186, 187, 186, 175, 186, 186, 186, 104, 186,
+        186, 186, 104, 186, 186, 104, 104, 186, 104, 104, 104, 104, 104, 104, 187, 104, 104, 104, 104, 104, 104, 186, 175, 21, 187, 187, 187, 187, 187, 187, 109, 187,
+        187, 187, 187, 187, 187, 109, 181, 181, 181, 187, 187, 109, 187, 109, 187, 187, 187, 187, 187, 187, 109, 186, 22, 104, 186, 104, 104, 104, 187, 104, 104, 104,
+        104, 187, 104, 186, 186, 186, 104, 186, 186, 187, 104, 104, 104, 104, 186, 186, 186, 186, 187, 186, 104, 104, 22, 6, 109, 109, 109, 109, 109, 187, 109, 187, 109,
+        187, 109, 109, 109, 109, 187, 109, 187, 109, 109, 109, 187, 109, 109, 109, 109, 109, 109, 186, 186, 186, 6, 104, 186, 104, 186, 186, 186, 187, 104, 187, 186, 187,
+        104, 104, 104, 186, 104, 186, 104, 186, 186, 186, 187, 104, 186, 104, 104, 104, 104, 186, 186, 186, 6, 21, 187, 187, 187, 187, 187, 187, 109, 187, 109, 187, 109,
+        187, 187, 187, 187, 109, 187, 187, 109, 187, 187, 109, 186, 186, 186, 186, 186, 186, 109, 186, 22, 104, 187, 104, 186, 104, 104, 104, 104, 186, 104, 104, 104, 186,
+        186, 187, 104, 186, 186, 187, 104, 187, 187, 104, 186, 104, 186, 186, 186, 186, 104, 104, 22, 21, 187, 109, 109, 109, 109, 109, 109, 187, 109, 187, 109, 187, 109,
+        187, 109, 109, 109, 187, 109, 109, 187, 109, 186, 109, 109, 109, 109, 109, 109, 186, 21, 104, 187, 104, 186, 104, 186, 186, 104, 187, 186, 186, 104, 186, 104, 104,
+        104, 104, 104, 186, 104, 186, 104, 104, 186, 104, 186, 104, 104, 186, 186, 104, 21, 6, 187, 109, 187, 187, 187, 187, 187, 187, 109, 187, 187, 187, 109, 187, 187,
+        187, 109, 187, 187, 187, 187, 109, 186, 109, 186, 186, 186, 186, 186, 186, 22, 104, 187, 187, 187, 104, 104, 187, 187, 187, 104, 186, 104, 187, 104, 104, 187,
+        187, 186, 186, 104, 187, 104, 104, 186, 104, 186, 186, 104, 104, 104, 104, 22, 20, 186, 109, 186, 109, 109, 109, 109, 186, 109, 186, 109, 186, 186, 186, 109, 186,
+        109, 109, 109, 109, 186, 109, 186, 109, 186, 109, 109, 109, 109, 109, 23, 104, 186, 104, 186, 186, 186, 186, 186, 186, 186, 186, 186, 186, 186, 186, 186, 104, 104,
+        104, 104, 186, 186, 186, 186, 104, 104, 186, 186, 186, 186, 22, 23, 20, 186, 109, 186, 109, 186, 186, 186, 186, 186, 186, 109, 109, 109, 109, 109, 186, 109, 186,
+        186, 186, 186, 186, 186, 109, 186, 109, 186, 186, 186, 109, 23, 104, 186, 104, 104, 104, 104, 104, 104, 104, 104, 104, 186, 104, 104, 104, 186, 104, 186, 186, 186,
+        186, 104, 186, 104, 104, 104, 104, 104, 104, 186, 22, 23, 21, 187, 187, 187, 186, 187, 109, 109, 109, 109, 109, 109, 186, 109, 187, 186, 187, 109, 187, 109, 109,
+        109, 109, 187, 109, 186, 109, 186, 109, 187, 109, 21, 104, 187, 186, 187, 104, 186, 186, 187, 104, 186, 187, 187, 104, 186, 186, 186, 104, 186, 104, 104, 104, 104,
+        187, 104, 104, 186, 186, 186, 187, 187, 104, 21, 21, 109, 109, 109, 109, 186, 109, 186, 186, 186, 186, 186, 186, 109, 186, 109, 109, 109, 187, 186, 186, 186, 186,
+        186, 186, 186, 186, 186, 109, 186, 109, 21, 104, 104, 104, 186, 104, 186, 104, 186, 104, 186, 104, 104, 104, 186, 104, 104, 104, 186, 186, 186, 186, 186, 186, 186,
+        104, 186, 104, 104, 104, 104, 104, 21, 21, 187, 186, 186, 186, 186, 109, 186, 109, 109, 109, 109, 186, 109, 186, 186, 187, 109, 187, 109, 109, 109, 109, 186, 109,
+        109, 109, 109, 109, 187, 109, 21, 104, 187, 186, 187, 104, 187, 186, 186, 104, 186, 186, 186, 104, 186, 186, 186, 104, 186, 104, 104, 104, 104, 104, 187, 104, 186,
+        186, 186, 186, 186, 104, 21, 20, 187, 109, 186, 109, 109, 109, 186, 186, 186, 186, 186, 186, 109, 109, 109, 186, 109, 186, 186, 186, 109, 186, 186, 186, 186, 186,
+        186, 186, 186, 109, 22, 104, 187, 104, 186, 104, 186, 104, 186, 104, 186, 104, 186, 186, 186, 104, 186, 186, 186, 186, 186, 104, 186, 186, 186, 104, 104, 104, 186,
+        104, 186, 104, 22, 21, 187, 109, 186, 186, 186, 109, 109, 109, 109, 187, 109, 186, 109, 186, 109, 186, 109, 186, 109, 186, 109, 186, 109, 109, 109, 109, 187, 109,
+        109, 109, 21, 104, 187, 104, 187, 186, 186, 186, 186, 104, 186, 104, 104, 104, 104, 104, 104, 104, 104, 104, 186, 104, 187, 104, 104, 104, 104, 186, 187, 104, 186,
+        186, 21, 6, 186, 109, 186, 109, 186, 187, 186, 186, 186, 186, 109, 186, 187, 186, 186, 186, 186, 186, 109, 186, 187, 187, 187, 186, 187, 186, 186, 187, 109, 109,
+        22, 104, 186, 104, 186, 104, 104, 104, 186, 104, 186, 186, 186, 104, 186, 186, 186, 104, 186, 186, 186, 104, 187, 186, 186, 186, 186, 186, 104, 104, 104, 187, 22,
+        20, 186, 109, 186, 109, 109, 109, 109, 186, 109, 109, 109, 186, 109, 109, 109, 186, 109, 109, 109, 186, 109, 109, 109, 186, 109, 109, 109, 187, 109, 109, 21, 104,
+        187, 104, 186, 104, 186, 186, 186, 186, 186, 104, 186, 104, 186, 104, 186, 104, 186, 104, 104, 104, 104, 186, 104, 104, 104, 186, 104, 186, 186, 186, 21, 175, 187,
+        109, 186, 109, 186, 186, 186, 186, 186, 186, 187, 186, 186, 109, 186, 186, 186, 186, 186, 186, 109, 186, 186, 186, 109, 186, 186, 186, 186, 186, 186, 186, 187, 104,
+        186, 104, 186, 104, 104, 104, 186, 104, 186, 175, 186, 104, 186, 186, 186, 186, 186, 186, 186, 186, 104, 186, 186, 186, 104, 186, 104, 186, 175, 21, 187, 109, 186,
+        109, 186, 109, 109, 109, 109, 109, 109, 109, 186, 109, 186, 109, 109, 109, 186, 109, 109, 186, 109, 186, 109, 186, 109, 109, 109, 109, 22, 104, 186, 104, 186, 186,
+        187, 104, 186, 186, 186, 104, 104, 104, 104, 104, 186, 104, 186, 104, 104, 186, 104, 104, 104, 186, 104, 104, 104, 186, 104, 104, 22, 6, 186, 109, 186, 109, 186, 109,
+        186, 187, 186, 109, 186, 186, 186, 109, 186, 109, 186, 109, 186, 109, 186, 186, 109, 186, 186, 186, 186, 186, 186, 186, 6, 104, 186, 104, 104, 104, 104, 104, 186, 104,
+        186, 186, 186, 104, 186, 186, 186, 104, 186, 186, 104, 186, 104, 181, 181, 181, 181, 104, 181, 181, 181, 181, 6, 21, 187, 109, 186, 109, 186, 109, 186, 109, 186, 109,
+        186, 109, 109, 109, 186, 109, 186, 187, 186, 186, 186, 186, 109, 186, 109, 109, 109, 109, 186, 109, 22, 104, 187, 104, 186, 186, 186, 104, 186, 104, 186, 104, 186, 186,
+        186, 104, 186, 104, 104, 186, 104, 187, 104, 181, 181, 181, 181, 104, 181, 181, 181, 181, 22, 21, 109, 109, 186, 109, 186, 109, 186, 109, 186, 109, 186, 109, 186,
+        187, 186, 109, 109, 186, 109, 109, 109, 186, 186, 186, 186, 186, 109, 109, 186, 109, 21, 104, 187, 104, 186, 104, 186, 104, 186, 104, 186, 104, 104, 186, 104, 104,
+        186, 186, 186, 186, 104, 186, 104, 181, 181, 181, 181, 104, 181, 181, 181, 181, 21, 6, 187, 187, 187, 187, 187, 187, 187, 109, 186, 187, 187, 187, 186, 109, 187,
+        187, 109, 186, 186, 186, 109, 109, 186, 109, 109, 186, 186, 186, 186, 109, 22, 104, 187, 187, 187, 104, 186, 187, 187, 104, 186, 186, 187, 187, 186, 186, 104, 187,
+        104, 186,
+        104, 186, 186, 181, 181, 181, 181, 104, 181, 181, 181, 181, 22, 20, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 175, 20, 21, 22, 23, 20, 21, 22, 23, 20,
+        21, 22, 20, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 23, 175, 20, 21, 22, 23, 20, 21, 22, 23, 20, 21, 22, 20, 21, 22, 23 };
+    //175 = transporter gate
+    int indexer = 0;
+        for (int row = 0; row < TILE_MAP_ROWS; row++) {
+        for (int col = 0; col < TILE_MAP_COLS; col++) {
+            tileMapId[col][row] = tileMapSingle[indexer];
+            indexer++;
+        }
+    }
+}
 
 }

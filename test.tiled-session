@@ -1,0 +1,33 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        "platform1.tsx": {
+            "scaleInDock": 4,
+            "scaleInEditor": 1
+        }
+    },
+    "last.imagePath": "C:/Test LIB GDX 3/core/src/main/resources/images",
+    "map.height": 30,
+    "map.renderOrder": "2",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 100,
+    "openFiles": [
+    ],
+    "project": "test.tiled-project",
+    "recentFiles": [
+        "platform1.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.spacing": 0,
+    "tileset.tileSize": {
+        "height": 32,
+        "width": 32
+    }
+}
