@@ -5,25 +5,49 @@
     },
     "activeFile": "",
     "expandedProjectPaths": [
+        ".",
+        "core/src",
+        "core/src/main/resources",
+        "core",
+        "core/src/main/resources/maze",
+        "core/src/main"
     ],
     "fileStates": {
+        "4 BigSet.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 2
+        },
+        "4 Walls, Floor & Doors.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 4
+        },
+        "5z1KX.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
         "platform1.tsx": {
-            "scaleInDock": 4,
+            "scaleInDock": 1,
             "scaleInEditor": 1
         }
     },
-    "last.imagePath": "C:/Test LIB GDX 3/core/src/main/resources/images",
-    "map.height": 30,
+    "last.externalTilesetPath": "C:/Test LIB GDX 3",
+    "last.imagePath": "C:/Test LIB GDX 3/core/src/main/resources/images/new",
+    "map.height": 50,
     "map.renderOrder": "2",
-    "map.tileHeight": 16,
-    "map.tileWidth": 16,
-    "map.width": 100,
+    "map.tileHeight": 32,
+    "map.tileWidth": 32,
+    "map.width": 300,
     "openFiles": [
+        "5z1KX.tsx"
     ],
     "project": "test.tiled-project",
     "recentFiles": [
-        "platform1.tsx"
+        "5z1KX.tsx",
+        "4 BigSet.tsx",
+        "platform1.tsx",
+        "4 Walls, Floor & Doors.tsx"
     ],
+    "tileset.lastUsedFilter": "Tiled tileset bestanden (*.tsx *.xml)",
     "tileset.lastUsedFormat": "tsx",
     "tileset.spacing": 0,
     "tileset.tileSize": {
