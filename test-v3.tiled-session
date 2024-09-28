@@ -1,0 +1,20 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+    },
+    "last.imagePath": "C:/Test LIB GDX 3/core/src/main/resources/images",
+    "map.lastUsedFormat": "json",
+    "map.width": 100,
+    "openFiles": [
+    ],
+    "project": "test-v3.tiled-project",
+    "recentFiles": [
+    ],
+    "tileset.lastUsedFormat": "tsx"
+}

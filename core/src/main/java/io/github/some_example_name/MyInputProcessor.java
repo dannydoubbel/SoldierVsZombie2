@@ -2,20 +2,30 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.math.MathUtils;
 
 public class MyInputProcessor implements InputProcessor {
+
+
     @Override
-    public boolean  keyDown(int keycode) {
+    public boolean keyDown(int keycode) {
         SharedVariables sharedVariables = SharedVariables.getInstance();
         int indexSoldier = sharedVariables.getTextureIndexSoldier();
+        int previousIndexSoldier = indexSoldier;
+        int leftOffset = sharedVariables.getTileMapLeftOffset();
+
+        float zoomValue = sharedVariables.getzoomValue();
+        float previousZoomValue = zoomValue;
         switch (keycode) {
             case Input.Keys.LEFT:
                 sharedVariables.setCurrentSolderDirection(Directions.lt);
+                leftOffset+=sharedVariables.LEFT_OFFSET_STEP_SIZE;
                 indexSoldier++;
                 break;
             case Input.Keys.RIGHT:
                 sharedVariables.setCurrentSolderDirection(Directions.rt);
                 indexSoldier++;
+                leftOffset-=sharedVariables.LEFT_OFFSET_STEP_SIZE;
                 break;
             case Input.Keys.UP:
                 sharedVariables.setCurrentSolderDirection(Directions.up);
@@ -37,13 +47,30 @@ public class MyInputProcessor implements InputProcessor {
             case Input.Keys.PAUSE:
                 handleAction("pauseAction");
                 break;
+            case Input.Keys.PAGE_DOWN:
+                zoomValue *= 2;
+                break;
+            case Input.Keys.PAGE_UP:
+                zoomValue = zoomValue > 0.5f ? zoomValue / 2 : sharedVariables.ZOOM_MIN_VALUE;
+                break;
+            case Input.Keys.TAB:
+                break;
             default:
                 break;
         }
-        if (indexSoldier>6) {
-            indexSoldier = 0;
+
+        if (previousIndexSoldier != indexSoldier) {
+            indexSoldier = indexSoldier % 7; // Ensures indexSoldier wraps around to 0 if it exceeds 6
+            sharedVariables.setTextureIndexSoldier(indexSoldier);
         }
-        sharedVariables.setTextureIndexSoldier(indexSoldier);
+
+        if (previousZoomValue != zoomValue) {
+            zoomValue = MathUtils.clamp(zoomValue, sharedVariables.ZOOM_MIN_VALUE, sharedVariables.ZOOM_MAX_VALUE);
+            sharedVariables.setzoomValue(zoomValue);
+        }
+        // todo check previous value
+        sharedVariables.setTileMapLeftOffset(leftOffset);
+
         return false;
     }
 
@@ -88,8 +115,11 @@ public class MyInputProcessor implements InputProcessor {
     }
 
     private void handleAction(String actionName) {
-            // Implement your actual actions here
-            System.out.println("Action: " + actionName);
-        }
+        // Implement your actual actions here
+        System.out.println("Action: " + actionName);
+    }
     // Other input methods (keyUp, touchDown, etc.) can be implemented as needed
+
+
 }
+

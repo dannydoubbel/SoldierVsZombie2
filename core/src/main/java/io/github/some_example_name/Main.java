@@ -9,8 +9,11 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+
+;
 
 
 /**
@@ -21,96 +24,97 @@ public class Main extends ApplicationAdapter {
 
     private static final int MAX_SOLDIER_PER_DIRECTION = 11;
     private static final int MAX_SOLDIER_DIRECTIONS = 4;
-    private static final int WIDTH_SOLDIER = 1650 / MAX_SOLDIER_PER_DIRECTION;
-    private static final int HEIGHT_SOLDIER = 468 / MAX_SOLDIER_DIRECTIONS;
+    private static final int WIDTH_SOLDIER_IN_FILE = 1650 / MAX_SOLDIER_PER_DIRECTION;
+    private static final int WIDTH_SOLDIER_WITH_RIGHT_MARGE = WIDTH_SOLDIER_IN_FILE - 70;
+    private static final int WIDTH_SOLDIER = WIDTH_SOLDIER_WITH_RIGHT_MARGE - 10;
+    private static final int HEIGHT_SOLDIER_IN_FILE = 468 / MAX_SOLDIER_DIRECTIONS;
+    private static final int HEIGHT_SOLDIER = HEIGHT_SOLDIER_IN_FILE - 35;
 
     private static final int TILE_WIDTH = 32;
     private static final int TILE_HEIGHT = 32;
     private static final int TILE_MAP_COLS = 100;
     private static final int TILE_MAP_ROWS = 20;
 
+    private static final int TILE_MAP_SCALE_FACTOR = 2;
+
     private final int WORLD_WIDTH = 800; // your desired virtual width in pixels
     private final int WORLD_HEIGHT = 600; // your desired virtual height in pixels
+    private final int WORLD_MIN_HEIGHT = 400; // Minimum window height
+    private final int WORLD_MAX_HEIGHT = 640; // Maximum window height
 
 
-    private final int[][] tileMapId = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
-
-
+    private int[][] tileMapIds = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
     private SpriteBatch batch;
-
     private Sprite[][] solderTextureRegion;
     private Sprite[] sourceTilesTextures;
-
     private OrthographicCamera camera;
     private Viewport viewport;
+    private ShapeRenderer shapeRenderer;
+
     private Music backgroundMusic;
     private Sound soundEffect;
 
+    private SharedVariables sharedVariables;
+
+
+    private static void setUpInputRelatedStuff() {
+        Gdx.input.setInputProcessor(new MyInputProcessor());
+    }
 
     @Override
     public void create() {
-        SharedVariables.getInstance().setCurrentSolderDirection(Directions.dn);
-        backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("sound/music.mp3"));
-        //soundEffect = Gdx.audio.newSound(Gdx.files.internal("sound/gun-single.mp3"));
+        sharedVariables = SharedVariables.getInstance();
+        sharedVariables.setCurrentSolderDirection(Directions.dn);
 
-        camera = new OrthographicCamera();
-        viewport = new ScreenViewport(camera); // Use ScreenViewport to adapt to window size without scaling
-        viewport.apply();
-        camera.update();
+        loadSpritesAndTiles();
+        setupScreenRelatedStuff();
+        setupSoundRelatedStuff();
+        setUpInputRelatedStuff();
+        setupTileMap();
 
-        solderTextureRegion = loadMainCharacter();
-        sourceTilesTextures = loadSourceTilesTextures();
-        Gdx.input.setInputProcessor(new MyInputProcessor());
         batch = new SpriteBatch();
-
-
-        backgroundMusic.play();
-        backgroundMusic.setLooping(true); // Loop the background music
-
-        loadSourceTilesTextures();
-        loadTileMap();
-        updateWindowTitle(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-
     }
 
     @Override
     public void resize(int width, int height) {
-        // Update the viewport on window resize to handle expanded world area
-        viewport.update(width, height);
-        camera.setToOrtho(false, width, height); // Adjust the camera to the new window size
+
+        //height = MathUtils.clamp(height, WORLD_MIN_HEIGHT, WORLD_MAX_HEIGHT);
+        // Force the window height to match the viewport height
+        int viewportHeight = TILE_HEIGHT * TILE_MAP_ROWS * TILE_MAP_SCALE_FACTOR; // Example: Fixed viewport height (in pixels)
+        int viewportWidth = TILE_WIDTH * TILE_MAP_COLS * TILE_MAP_SCALE_FACTOR;
+
+        // Adjust the window width to match the new aspect ratio
+        float aspectRatio = (float) width / height;
+        int windowWidth = (int) (viewportHeight * aspectRatio);
+
+        // Set the windowed mode to enforce the fixed height
+        Gdx.graphics.setWindowedMode(windowWidth, viewportHeight);
+
+        // Update the viewport to match the new size
+        viewport.update(viewportWidth, viewportHeight, false);
+
+        // Update the camera to handle the new size
+        camera.position.set(camera.viewportWidth / 2f, camera.viewportHeight / 2f, 0);
         camera.update();
-        updateWindowTitle(width, height);
+
 
     }
 
+
     @Override
     public void render() {
-        SharedVariables sharedVariables = SharedVariables.getInstance();
-
+        updateWindowTitle();
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        camera.zoom = sharedVariables.getzoomValue();
+        camera.update();
         batch.setProjectionMatrix(camera.combined);
 
         batch.begin();
-
-
-        for (int col = 0; col < TILE_MAP_COLS; col++) {
-            for (int row = 0; row < TILE_MAP_ROWS; row++) {
-                int tileNr = tileMapId[col][row];
-                tileNr = tileNr > 0 ? tileNr - 1 : tileNr;
-                batch.draw(sourceTilesTextures[tileNr], col * 32, row * 32);//,16,16);
-                //if (tileNr!=0) System.out.println("Tile nr "+tileNr);
-            }
-        }
-
-
-        batch.draw(
-            solderTextureRegion[sharedVariables.getCurrentSolderDirection().getValue()]
-                [sharedVariables.getTextureIndexSoldier()],
-            100, 100,
-            WIDTH_SOLDIER, HEIGHT_SOLDIER);
-
+        drawBackground();
+        drawMainCharacter();
 
         batch.end();
+        drawMainCharacterBorder();
     }
 
     @Override
@@ -122,13 +126,23 @@ public class Main extends ApplicationAdapter {
         Texture spriteSheet = new Texture(Gdx.files.internal("images/top down soldier.png"));
         Sprite[][] spriteRegions =
             new Sprite[MAX_SOLDIER_DIRECTIONS][MAX_SOLDIER_PER_DIRECTION];
+
+
         for (int row = 0; row < MAX_SOLDIER_DIRECTIONS; row++) {
             for (int col = 0; col < MAX_SOLDIER_PER_DIRECTION; col++) {
-                spriteRegions[row][col] =
+                Sprite spriteAsInSpriteSheet =
                     new Sprite(
                         spriteSheet,
-                        col * WIDTH_SOLDIER,
-                        row * HEIGHT_SOLDIER,
+                        col * WIDTH_SOLDIER_IN_FILE,
+                        row * HEIGHT_SOLDIER_IN_FILE,
+                        WIDTH_SOLDIER_IN_FILE,
+                        HEIGHT_SOLDIER_IN_FILE);
+
+                spriteRegions[row][col] =
+                    new Sprite(
+                        spriteAsInSpriteSheet,
+                        (WIDTH_SOLDIER_IN_FILE - WIDTH_SOLDIER_WITH_RIGHT_MARGE) / 2,
+                        (HEIGHT_SOLDIER_IN_FILE - HEIGHT_SOLDIER),
                         WIDTH_SOLDIER,
                         HEIGHT_SOLDIER);
             }
@@ -160,19 +174,96 @@ public class Main extends ApplicationAdapter {
         return slicedTiles;
     }
 
-    private void loadTileMap() {
-        SharedVariables sharedVariables = SharedVariables.getInstance();
+    private int[][] setupTileMap() {
         int[] test = sharedVariables.getTileMap();
+        int[][] result = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
         for (int row = 0; row < TILE_MAP_ROWS; row++) {
             for (int col = 0; col < TILE_MAP_COLS; col++) {
-                tileMapId[col][row] = test[col + row * TILE_MAP_COLS];
+                result[col][row] = test[col + row * TILE_MAP_COLS];
+            }
+        }
+        return result;
+    }
+
+    private void updateWindowTitle() {
+        String title =
+            "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " " +
+            "Offset " + sharedVariables.getTileMapLeftOffset();
+
+        Gdx.graphics.setTitle(title); // Set the window title
+    }
+
+    void setupScreenRelatedStuff() {
+        camera = new OrthographicCamera();
+        viewport = new ScreenViewport(camera); // Use ScreenViewport to adapt to window size without scaling
+        viewport.apply();
+        camera.update();
+        shapeRenderer = new ShapeRenderer();
+    }
+
+    void setupSoundRelatedStuff() {
+        backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("sound/music.mp3"));
+        //soundEffect = Gdx.audio.newSound(Gdx.files.internal("sound/gun-single.mp3"));
+        backgroundMusic.play();
+        backgroundMusic.setLooping(true); // Loop the background music
+    }
+
+    private void loadSpritesAndTiles() {
+        solderTextureRegion = loadMainCharacter();
+        sourceTilesTextures = loadSourceTilesTextures();
+        tileMapIds = setupTileMap();
+    }
+
+    private void drawBackground() {
+        int rightStopDrawing =
+            (Gdx.graphics.getWidth() + sharedVariables.getTileMapLeftOffset())/TILE_WIDTH+1;
+
+        for (int row = 0; row < TILE_MAP_ROWS; row++) {
+            for (int col = 0; col < TILE_MAP_COLS && col < rightStopDrawing ; col++) {
+                int tileNr = tileMapIds[col][row];
+                tileNr = tileNr > 0 ? tileNr - 1 : tileNr;
+                batch.draw(sourceTilesTextures[tileNr],
+                    col * TILE_WIDTH * TILE_MAP_SCALE_FACTOR + sharedVariables.getTileMapLeftOffset(), row * TILE_HEIGHT * TILE_MAP_SCALE_FACTOR,
+                    TILE_WIDTH * TILE_MAP_SCALE_FACTOR, TILE_HEIGHT * TILE_MAP_SCALE_FACTOR);
             }
         }
     }
 
-    private void updateWindowTitle(int width, int height) {
-        String title = "Window Size: " + width + "x" + height;
-        Gdx.graphics.setTitle(title); // Set the window title
+    private void drawMainCharacter() {
+
+        batch.draw(
+            solderTextureRegion[sharedVariables.getCurrentSolderDirection().getValue()]
+                [sharedVariables.getTextureIndexSoldier()],
+            getMainCharacterXPos(),
+            getMainCharacterYPos(),
+            WIDTH_SOLDIER, HEIGHT_SOLDIER);
+    }
+
+    private void drawMainCharacterBorder() {
+        // Draw a white rectangle on top of the sprite to represent its bounds
+        shapeRenderer.setProjectionMatrix(camera.combined);
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line); // Draw the rectangle as lines
+        shapeRenderer.setColor(1, 1, 1, 1); // Set color to white (RGBA)
+        shapeRenderer.rect(getMainCharacterXPos(), getMainCharacterYPos(), WIDTH_SOLDIER, HEIGHT_SOLDIER); // Draw the rectangle around the sprite
+        shapeRenderer.setColor(0, 0.2f, 0.5f, 1); // Set color to dark blue (RGBA)
+        shapeRenderer.circle(getMainCharacterXPosCenter(), getMainCharacterYPosCenter(), 6);
+        shapeRenderer.end();
+    }
+
+    private int getMainCharacterXPos() {
+        return (TILE_MAP_COLS * TILE_WIDTH) / 2;
+    }
+
+    private int getMainCharacterYPos() {
+        return (TILE_MAP_ROWS * TILE_HEIGHT) / 2;
+    }
+
+    private int getMainCharacterXPosCenter() {
+        return getMainCharacterXPos() + (WIDTH_SOLDIER / 2);
+    }
+
+    private int getMainCharacterYPosCenter() {
+        return getMainCharacterYPos() + (HEIGHT_SOLDIER / 2);
     }
 
 }

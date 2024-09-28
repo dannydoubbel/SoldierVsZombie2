@@ -3,7 +3,17 @@ package io.github.some_example_name;
 public class SharedVariables {
     private static SharedVariables instance;
     private Directions currentSolderDirection = Directions.dn;
+
+    private int tileMapLeftOffset = 0;
+
     private int textureIndexSoldier = 0;
+
+    private float zoomValue = 1;
+
+    public final float ZOOM_MAX_VALUE = 8;
+    public final float ZOOM_MIN_VALUE = 0.5f;
+
+    public final int LEFT_OFFSET_STEP_SIZE = 5;
 
     private int tileMap[] = {70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70,
         70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70,
@@ -56,8 +66,23 @@ public class SharedVariables {
         currentSolderDirection = newDirection;
     }
 
+    float getzoomValue(){
+        return zoomValue;
+    }
+    void setzoomValue(float newzoomValue) {
+        zoomValue = newzoomValue;
+    }
+
 
     public int[] getTileMap() {
         return tileMap;
+    }
+
+    public void setTileMapLeftOffset(int newLeftOffset) {
+        tileMapLeftOffset = newLeftOffset;
+    }
+
+    public int getTileMapLeftOffset(){
+        return tileMapLeftOffset;
     }
 }
