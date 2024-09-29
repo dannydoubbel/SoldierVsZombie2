@@ -5,35 +5,25 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.math.MathUtils;
 
 public class MyInputProcessor implements InputProcessor {
-
-
+    SharedVariables sharedVariables = SharedVariables.getInstance();
     @Override
     public boolean keyDown(int keycode) {
-        SharedVariables sharedVariables = SharedVariables.getInstance();
-        int indexSoldier = sharedVariables.getTextureIndexSoldier();
-        int previousIndexSoldier = indexSoldier;
-        int leftOffset = sharedVariables.getTileMapLeftOffset();
 
         float zoomValue = sharedVariables.getzoomValue();
         float previousZoomValue = zoomValue;
+
         switch (keycode) {
             case Input.Keys.LEFT:
-                sharedVariables.setCurrentSolderDirection(Directions.lt);
-                leftOffset+=sharedVariables.LEFT_OFFSET_STEP_SIZE;
-                indexSoldier++;
+                sharedVariables.goLeft = true;
                 break;
             case Input.Keys.RIGHT:
-                sharedVariables.setCurrentSolderDirection(Directions.rt);
-                indexSoldier++;
-                leftOffset-=sharedVariables.LEFT_OFFSET_STEP_SIZE;
+                sharedVariables.goRight = true;
                 break;
             case Input.Keys.UP:
-                sharedVariables.setCurrentSolderDirection(Directions.up);
-                indexSoldier++;
+                sharedVariables.goUp = true;
                 break;
             case Input.Keys.DOWN:
-                sharedVariables.setCurrentSolderDirection(Directions.dn);
-                indexSoldier++;
+                sharedVariables.goDown = true;
                 break;
             case Input.Keys.ENTER:
                 handleAction("enterAction");
@@ -53,29 +43,36 @@ public class MyInputProcessor implements InputProcessor {
             case Input.Keys.PAGE_UP:
                 zoomValue = zoomValue > 0.5f ? zoomValue / 2 : sharedVariables.ZOOM_MIN_VALUE;
                 break;
-            case Input.Keys.TAB:
+            case Input.Keys.INSERT:
+                sharedVariables.setDebugScreen(!sharedVariables.isDebugScreen());
                 break;
             default:
                 break;
-        }
-
-        if (previousIndexSoldier != indexSoldier) {
-            indexSoldier = indexSoldier % 7; // Ensures indexSoldier wraps around to 0 if it exceeds 6
-            sharedVariables.setTextureIndexSoldier(indexSoldier);
         }
 
         if (previousZoomValue != zoomValue) {
             zoomValue = MathUtils.clamp(zoomValue, sharedVariables.ZOOM_MIN_VALUE, sharedVariables.ZOOM_MAX_VALUE);
             sharedVariables.setzoomValue(zoomValue);
         }
-        // todo check previous value
-        sharedVariables.setTileMapLeftOffset(leftOffset);
-
         return false;
     }
 
     @Override
     public boolean keyUp(int keycode) {
+        switch (keycode) {
+            case Input.Keys.LEFT:
+                sharedVariables.goLeft = false;
+                break;
+            case Input.Keys.RIGHT:
+                sharedVariables.goRight = false;
+                break;
+            case Input.Keys.UP:
+                sharedVariables.goUp = false;
+                break;
+            case Input.Keys.DOWN:
+                sharedVariables.goDown = false;
+                break;
+        }
         return false;
     }
 

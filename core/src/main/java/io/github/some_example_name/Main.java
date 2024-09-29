@@ -13,15 +13,10 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
-;
-
-
 /**
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
 public class Main extends ApplicationAdapter {
-
-
     private static final int MAX_SOLDIER_PER_DIRECTION = 11;
     private static final int MAX_SOLDIER_DIRECTIONS = 4;
     private static final int WIDTH_SOLDIER_IN_FILE = 1650 / MAX_SOLDIER_PER_DIRECTION;
@@ -29,20 +24,15 @@ public class Main extends ApplicationAdapter {
     private static final int WIDTH_SOLDIER = WIDTH_SOLDIER_WITH_RIGHT_MARGE - 10;
     private static final int HEIGHT_SOLDIER_IN_FILE = 468 / MAX_SOLDIER_DIRECTIONS;
     private static final int HEIGHT_SOLDIER = HEIGHT_SOLDIER_IN_FILE - 35;
-
     private static final int TILE_WIDTH = 32;
     private static final int TILE_HEIGHT = 32;
     private static final int TILE_MAP_COLS = 100;
     private static final int TILE_MAP_ROWS = 20;
-
     private static final int TILE_MAP_SCALE_FACTOR = 2;
-
-    private final int WORLD_WIDTH = 800; // your desired virtual width in pixels
-    private final int WORLD_HEIGHT = 600; // your desired virtual height in pixels
-    private final int WORLD_MIN_HEIGHT = 400; // Minimum window height
-    private final int WORLD_MAX_HEIGHT = 640; // Maximum window height
-
-
+    private int xposPixelSoldier;
+    private int yposPixelSoldier;
+    private int xposTileSoldier;
+    private int yposTileSoldier;
     private int[][] tileMapIds = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
     private SpriteBatch batch;
     private Sprite[][] solderTextureRegion;
@@ -50,12 +40,9 @@ public class Main extends ApplicationAdapter {
     private OrthographicCamera camera;
     private Viewport viewport;
     private ShapeRenderer shapeRenderer;
-
     private Music backgroundMusic;
     private Sound soundEffect;
-
     private SharedVariables sharedVariables;
-
 
     private static void setUpInputRelatedStuff() {
         Gdx.input.setInputProcessor(new MyInputProcessor());
@@ -73,48 +60,39 @@ public class Main extends ApplicationAdapter {
         setupTileMap();
 
         batch = new SpriteBatch();
+
+        yposPixelSoldier = (TILE_MAP_ROWS * TILE_HEIGHT) / TILE_MAP_SCALE_FACTOR;
     }
 
     @Override
     public void resize(int width, int height) {
-
-        //height = MathUtils.clamp(height, WORLD_MIN_HEIGHT, WORLD_MAX_HEIGHT);
-        // Force the window height to match the viewport height
         int viewportHeight = TILE_HEIGHT * TILE_MAP_ROWS * TILE_MAP_SCALE_FACTOR; // Example: Fixed viewport height (in pixels)
         int viewportWidth = TILE_WIDTH * TILE_MAP_COLS * TILE_MAP_SCALE_FACTOR;
-
-        // Adjust the window width to match the new aspect ratio
         float aspectRatio = (float) width / height;
         int windowWidth = (int) (viewportHeight * aspectRatio);
-
-        // Set the windowed mode to enforce the fixed height
         Gdx.graphics.setWindowedMode(windowWidth, viewportHeight);
-
-        // Update the viewport to match the new size
         viewport.update(viewportWidth, viewportHeight, false);
-
-        // Update the camera to handle the new size
-        camera.position.set(camera.viewportWidth / 2f, camera.viewportHeight / 2f, 0);
+        camera.position.set(camera.viewportWidth / 2, camera.viewportHeight / 2, 0); // Adjust if needed
         camera.update();
-
-
     }
 
 
     @Override
     public void render() {
-        updateWindowTitle();
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.zoom = sharedVariables.getzoomValue();
         camera.update();
         batch.setProjectionMatrix(camera.combined);
+
+        mainCharacterDoMovement();
 
         batch.begin();
         drawBackground();
         drawMainCharacter();
 
         batch.end();
-        drawMainCharacterBorder();
+        if (sharedVariables.isDebugScreen()) drawMainCharacterBorder();
+        updateWindowTitle();
     }
 
     @Override
@@ -141,7 +119,7 @@ public class Main extends ApplicationAdapter {
                 spriteRegions[row][col] =
                     new Sprite(
                         spriteAsInSpriteSheet,
-                        (WIDTH_SOLDIER_IN_FILE - WIDTH_SOLDIER_WITH_RIGHT_MARGE) / 2,
+                        (WIDTH_SOLDIER_IN_FILE - WIDTH_SOLDIER_WITH_RIGHT_MARGE) / TILE_MAP_SCALE_FACTOR,
                         (HEIGHT_SOLDIER_IN_FILE - HEIGHT_SOLDIER),
                         WIDTH_SOLDIER,
                         HEIGHT_SOLDIER);
@@ -151,15 +129,15 @@ public class Main extends ApplicationAdapter {
     }
 
     Sprite[] loadSourceTilesTextures() {
-        int tileSourceCols = 23;
-        int tileSourceRows = 21;
+        final int TILE_SOURCE_COLS = 23;
+        final int TILE_SOURCE_ROWS = 21;
 
-        Sprite[] slicedTiles = new Sprite[tileSourceCols * tileSourceRows];
+        Sprite[] slicedTiles = new Sprite[TILE_SOURCE_COLS * TILE_SOURCE_COLS];
         Texture fullFile = new Texture(Gdx.files.internal("images/5z1KX.png"));
-        for (int row = 0; row < tileSourceRows; row++) {
-            for (int col = 0; col < tileSourceCols; col++) {
+        for (int row = 0; row < TILE_SOURCE_ROWS; row++) {
+            for (int col = 0; col < TILE_SOURCE_COLS; col++) {
                 // the image is here, transfer writeable image to image
-                slicedTiles[col + row * tileSourceCols] =
+                slicedTiles[col + row * TILE_SOURCE_COLS] =
                     new Sprite(
                         fullFile,
                         col * (TILE_WIDTH),
@@ -167,10 +145,7 @@ public class Main extends ApplicationAdapter {
                         TILE_WIDTH,
                         TILE_HEIGHT);
             }
-
         }
-
-
         return slicedTiles;
     }
 
@@ -186,9 +161,11 @@ public class Main extends ApplicationAdapter {
     }
 
     private void updateWindowTitle() {
-        String title =
-            "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " " +
-            "Offset " + sharedVariables.getTileMapLeftOffset();
+        String title = "";
+        title += "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " ";
+        title += "Offset " + sharedVariables.getTileMapLeftOffset() + " ";
+        title += "XPOS = " + xposTileSoldier + " YPOS = " + yposTileSoldier + " ";
+        title += "Debug (INS) : " + sharedVariables.isDebugScreen();
 
         Gdx.graphics.setTitle(title); // Set the window title
     }
@@ -196,9 +173,11 @@ public class Main extends ApplicationAdapter {
     void setupScreenRelatedStuff() {
         camera = new OrthographicCamera();
         viewport = new ScreenViewport(camera); // Use ScreenViewport to adapt to window size without scaling
+        camera.position.set(camera.viewportWidth / 2, camera.viewportHeight / 2, 0);
         viewport.apply();
         camera.update();
         shapeRenderer = new ShapeRenderer();
+        Gdx.graphics.setResizable(true);
     }
 
     void setupSoundRelatedStuff() {
@@ -216,21 +195,22 @@ public class Main extends ApplicationAdapter {
 
     private void drawBackground() {
         int rightStopDrawing =
-            (Gdx.graphics.getWidth() + sharedVariables.getTileMapLeftOffset())/TILE_WIDTH+1;
+            (Gdx.graphics.getWidth() + sharedVariables.getTileMapLeftOffset()) / TILE_WIDTH + 200;
 
         for (int row = 0; row < TILE_MAP_ROWS; row++) {
-            for (int col = 0; col < TILE_MAP_COLS && col < rightStopDrawing ; col++) {
+            for (int col = 0; col < TILE_MAP_COLS && col < rightStopDrawing; col++) {
                 int tileNr = tileMapIds[col][row];
                 tileNr = tileNr > 0 ? tileNr - 1 : tileNr;
                 batch.draw(sourceTilesTextures[tileNr],
-                    col * TILE_WIDTH * TILE_MAP_SCALE_FACTOR + sharedVariables.getTileMapLeftOffset(), row * TILE_HEIGHT * TILE_MAP_SCALE_FACTOR,
-                    TILE_WIDTH * TILE_MAP_SCALE_FACTOR, TILE_HEIGHT * TILE_MAP_SCALE_FACTOR);
+                    col * TILE_WIDTH * TILE_MAP_SCALE_FACTOR + sharedVariables.getTileMapLeftOffset(),
+                    row * TILE_HEIGHT * TILE_MAP_SCALE_FACTOR,
+                    TILE_WIDTH * TILE_MAP_SCALE_FACTOR,
+                    TILE_HEIGHT * TILE_MAP_SCALE_FACTOR);
             }
         }
     }
 
     private void drawMainCharacter() {
-
         batch.draw(
             solderTextureRegion[sharedVariables.getCurrentSolderDirection().getValue()]
                 [sharedVariables.getTextureIndexSoldier()],
@@ -255,7 +235,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private int getMainCharacterYPos() {
-        return (TILE_MAP_ROWS * TILE_HEIGHT) / 2;
+        return yposPixelSoldier;
     }
 
     private int getMainCharacterXPosCenter() {
@@ -266,6 +246,63 @@ public class Main extends ApplicationAdapter {
         return getMainCharacterYPos() + (HEIGHT_SOLDIER / 2);
     }
 
+    private void mainCharacterDoMovement() {
+
+        int indexSoldier = sharedVariables.getTextureIndexSoldier();
+        int previousIndexSoldier = indexSoldier;
+        int leftOffset = sharedVariables.getTileMapLeftOffset();
+
+        if (sharedVariables.goDown) {
+            sharedVariables.setCurrentSolderDirection(Directions.dn);
+            yposPixelSoldier -= sharedVariables.LEFT_OFFSET_STEP_SIZE;
+            indexSoldier++;
+        }
+        if (sharedVariables.goUp) {
+            sharedVariables.setCurrentSolderDirection(Directions.up);
+            yposPixelSoldier += sharedVariables.LEFT_OFFSET_STEP_SIZE;
+            indexSoldier++;
+        }
+        if (sharedVariables.goLeft) {
+            sharedVariables.setCurrentSolderDirection(Directions.lt);
+            leftOffset += sharedVariables.LEFT_OFFSET_STEP_SIZE;
+            indexSoldier++;
+        }
+        if (sharedVariables.goRight) {
+            sharedVariables.setCurrentSolderDirection(Directions.rt);
+            indexSoldier++;
+            leftOffset -= sharedVariables.LEFT_OFFSET_STEP_SIZE;
+        }
+        setMainCharacterAnimationFrame(indexSoldier, previousIndexSoldier);
+        fitMainCharacterPositionWithinBoundaries(leftOffset);
+        calculateTilePositionsMainCharacter();
+    }
+
+    private void setMainCharacterAnimationFrame(int indexSoldier, int previousIndexSoldier) {
+        if (previousIndexSoldier != indexSoldier) {
+            indexSoldier = indexSoldier % 7; // Ensures indexSoldier wraps around to 0 if it exceeds 6
+            sharedVariables.setTextureIndexSoldier(indexSoldier);
+        }
+    }
+
+    private void fitMainCharacterPositionWithinBoundaries(int leftOffset) {
+        leftOffset = Math.min(leftOffset, getMainCharacterXPos());
+
+        yposPixelSoldier = Math.max(yposPixelSoldier, 0);
+        yposPixelSoldier = Math.min(yposPixelSoldier, TILE_HEIGHT * (TILE_MAP_ROWS - 1) * TILE_MAP_SCALE_FACTOR);
+
+        int maxLeftOffset = -((TILE_MAP_COLS * TILE_WIDTH) + (TILE_MAP_COLS * TILE_WIDTH) / TILE_MAP_SCALE_FACTOR) + TILE_WIDTH;
+        if (leftOffset < maxLeftOffset) {
+            leftOffset = maxLeftOffset;
+        }
+        sharedVariables.setTileMapLeftOffset(leftOffset);
+    }
+
+    private void calculateTilePositionsMainCharacter() {
+        xposPixelSoldier = getMainCharacterXPosCenter();
+        yposPixelSoldier = getMainCharacterYPos();
+        xposTileSoldier = ((xposPixelSoldier - sharedVariables.getTileMapLeftOffset()) / TILE_WIDTH);
+        yposTileSoldier = (yposPixelSoldier / TILE_HEIGHT);
+        xposTileSoldier = (xposTileSoldier != 0) ? xposTileSoldier / 2 : xposTileSoldier;
+        yposTileSoldier = (yposTileSoldier != 0) ? yposTileSoldier / 2 : yposTileSoldier;
+    }
 }
-
-
