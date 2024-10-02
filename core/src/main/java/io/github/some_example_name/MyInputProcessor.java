@@ -2,16 +2,11 @@ package io.github.some_example_name;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.math.MathUtils;
 
 public class MyInputProcessor implements InputProcessor {
     SharedVariables sharedVariables = SharedVariables.getInstance();
     @Override
     public boolean keyDown(int keycode) {
-
-        float zoomValue = sharedVariables.getzoomValue();
-        float previousZoomValue = zoomValue;
-
         switch (keycode) {
             case Input.Keys.LEFT:
                 sharedVariables.goLeft = true;
@@ -38,21 +33,16 @@ public class MyInputProcessor implements InputProcessor {
                 handleAction("pauseAction");
                 break;
             case Input.Keys.PAGE_DOWN:
-                zoomValue *= 2;
+                sharedVariables.setZoomIn(true);
                 break;
             case Input.Keys.PAGE_UP:
-                zoomValue = zoomValue > 0.5f ? zoomValue / 2 : sharedVariables.ZOOM_MIN_VALUE;
+                sharedVariables.setZoomOut(true);
                 break;
             case Input.Keys.INSERT:
                 sharedVariables.setDebugScreen(!sharedVariables.isDebugScreen());
                 break;
             default:
                 break;
-        }
-
-        if (previousZoomValue != zoomValue) {
-            zoomValue = MathUtils.clamp(zoomValue, sharedVariables.ZOOM_MIN_VALUE, sharedVariables.ZOOM_MAX_VALUE);
-            sharedVariables.setzoomValue(zoomValue);
         }
         return false;
     }

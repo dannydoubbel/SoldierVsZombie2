@@ -3,13 +3,13 @@ package io.github.some_example_name;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -29,10 +29,14 @@ public class Main extends ApplicationAdapter {
     private static final int TILE_MAP_COLS = 100;
     private static final int TILE_MAP_ROWS = 20;
     private static final int TILE_MAP_SCALE_FACTOR = 2;
-    private int xposPixelSoldier;
-    private int yposPixelSoldier;
-    private int xposTileSoldier;
-    private int yposTileSoldier;
+    private int xPosPixelSoldier;
+    private int yPosPixelSoldier;
+    private int xPosTileSoldier;
+    private int yPosTileSoldier;
+    private boolean isWalkingLeft = false;
+    private boolean isWalkingRight = false;
+    private boolean isWalkingUp = false;
+    private boolean isWalkingDown = false;
     private int[][] tileMapIds = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
     private SpriteBatch batch;
     private Sprite[][] solderTextureRegion;
@@ -41,7 +45,7 @@ public class Main extends ApplicationAdapter {
     private Viewport viewport;
     private ShapeRenderer shapeRenderer;
     private Music backgroundMusic;
-    private Sound soundEffect;
+    //private Sound soundEffect;
     private SharedVariables sharedVariables;
 
     private static void setUpInputRelatedStuff() {
@@ -61,7 +65,7 @@ public class Main extends ApplicationAdapter {
 
         batch = new SpriteBatch();
 
-        yposPixelSoldier = (TILE_MAP_ROWS * TILE_HEIGHT) / TILE_MAP_SCALE_FACTOR;
+        yPosPixelSoldier = (TILE_MAP_ROWS * TILE_HEIGHT) / TILE_MAP_SCALE_FACTOR;
     }
 
     @Override
@@ -85,6 +89,9 @@ public class Main extends ApplicationAdapter {
         batch.setProjectionMatrix(camera.combined);
 
         mainCharacterDoMovement();
+
+        handleZoomKeyPress();
+
 
         batch.begin();
         drawBackground();
@@ -163,19 +170,23 @@ public class Main extends ApplicationAdapter {
     private void updateWindowTitle() {
         String title = "";
         title += "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " ";
-        title += "Offset " + sharedVariables.getTileMapLeftOffset() + " ";
-        title += "XPOS = " + xposTileSoldier + " YPOS = " + yposTileSoldier + " ";
-        title += "Debug (INS) : " + sharedVariables.isDebugScreen();
+        title += "Offset " + sharedVariables.gettileMapDrawingLeftOffset() + " ";
+        title += "XPOS = " + xPosTileSoldier + " YPOS = " + yPosTileSoldier + " ";
+        title += "Debug (INS) : " + sharedVariables.isDebugScreen() + " ";
+
+        int tileValueUnderMainCharacter = tileMapIds[xPosTileSoldier][yPosTileSoldier];
+        title += "Value under = " + tileValueUnderMainCharacter + " ";
+        title += "Zoom =  " + sharedVariables.getzoomValue();
 
         Gdx.graphics.setTitle(title); // Set the window title
     }
 
     void setupScreenRelatedStuff() {
         camera = new OrthographicCamera();
-        viewport = new ScreenViewport(camera); // Use ScreenViewport to adapt to window size without scaling
         camera.position.set(camera.viewportWidth / 2, camera.viewportHeight / 2, 0);
-        viewport.apply();
         camera.update();
+        viewport = new ScreenViewport(camera); // Use ScreenViewport to adapt to window size without scaling
+        viewport.apply();
         shapeRenderer = new ShapeRenderer();
         Gdx.graphics.setResizable(true);
     }
@@ -195,14 +206,14 @@ public class Main extends ApplicationAdapter {
 
     private void drawBackground() {
         int rightStopDrawing =
-            (Gdx.graphics.getWidth() + sharedVariables.getTileMapLeftOffset()) / TILE_WIDTH + 200;
+            (Gdx.graphics.getWidth() + sharedVariables.gettileMapDrawingLeftOffset()) / TILE_WIDTH + 200;
 
         for (int row = 0; row < TILE_MAP_ROWS; row++) {
             for (int col = 0; col < TILE_MAP_COLS && col < rightStopDrawing; col++) {
                 int tileNr = tileMapIds[col][row];
                 tileNr = tileNr > 0 ? tileNr - 1 : tileNr;
                 batch.draw(sourceTilesTextures[tileNr],
-                    col * TILE_WIDTH * TILE_MAP_SCALE_FACTOR + sharedVariables.getTileMapLeftOffset(),
+                    col * TILE_WIDTH * TILE_MAP_SCALE_FACTOR + sharedVariables.gettileMapDrawingLeftOffset(),
                     row * TILE_HEIGHT * TILE_MAP_SCALE_FACTOR,
                     TILE_WIDTH * TILE_MAP_SCALE_FACTOR,
                     TILE_HEIGHT * TILE_MAP_SCALE_FACTOR);
@@ -231,11 +242,11 @@ public class Main extends ApplicationAdapter {
     }
 
     private int getMainCharacterXPos() {
-        return (TILE_MAP_COLS * TILE_WIDTH) / 2;
+        return Math.round(Gdx.graphics.getWidth() / 2f);
     }
 
     private int getMainCharacterYPos() {
-        return yposPixelSoldier;
+        return yPosPixelSoldier;
     }
 
     private int getMainCharacterXPosCenter() {
@@ -246,63 +257,136 @@ public class Main extends ApplicationAdapter {
         return getMainCharacterYPos() + (HEIGHT_SOLDIER / 2);
     }
 
+
     private void mainCharacterDoMovement() {
 
         int indexSoldier = sharedVariables.getTextureIndexSoldier();
-        int previousIndexSoldier = indexSoldier;
-        int leftOffset = sharedVariables.getTileMapLeftOffset();
+        int leftOffset = sharedVariables.gettileMapDrawingLeftOffset();
 
         if (sharedVariables.goDown) {
-            sharedVariables.setCurrentSolderDirection(Directions.dn);
-            yposPixelSoldier -= sharedVariables.LEFT_OFFSET_STEP_SIZE;
-            indexSoldier++;
+            isWalkingDown = true;
+            if (tileMapIds[xPosTileSoldier][yPosTileSoldier] == 0) {
+                sharedVariables.setCurrentSolderDirection(Directions.dn);
+                yPosPixelSoldier -= sharedVariables.STEP_SIZE;
+                indexSoldier++;
+            } else {
+                yPosPixelSoldier += TILE_HEIGHT;
+            }
+        } else {
+            if (isWalkingDown) {
+                if (yPosPixelSoldier % TILE_HEIGHT !=0) {
+                    yPosPixelSoldier--;
+                    indexSoldier++;
+                } else {
+                    isWalkingDown=false;
+                }
+            }
         }
         if (sharedVariables.goUp) {
-            sharedVariables.setCurrentSolderDirection(Directions.up);
-            yposPixelSoldier += sharedVariables.LEFT_OFFSET_STEP_SIZE;
-            indexSoldier++;
+            isWalkingUp = true;
+            if (tileMapIds[xPosTileSoldier][yPosTileSoldier + 1] == 0) {
+                sharedVariables.setCurrentSolderDirection(Directions.up);
+                yPosPixelSoldier += sharedVariables.STEP_SIZE;
+                indexSoldier++;
+            } else {
+
+            }
+        } else {
+            if (isWalkingUp) {
+                if (yPosPixelSoldier % TILE_HEIGHT !=0) {
+                    yPosPixelSoldier++;
+                    indexSoldier++;
+                } else {
+                    isWalkingUp = false;
+                }
+            }
         }
         if (sharedVariables.goLeft) {
-            sharedVariables.setCurrentSolderDirection(Directions.lt);
-            leftOffset += sharedVariables.LEFT_OFFSET_STEP_SIZE;
-            indexSoldier++;
+            isWalkingLeft = true;
+            if (tileMapIds[xPosTileSoldier - 1][yPosTileSoldier] == 0) {
+                sharedVariables.setCurrentSolderDirection(Directions.lt);
+                leftOffset += sharedVariables.STEP_SIZE;
+                indexSoldier++;
+            } else {
+            }
+        } else {
+            if (isWalkingLeft) {
+                if ((leftOffset % TILE_WIDTH) != 0) {
+                    leftOffset++;
+                    indexSoldier++;
+                } else {
+                    isWalkingLeft = false;
+                }
+
+            }
         }
         if (sharedVariables.goRight) {
-            sharedVariables.setCurrentSolderDirection(Directions.rt);
-            indexSoldier++;
-            leftOffset -= sharedVariables.LEFT_OFFSET_STEP_SIZE;
+            isWalkingRight = true;
+            if (tileMapIds[xPosTileSoldier + 1][yPosTileSoldier] == 0) {
+                sharedVariables.setCurrentSolderDirection(Directions.rt);
+                indexSoldier++;
+                leftOffset -= sharedVariables.STEP_SIZE;
+            } else {
+
+            }
+        } else {
+            if (isWalkingRight) {
+                if (leftOffset % TILE_WIDTH != 0) {
+                    leftOffset--;
+                } else {
+                    isWalkingRight = false;
+                    indexSoldier++;
+
+                }
+            }
         }
-        setMainCharacterAnimationFrame(indexSoldier, previousIndexSoldier);
+        sharedVariables.settileMapDrawingLeftOffset(leftOffset);
+        setMainCharacterAnimationFrame(indexSoldier);
         fitMainCharacterPositionWithinBoundaries(leftOffset);
         calculateTilePositionsMainCharacter();
+
     }
 
-    private void setMainCharacterAnimationFrame(int indexSoldier, int previousIndexSoldier) {
-        if (previousIndexSoldier != indexSoldier) {
-            indexSoldier = indexSoldier % 7; // Ensures indexSoldier wraps around to 0 if it exceeds 6
-            sharedVariables.setTextureIndexSoldier(indexSoldier);
-        }
+    private void setMainCharacterAnimationFrame(int indexSoldier) {
+        indexSoldier = indexSoldier % 7; // Ensures indexSoldier wraps around to 0 if it exceeds 6
+        sharedVariables.setTextureIndexSoldier(indexSoldier);
     }
 
     private void fitMainCharacterPositionWithinBoundaries(int leftOffset) {
         leftOffset = Math.min(leftOffset, getMainCharacterXPos());
 
-        yposPixelSoldier = Math.max(yposPixelSoldier, 0);
-        yposPixelSoldier = Math.min(yposPixelSoldier, TILE_HEIGHT * (TILE_MAP_ROWS - 1) * TILE_MAP_SCALE_FACTOR);
+        yPosPixelSoldier = Math.max(yPosPixelSoldier, 0);
+        yPosPixelSoldier = Math.min(yPosPixelSoldier, TILE_HEIGHT * (TILE_MAP_ROWS - 1) * TILE_MAP_SCALE_FACTOR);
 
         int maxLeftOffset = -((TILE_MAP_COLS * TILE_WIDTH) + (TILE_MAP_COLS * TILE_WIDTH) / TILE_MAP_SCALE_FACTOR) + TILE_WIDTH;
         if (leftOffset < maxLeftOffset) {
             leftOffset = maxLeftOffset;
         }
-        sharedVariables.setTileMapLeftOffset(leftOffset);
+        sharedVariables.settileMapDrawingLeftOffset(leftOffset);
     }
 
     private void calculateTilePositionsMainCharacter() {
-        xposPixelSoldier = getMainCharacterXPosCenter();
-        yposPixelSoldier = getMainCharacterYPos();
-        xposTileSoldier = ((xposPixelSoldier - sharedVariables.getTileMapLeftOffset()) / TILE_WIDTH);
-        yposTileSoldier = (yposPixelSoldier / TILE_HEIGHT);
-        xposTileSoldier = (xposTileSoldier != 0) ? xposTileSoldier / 2 : xposTileSoldier;
-        yposTileSoldier = (yposTileSoldier != 0) ? yposTileSoldier / 2 : yposTileSoldier;
+        xPosPixelSoldier = getMainCharacterXPosCenter();
+        yPosPixelSoldier = getMainCharacterYPos();
+        xPosTileSoldier = ((xPosPixelSoldier - sharedVariables.gettileMapDrawingLeftOffset()) / TILE_WIDTH);
+        yPosTileSoldier = ((yPosPixelSoldier + TILE_HEIGHT / 2) / TILE_HEIGHT); // ****** WIJZIG
+        xPosTileSoldier = (xPosTileSoldier != 0) ? xPosTileSoldier / 2 : xPosTileSoldier;
+        yPosTileSoldier = (yPosTileSoldier != 0) ? yPosTileSoldier / 2 : yPosTileSoldier;
+    }
+
+
+
+    private void handleZoomKeyPress() {
+        float newZoomValue = sharedVariables.getzoomValue();
+        if (sharedVariables.isZoomIn()) {
+            newZoomValue *= 2;
+            sharedVariables.setZoomIn(false);
+        }
+        if (sharedVariables.isZoomOut()) {
+            newZoomValue = newZoomValue > sharedVariables.ZOOM_MIN_VALUE ? newZoomValue / 2 : sharedVariables.ZOOM_MIN_VALUE;
+            sharedVariables.setZoomOut(false);
+        }
+        newZoomValue = MathUtils.clamp(newZoomValue, sharedVariables.ZOOM_MIN_VALUE, sharedVariables.ZOOM_MAX_VALUE);
+        sharedVariables.setzoomValue(newZoomValue);
     }
 }
