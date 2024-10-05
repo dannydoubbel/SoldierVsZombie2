@@ -29,7 +29,7 @@ public class Main extends ApplicationAdapter {
     private static final int TILE_MAP_COLS = 100;
     private static final int TILE_MAP_ROWS = 20;
     private static final int TILE_MAP_SCALE_FACTOR = 2;
-    private int xPosPixelSoldier;
+
     private int yPosPixelSoldier;
     private int xPosTileSoldier;
     private int yPosTileSoldier;
@@ -56,6 +56,10 @@ public class Main extends ApplicationAdapter {
     public void create() {
         sharedVariables = SharedVariables.getInstance();
         sharedVariables.setCurrentSolderDirection(Directions.dn);
+
+        sharedVariables.setMain_xpos(Math.round(Gdx.graphics.getWidth() / 2f));
+        sharedVariables.setLeftMargin(200);
+        sharedVariables.setRightMargin(200);
 
         loadSpritesAndTiles();
         setupScreenRelatedStuff();
@@ -88,7 +92,7 @@ public class Main extends ApplicationAdapter {
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
-        mainCharacterDoMovement();
+        doMainCharacterMovement();
 
         handleZoomKeyPress();
 
@@ -170,13 +174,19 @@ public class Main extends ApplicationAdapter {
     private void updateWindowTitle() {
         String title = "";
         title += "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " ";
-        title += "Offset " + sharedVariables.gettileMapDrawingLeftOffset() + " ";
+        title += "leftOffset " + sharedVariables.getLeftOffset() + " ";
         title += "XPOS = " + xPosTileSoldier + " YPOS = " + yPosTileSoldier + " ";
+        title += "XPOS PIX = " + sharedVariables.getMain_xpos() + " ";
         title += "Debug (INS) : " + sharedVariables.isDebugScreen() + " ";
 
         int tileValueUnderMainCharacter = tileMapIds[xPosTileSoldier][yPosTileSoldier];
         title += "Value under = " + tileValueUnderMainCharacter + " ";
-        title += "Zoom =  " + sharedVariables.getzoomValue();
+        title += "Zoom =  " + sharedVariables.getzoomValue() + " ";
+        if (isWalkingRight) title += "RT ";
+        if (isWalkingLeft) title += "LT ";
+        if (isWalkingUp) title += "UP ";
+        if (isWalkingDown) title += "Dn ";
+
 
         Gdx.graphics.setTitle(title); // Set the window title
     }
@@ -206,14 +216,14 @@ public class Main extends ApplicationAdapter {
 
     private void drawBackground() {
         int rightStopDrawing =
-            (Gdx.graphics.getWidth() + sharedVariables.gettileMapDrawingLeftOffset()) / TILE_WIDTH + 200;
+            (Gdx.graphics.getWidth() + sharedVariables.getLeftOffset()) / TILE_WIDTH + 200;
 
         for (int row = 0; row < TILE_MAP_ROWS; row++) {
             for (int col = 0; col < TILE_MAP_COLS && col < rightStopDrawing; col++) {
                 int tileNr = tileMapIds[col][row];
                 tileNr = tileNr > 0 ? tileNr - 1 : tileNr;
                 batch.draw(sourceTilesTextures[tileNr],
-                    col * TILE_WIDTH * TILE_MAP_SCALE_FACTOR + sharedVariables.gettileMapDrawingLeftOffset(),
+                    col * TILE_WIDTH * TILE_MAP_SCALE_FACTOR - sharedVariables.getLeftOffset(),
                     row * TILE_HEIGHT * TILE_MAP_SCALE_FACTOR,
                     TILE_WIDTH * TILE_MAP_SCALE_FACTOR,
                     TILE_HEIGHT * TILE_MAP_SCALE_FACTOR);
@@ -221,11 +231,12 @@ public class Main extends ApplicationAdapter {
         }
     }
 
+
     private void drawMainCharacter() {
         batch.draw(
             solderTextureRegion[sharedVariables.getCurrentSolderDirection().getValue()]
                 [sharedVariables.getTextureIndexSoldier()],
-            getMainCharacterXPos(),
+            sharedVariables.getMain_xpos() - sharedVariables.getLeftOffset(),
             getMainCharacterYPos(),
             WIDTH_SOLDIER, HEIGHT_SOLDIER);
     }
@@ -235,116 +246,109 @@ public class Main extends ApplicationAdapter {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line); // Draw the rectangle as lines
         shapeRenderer.setColor(1, 1, 1, 1); // Set color to white (RGBA)
-        shapeRenderer.rect(getMainCharacterXPos(), getMainCharacterYPos(), WIDTH_SOLDIER, HEIGHT_SOLDIER); // Draw the rectangle around the sprite
+        shapeRenderer.rect(sharedVariables.getMain_xpos() - sharedVariables.getLeftOffset(), getMainCharacterYPos(), WIDTH_SOLDIER, HEIGHT_SOLDIER); // Draw the rectangle around the sprite
         shapeRenderer.setColor(0, 0.2f, 0.5f, 1); // Set color to dark blue (RGBA)
-        shapeRenderer.circle(getMainCharacterXPosCenter(), getMainCharacterYPosCenter(), 6);
+        shapeRenderer.circle(getMainCharacterXPosCenter() - sharedVariables.getLeftOffset(),getMainCharacterYPosCenter() , 6);
         shapeRenderer.end();
+
     }
 
-    private int getMainCharacterXPos() {
-        return Math.round(Gdx.graphics.getWidth() / 2f);
+    private int getMainCharacterXPosCenter() {
+        return sharedVariables.getMain_xpos()+(WIDTH_SOLDIER/2);
+    }
+    private int getMainCharacterYPosCenter() {
+        return  getMainCharacterYPos() + (HEIGHT_SOLDIER/2);
     }
 
     private int getMainCharacterYPos() {
         return yPosPixelSoldier;
     }
 
-    private int getMainCharacterXPosCenter() {
-        return getMainCharacterXPos() + (WIDTH_SOLDIER / 2);
-    }
 
-    private int getMainCharacterYPosCenter() {
-        return getMainCharacterYPos() + (HEIGHT_SOLDIER / 2);
-    }
-
-
-    private void mainCharacterDoMovement() {
-
+    private void doMainCharacterMovement() {
         int indexSoldier = sharedVariables.getTextureIndexSoldier();
-        int leftOffset = sharedVariables.gettileMapDrawingLeftOffset();
-
-        if (sharedVariables.goDown) {
-            isWalkingDown = true;
-            if (tileMapIds[xPosTileSoldier][yPosTileSoldier] == 0) {
-                sharedVariables.setCurrentSolderDirection(Directions.dn);
-                yPosPixelSoldier -= sharedVariables.STEP_SIZE;
-                indexSoldier++;
-            } else {
-                yPosPixelSoldier += TILE_HEIGHT;
-            }
-        } else {
-            if (isWalkingDown) {
-                if (yPosPixelSoldier % TILE_HEIGHT !=0) {
-                    yPosPixelSoldier--;
-                    indexSoldier++;
-                } else {
-                    isWalkingDown=false;
-                }
-            }
-        }
-        if (sharedVariables.goUp) {
-            isWalkingUp = true;
-            if (tileMapIds[xPosTileSoldier][yPosTileSoldier + 1] == 0) {
-                sharedVariables.setCurrentSolderDirection(Directions.up);
-                yPosPixelSoldier += sharedVariables.STEP_SIZE;
-                indexSoldier++;
-            } else {
-
-            }
-        } else {
-            if (isWalkingUp) {
-                if (yPosPixelSoldier % TILE_HEIGHT !=0) {
-                    yPosPixelSoldier++;
-                    indexSoldier++;
-                } else {
-                    isWalkingUp = false;
-                }
-            }
-        }
-        if (sharedVariables.goLeft) {
-            isWalkingLeft = true;
-            if (tileMapIds[xPosTileSoldier - 1][yPosTileSoldier] == 0) {
-                sharedVariables.setCurrentSolderDirection(Directions.lt);
-                leftOffset += sharedVariables.STEP_SIZE;
-                indexSoldier++;
-            } else {
-            }
-        } else {
-            if (isWalkingLeft) {
-                if ((leftOffset % TILE_WIDTH) != 0) {
-                    leftOffset++;
-                    indexSoldier++;
-                } else {
-                    isWalkingLeft = false;
-                }
-
-            }
-        }
-        if (sharedVariables.goRight) {
-            isWalkingRight = true;
-            if (tileMapIds[xPosTileSoldier + 1][yPosTileSoldier] == 0) {
-                sharedVariables.setCurrentSolderDirection(Directions.rt);
-                indexSoldier++;
-                leftOffset -= sharedVariables.STEP_SIZE;
-            } else {
-
-            }
-        } else {
-            if (isWalkingRight) {
-                if (leftOffset % TILE_WIDTH != 0) {
-                    leftOffset--;
-                } else {
-                    isWalkingRight = false;
-                    indexSoldier++;
-
-                }
-            }
-        }
-        sharedVariables.settileMapDrawingLeftOffset(leftOffset);
+        handleContradictingDirections();
+        handleGoDown();
+        handleGoUp();
+        handleGoLeft();
+        handleGoRight();
+        if (isWalkingLeft || isWalkingRight || isWalkingDown || isWalkingUp) indexSoldier++;
         setMainCharacterAnimationFrame(indexSoldier);
-        fitMainCharacterPositionWithinBoundaries(leftOffset);
         calculateTilePositionsMainCharacter();
+    }
 
+    private void handleContradictingDirections() {
+        isWalkingDown = isWalkingDown && !isWalkingUp;
+        isWalkingLeft = isWalkingLeft && !isWalkingRight;
+    }
+
+    private void handleGoRight() {
+        if (sharedVariables.goRight && xPosTileSoldier - 1 < TILE_MAP_COLS
+            && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier + 1][yPosTileSoldier])) {
+            isWalkingRight = true;
+            sharedVariables.setCurrentSolderDirection(Directions.rt);
+            sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() + sharedVariables.STEP_SIZE);
+        } else if (isWalkingRight && sharedVariables.getMain_xpos() % TILE_WIDTH != 0) {
+            sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() + 1);
+        } else {
+            isWalkingRight = false;
+        }
+        while (sharedVariables.getMain_xpos() - sharedVariables.getLeftOffset() > (Gdx.graphics.getWidth()- sharedVariables.getRightMargin())) {
+            sharedVariables.setLeftOffset(sharedVariables.getLeftOffset() + 1);
+        }
+    }
+
+
+    private void handleGoLeft() {
+        // Ensure we don't go out of bounds by checking if xPosTileSoldier - 1 >= 0
+        if (sharedVariables.goLeft && xPosTileSoldier - 1 >= 0
+            && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier][yPosTileSoldier])) {
+            isWalkingLeft = true;
+            sharedVariables.setCurrentSolderDirection(Directions.lt);
+            sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() - sharedVariables.STEP_SIZE);
+
+        } else if (isWalkingLeft && ((sharedVariables.getMain_xpos() - TILE_WIDTH / 2) % TILE_WIDTH != 0)) {
+            sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() + 1);
+        } else {
+            isWalkingLeft = false;
+        }
+        while (sharedVariables.getMain_xpos() - sharedVariables.getLeftOffset() < sharedVariables.getLeftMargin()) {
+            sharedVariables.setLeftOffset(sharedVariables.getLeftOffset()-1);
+        }
+        if (sharedVariables.getLeftOffset() < 0) sharedVariables.setLeftOffset(0);
+    }
+
+
+    private void handleGoUp() {
+
+        if (sharedVariables.goUp && yPosTileSoldier + 1 < tileMapIds[0].length
+            && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier][yPosTileSoldier + 1])) {
+
+            isWalkingUp = true;
+            sharedVariables.setCurrentSolderDirection(Directions.up);
+            yPosPixelSoldier += sharedVariables.STEP_SIZE;
+
+        } else if (isWalkingUp && yPosPixelSoldier % TILE_HEIGHT != 0) {
+            yPosPixelSoldier++;
+        } else {
+            isWalkingUp = false;
+        }
+    }
+
+    private void handleGoDown() {
+
+        if (sharedVariables.goDown && yPosTileSoldier - 1 >= 0
+            && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier][yPosTileSoldier - 1])) {
+
+            isWalkingDown = true;
+            sharedVariables.setCurrentSolderDirection(Directions.dn);
+            yPosPixelSoldier -= sharedVariables.STEP_SIZE;
+
+        } else if (isWalkingDown && (yPosPixelSoldier - TILE_HEIGHT / 2) % TILE_HEIGHT != 0) {
+            yPosPixelSoldier--;
+        } else {
+            isWalkingDown = false;
+        }
     }
 
     private void setMainCharacterAnimationFrame(int indexSoldier) {
@@ -352,28 +356,15 @@ public class Main extends ApplicationAdapter {
         sharedVariables.setTextureIndexSoldier(indexSoldier);
     }
 
-    private void fitMainCharacterPositionWithinBoundaries(int leftOffset) {
-        leftOffset = Math.min(leftOffset, getMainCharacterXPos());
-
-        yPosPixelSoldier = Math.max(yPosPixelSoldier, 0);
-        yPosPixelSoldier = Math.min(yPosPixelSoldier, TILE_HEIGHT * (TILE_MAP_ROWS - 1) * TILE_MAP_SCALE_FACTOR);
-
-        int maxLeftOffset = -((TILE_MAP_COLS * TILE_WIDTH) + (TILE_MAP_COLS * TILE_WIDTH) / TILE_MAP_SCALE_FACTOR) + TILE_WIDTH;
-        if (leftOffset < maxLeftOffset) {
-            leftOffset = maxLeftOffset;
-        }
-        sharedVariables.settileMapDrawingLeftOffset(leftOffset);
-    }
 
     private void calculateTilePositionsMainCharacter() {
-        xPosPixelSoldier = getMainCharacterXPosCenter();
-        yPosPixelSoldier = getMainCharacterYPos();
-        xPosTileSoldier = ((xPosPixelSoldier - sharedVariables.gettileMapDrawingLeftOffset()) / TILE_WIDTH);
-        yPosTileSoldier = ((yPosPixelSoldier + TILE_HEIGHT / 2) / TILE_HEIGHT); // ****** WIJZIG
-        xPosTileSoldier = (xPosTileSoldier != 0) ? xPosTileSoldier / 2 : xPosTileSoldier;
+        xPosTileSoldier = (sharedVariables.getMain_xpos() / TILE_WIDTH) /2 ;
+        yPosTileSoldier = ((yPosPixelSoldier + TILE_HEIGHT / 2) / TILE_HEIGHT);
         yPosTileSoldier = (yPosTileSoldier != 0) ? yPosTileSoldier / 2 : yPosTileSoldier;
+        if (yPosTileSoldier < 0) {
+            yPosTileSoldier = 0;
+        }
     }
-
 
 
     private void handleZoomKeyPress() {
