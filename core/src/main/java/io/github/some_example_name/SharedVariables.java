@@ -34,12 +34,6 @@ public class SharedVariables {
 
     private IntPosition mainCharacter = new IntPosition(1000,0);
 
-
-    /*
-    private int main_xpos = 1000;// xpos in pixels starting from leftOffset
-    private int main_ypos = 0;
-*/
-
     private int textureIndexSoldier = 0;
 
     public IntPosition getMainCharacter() {
@@ -69,29 +63,12 @@ public class SharedVariables {
     public void setRightMargin(int rightMargin) {
         this.rightMargin = rightMargin;
     }
-/*
-    public int getMain_xpos() {
-        return main_xpos;
-    }
-
-    public void setMain_xpos(int main_xpos) {
-        this.main_xpos = main_xpos;
-    }
-    public int getMain_ypos() {
-        return main_ypos;
-    }
-
-    public void setMain_ypos(int main_ypos) {
-        this.main_ypos = main_ypos;
-    }
-
- */
 
     public void setDebugScreen(boolean debugScreen) {
         this.debugScreen = debugScreen;
     }
 
-    private int tileMap[] = {
+    private final int[] tileMap = {
         70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70,
         70, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 70, 70, 0, 0, 0, 0, 70, 70, 0, 70, 0, 0, 0, 0, 70, 0, 70, 0, 70, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70,
         70, 0, 70, 70, 70, 70, 0, 70, 0, 70, 0, 70, 0, 70, 70, 0, 70, 0, 70, 0, 0, 70, 0, 70, 70, 0, 0, 0, 0, 70, 0, 70, 70, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 70, 0, 0, 70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70,

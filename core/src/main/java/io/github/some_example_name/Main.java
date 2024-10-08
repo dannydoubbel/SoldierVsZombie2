@@ -13,6 +13,42 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+/*
+
+
+        ToDo    Major Problem       Main figure should always walks until it's center is in center of the tile.
+
+        Solution    Introduce variables     ENUM    goingLeftToCenter
+                                                    goingRightToCenter
+                                                    goingDownToCenter
+                                                    goingUpToCenter
+                                                    goingNowhere
+                                            currentWalkingDirecting is holding that ENUM
+
+                                            intPosition targetPos holding   targetPosX
+                                                                            targetPosY
+
+                    Introduce function      intPosition calculateTileToGoCenter(tileX,tileY) {
+                                                blablabla do some math
+                                                targetPosX = blablabla
+                                                targetPosY = blablabla
+                                            }
+
+                    When we press left, and currenWalkingDirection is goingNowhere,
+                    the currentWalkingDirection should be set to goingLeftToCenter,
+                    the calculateTileToGoCenter should be called.
+                    Like this    targetPos =    calculateTileCenter(currentXTile +1, currentYTile);
+
+                    When we are going to the left, all other keys (up,down,right and also left) should be ignored
+                    but the movement should continue to the left, until the xpos meets the center of the tile.
+                    When the center of the tile is reached, the goingLeftToCenter should be reset.
+                    Whent the actual position xpos is "over" the targetPositionX,then actual position should be the tartgePositionX,
+                    before the goingLeftToCenter is being reset.
+
+                    Same logic for all four directions
+
+*/
+
 /**
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
@@ -178,7 +214,7 @@ public class Main extends ApplicationAdapter {
         title += "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " ";
         title += "leftOffset " + sharedVariables.getLeftOffset() + " ";
         title += "XPOS = " + xPosTileSoldier + " YPOS = " + yPosTileSoldier + " ";
-        title += "XPOS PIX = " + sharedVariables.getMainCharacter().getX() + " ";// //getMain_xpos() + " ";
+        title += "XPOS PIX = " + sharedVariables.getMainCharacter().getX() + " ";
         title += "Debug (INS) : " + sharedVariables.isDebugScreen() + " ";
 
         int tileValueUnderMainCharacter = tileMapIds[xPosTileSoldier][yPosTileSoldier];
@@ -239,8 +275,8 @@ public class Main extends ApplicationAdapter {
         batch.draw(
             solderTextureRegion[sharedVariables.getCurrentSolderDirection().getValue()]
                 [sharedVariables.getTextureIndexSoldier()],
-            sharedVariables.getMainCharacter().getX()-sharedVariables.getLeftOffset(),  // getMain_xpos() - sharedVariables.getLeftOffset(),
-            sharedVariables.getMainCharacter().getY(),  //getMain_ypos(),
+            sharedVariables.getMainCharacter().getX()-sharedVariables.getLeftOffset(),
+            sharedVariables.getMainCharacter().getY(),
             WIDTH_SOLDIER, HEIGHT_SOLDIER);
     }
 
@@ -250,14 +286,14 @@ public class Main extends ApplicationAdapter {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line); // Draw the rectangle as lines
         shapeRenderer.setColor(1, 1, 1, 1); // Set color to white (RGBA)
         shapeRenderer.rect(
-            sharedVariables.getMainCharacter().getX()-sharedVariables.getLeftOffset(),   //getMain_xpos() - sharedVariables.getLeftOffset(),
-            sharedVariables.getMainCharacter().getY(), //  getMain_ypos(),
+            sharedVariables.getMainCharacter().getX()-sharedVariables.getLeftOffset(),
+            sharedVariables.getMainCharacter().getY(),
             WIDTH_SOLDIER,
             HEIGHT_SOLDIER); // Draw the rectangle around the sprite
         shapeRenderer.setColor(0, 0.2f, 0.5f, 1); // Set color to dark blue (RGBA)
         shapeRenderer.rect(
-            sharedVariables.getMainCharacter().getX()-sharedVariables.getLeftOffset(),  //getMain_xpos() - sharedVariables.getLeftOffset(),
-            sharedVariables.getMainCharacter().getY(),  //getMain_ypos(),
+            sharedVariables.getMainCharacter().getX()-sharedVariables.getLeftOffset(),
+            sharedVariables.getMainCharacter().getY(),
             TILE_WIDTH * TILE_MAP_SCALE_FACTOR,
             TILE_HEIGHT * TILE_MAP_SCALE_FACTOR); // Draw the rectangle around the sprite
 
@@ -268,11 +304,11 @@ public class Main extends ApplicationAdapter {
     }
 
     private int getMainCharacterXPosCenter() {
-        return sharedVariables.getMainCharacter().getX()+ (WIDTH_SOLDIER/TILE_MAP_SCALE_FACTOR);   //getMain_xpos() + (WIDTH_SOLDIER / TILE_MAP_SCALE_FACTOR);
+        return sharedVariables.getMainCharacter().getX()+ (WIDTH_SOLDIER/TILE_MAP_SCALE_FACTOR);
     }
 
     private int getMainCharacterYPosCenter() {
-        return sharedVariables.getMainCharacter().getY()+(HEIGHT_SOLDIER/TILE_MAP_SCALE_FACTOR);  //getMain_ypos() + (HEIGHT_SOLDIER / TILE_MAP_SCALE_FACTOR);
+        return sharedVariables.getMainCharacter().getY()+(HEIGHT_SOLDIER/TILE_MAP_SCALE_FACTOR);
     }
 
 
@@ -306,26 +342,25 @@ public class Main extends ApplicationAdapter {
 
             isWalkingRight = true;
             sharedVariables.setCurrentSolderDirection(Directions.rt);
-            sharedVariables.getMainCharacter().setX(sharedVariables.getMainCharacter().getX()+sharedVariables.STEP_SIZE);//******** USE ADD
-                //setMain_xpos(sharedVariables.getMain_xpos() + sharedVariables.STEP_SIZE);
+            sharedVariables.getMainCharacter().addX(sharedVariables.STEP_SIZE);
+                //setX(sharedVariables.getMainCharacter().getX()+sharedVariables.STEP_SIZE);//******** USE ADD
 
-
-        } else if (isWalkingRight &&  sharedVariables.getMainCharacter().getX()  //sharedVariables.getMain_xpos()
-            % (TILE_WIDTH * TILE_MAP_SCALE_FACTOR) != sharedVariables.STEP_SIZE /*0 XXXXXXXXXXXXXXXXX*/) {
-            //sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() + 1);
-            sharedVariables.getMainCharacter().setX(sharedVariables.getMainCharacter().getX()+1); //******* USE ADD
+        } else if (isWalkingRight &&  sharedVariables.getMainCharacter().getX() % (TILE_WIDTH * TILE_MAP_SCALE_FACTOR) !=
+            sharedVariables.STEP_SIZE ) {
+            sharedVariables.getMainCharacter().addX(+1);
+                //setX(sharedVariables.getMainCharacter().getX()+1); //******* USE ADD
         } else {
             isWalkingRight = false;
         }
 
         adjustLeftOffsetWithinMarginBounds();
 
-        return oldXPos != sharedVariables.getMainCharacter().getX();  //getMain_xpos();
+        return oldXPos != sharedVariables.getMainCharacter().getX();
     }
 
 
     private boolean handleGoLeft() {
-        int oldXPos = sharedVariables.getMainCharacter().getX(); //getMain_xpos();
+        int oldXPos = sharedVariables.getMainCharacter().getX();
         int predictNextTileXPos = (getMain_xpos_center() - sharedVariables.STEP_SIZE) / (TILE_WIDTH * TILE_MAP_SCALE_FACTOR);
         predictNextTileXPos = Math.max(predictNextTileXPos, 0);
         // Ensure we don't go out of bounds by checking if xPosTileSoldier - 1 >= 0
@@ -334,21 +369,22 @@ public class Main extends ApplicationAdapter {
             if (sharedVariables.WALKABLE_TILES.contains(tileMapIds[predictNextTileXPos][yPosTileSoldier])) {
                 isWalkingLeft = true;
                 sharedVariables.setCurrentSolderDirection(Directions.lt);
-                sharedVariables.getMainCharacter().setX( //setMain_xpos(
-                    sharedVariables.getMainCharacter().getX() //getMain_xpos()
-                    - sharedVariables.STEP_SIZE);
+                sharedVariables.getMainCharacter().addX(-sharedVariables.STEP_SIZE);
+                    //setX(
+                    //sharedVariables.getMainCharacter().getX()
+                    //- sharedVariables.STEP_SIZE);// ********* USE ADD
             }
-        } else if (isWalkingLeft && ((sharedVariables.getMainCharacter().getX()  //getMain_xpos()
+        } else if (isWalkingLeft && ((sharedVariables.getMainCharacter().getX()
             - (TILE_WIDTH * TILE_MAP_SCALE_FACTOR)) % TILE_WIDTH != 0)) {
-            sharedVariables.getMainCharacter().setX(sharedVariables.getMainCharacter().getX()-1);// ********* USE ADD
-                //setMain_xpos(sharedVariables.getMain_xpos() - 1);
+            sharedVariables.getMainCharacter().addX(-1);
+                //setX(sharedVariables.getMainCharacter().getX()-1);// ********* USE ADD
         } else {
             isWalkingLeft = false;
         }
 
 
         int leftLimitInWindow = sharedVariables.getLeftMargin();
-        int mainCharacterXPosInWindow = sharedVariables.getMainCharacter().getX() //getMain_xpos()
+        int mainCharacterXPosInWindow = sharedVariables.getMainCharacter().getX()
             - sharedVariables.getLeftOffset();
 
         if (mainCharacterXPosInWindow < leftLimitInWindow) {
@@ -358,15 +394,14 @@ public class Main extends ApplicationAdapter {
         }
 
         adjustLeftOffsetWithinMarginBounds();
-        return oldXPos != sharedVariables.getMainCharacter().getX(); //getMain_xpos();
+        return oldXPos != sharedVariables.getMainCharacter().getX();
 
     }
 
     private void adjustLeftOffsetWithinMarginBounds() {
         int rightLimitInWindow = Gdx.graphics.getWidth() - sharedVariables.getRightMargin();
         int leftLimitInWindow = sharedVariables.getLeftMargin();
-        int mainCharacterXPosInWindow = sharedVariables.getMainCharacter().getX() //getMain_xpos()
-            - sharedVariables.getLeftOffset();
+        int mainCharacterXPosInWindow = sharedVariables.getMainCharacter().getX() - sharedVariables.getLeftOffset();
         int adjustment = 0;
 
         if (mainCharacterXPosInWindow > rightLimitInWindow) {
@@ -382,47 +417,49 @@ public class Main extends ApplicationAdapter {
 
 
     private boolean handleGoUp() {
-        int oldYPos = sharedVariables.getMainCharacter().getY(); //getMain_ypos();
+        int oldYPos = sharedVariables.getMainCharacter().getY();
         if (sharedVariables.goUp && yPosTileSoldier + 1 < tileMapIds[0].length
             && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier][yPosTileSoldier + 1])) {
 
             isWalkingUp = true;
             sharedVariables.setCurrentSolderDirection(Directions.up);
-            sharedVariables.getMainCharacter().setY( //setMain_ypos(
-                sharedVariables.getMainCharacter().getY() //getMain_ypos()
-                    + sharedVariables.STEP_SIZE);
+            sharedVariables.getMainCharacter().setY(
+                sharedVariables.getMainCharacter().getY()     + sharedVariables.STEP_SIZE);
 
-        } else if (isWalkingUp && sharedVariables.getMainCharacter().getY() //getMain_ypos()
+        } else if (isWalkingUp && sharedVariables.getMainCharacter().getY()
             % (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR) != 0) {
-            sharedVariables.getMainCharacter().setY( //setMain_ypos(
-                sharedVariables.getMainCharacter().getY() // getMain_ypos()
-                    + 1); // ************ USE ADD
+            sharedVariables.getMainCharacter().addY(+1);
+                //setY( //setMain_ypos(
+                //sharedVariables.getMainCharacter().getY() // getMain_ypos()
+                //    + 1); // ************ USE ADD
         } else {
             isWalkingUp = false;
         }
-        return oldYPos != sharedVariables.getMainCharacter().getY(); //getMain_ypos();
+        return oldYPos != sharedVariables.getMainCharacter().getY();
     }
 
     private boolean handleGoDown() {
-        int oldYPos = sharedVariables.getMainCharacter().getY(); //getMain_ypos();
+        int oldYPos = sharedVariables.getMainCharacter().getY();
         if (sharedVariables.goDown && yPosTileSoldier - 1 >= 0
             && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier][yPosTileSoldier - 1])) {
 
             isWalkingDown = true;
             sharedVariables.setCurrentSolderDirection(Directions.dn);
-            sharedVariables.getMainCharacter().setY( // setMain_ypos(
-                sharedVariables.getMainCharacter().getY() //getMain_ypos()
-                    - sharedVariables.STEP_SIZE);
+            sharedVariables.getMainCharacter().addY(-SharedVariables.getInstance().STEP_SIZE);
+                //setY( // setMain_ypos(
+                //sharedVariables.getMainCharacter().getY()
+                //    - sharedVariables.STEP_SIZE);
 
-        } else if (isWalkingDown && (sharedVariables.getMainCharacter().getY() //getMain_ypos()
+        } else if (isWalkingDown && (sharedVariables.getMainCharacter().getY()
             - TILE_HEIGHT / 2) % (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR) != 0) {
-            sharedVariables.getMainCharacter().setY( //setMain_ypos(
-                sharedVariables.getMainCharacter().getY() //getMain_ypos()
-                    - 1);
+            sharedVariables.getMainCharacter().addY(-1);
+                ///setY( //setMain_ypos(
+                //sharedVariables.getMainCharacter().getY()
+                  //  - 1);
         } else {
             isWalkingDown = false;
         }
-        return oldYPos != sharedVariables.getMainCharacter().getY(); //getMain_ypos();
+        return oldYPos != sharedVariables.getMainCharacter().getY();
     }
 
     private void setMainCharacterAnimationFrame(int indexSoldier) {
@@ -432,13 +469,11 @@ public class Main extends ApplicationAdapter {
 
 
     private int getMain_xpos_center() {
-        return sharedVariables.getMainCharacter().getX() //getMain_xpos()
-            + (TILE_WIDTH * TILE_MAP_SCALE_FACTOR / 2);
+        return sharedVariables.getMainCharacter().getX()+ (TILE_WIDTH * TILE_MAP_SCALE_FACTOR / 2);
     }
 
     private int getMain_ypos_center() {
-        return sharedVariables.getMainCharacter().getY()// getMain_ypos()
-            + (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR / 2);
+        return sharedVariables.getMainCharacter().getY() + (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR / 2);
     }
 
     private void calculateTilePositionsMainCharacter() {

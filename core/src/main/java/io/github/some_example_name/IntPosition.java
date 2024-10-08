@@ -36,11 +36,11 @@ public class IntPosition {
         this.y = y;
     }
 
-    public void moveX(int deltaX) {
+    public void addX(int deltaX) {
         this.x += deltaX;
     }
 
-    public void moveY(int deltaY) {
+    public void addY(int deltaY) {
         this.y += deltaY;
     }
 }
