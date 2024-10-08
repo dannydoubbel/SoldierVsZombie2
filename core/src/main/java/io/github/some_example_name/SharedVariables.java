@@ -14,6 +14,7 @@ public class SharedVariables {
     public final int TILE_NOTHING = 0;
     public final int TILE_GATE = 398;
     public final Set<Integer> WALKABLE_TILES = new HashSet<>(Arrays.asList(TILE_NOTHING,TILE_GATE));
+    boolean musicAllowed = false;
     boolean goLeft = false;
     boolean goRight = false;
     boolean goUp = false;
@@ -29,11 +30,21 @@ public class SharedVariables {
     private int leftOffset = 0; // background tiles are drawn from the left 0 + leftOffset pixels
     private int leftMargin = 100; // walking position main figure left margin in the window
     private int rightMargin = 100;// walking position main figure right margin in the window (should be used as width-rightMargin)
+
+
+    private IntPosition mainCharacter = new IntPosition(1000,0);
+
+
+    /*
     private int main_xpos = 1000;// xpos in pixels starting from leftOffset
-
-
+    private int main_ypos = 0;
+*/
 
     private int textureIndexSoldier = 0;
+
+    public IntPosition getMainCharacter() {
+        return mainCharacter;
+    }
 
     public int getLeftOffset() {
         return leftOffset;
@@ -58,7 +69,7 @@ public class SharedVariables {
     public void setRightMargin(int rightMargin) {
         this.rightMargin = rightMargin;
     }
-
+/*
     public int getMain_xpos() {
         return main_xpos;
     }
@@ -66,6 +77,15 @@ public class SharedVariables {
     public void setMain_xpos(int main_xpos) {
         this.main_xpos = main_xpos;
     }
+    public int getMain_ypos() {
+        return main_ypos;
+    }
+
+    public void setMain_ypos(int main_ypos) {
+        this.main_ypos = main_ypos;
+    }
+
+ */
 
     public void setDebugScreen(boolean debugScreen) {
         this.debugScreen = debugScreen;

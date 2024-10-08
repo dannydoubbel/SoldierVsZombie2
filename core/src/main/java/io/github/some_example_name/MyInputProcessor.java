@@ -8,16 +8,24 @@ public class MyInputProcessor implements InputProcessor {
     @Override
     public boolean keyDown(int keycode) {
         switch (keycode) {
+            case Input.Keys.M : {
+                sharedVariables.musicAllowed = true;
+                break;
+            }
             case Input.Keys.LEFT:
+                resetAllgoDirections();
                 sharedVariables.goLeft = true;
                 break;
             case Input.Keys.RIGHT:
+                resetAllgoDirections();
                 sharedVariables.goRight = true;
                 break;
             case Input.Keys.UP:
+                resetAllgoDirections();
                 sharedVariables.goUp = true;
                 break;
             case Input.Keys.DOWN:
+                resetAllgoDirections();
                 sharedVariables.goDown = true;
                 break;
             case Input.Keys.ENTER:
@@ -64,6 +72,13 @@ public class MyInputProcessor implements InputProcessor {
                 break;
         }
         return false;
+    }
+
+    private void resetAllgoDirections(){
+        sharedVariables.goRight=false;
+        sharedVariables.goLeft=false;
+        sharedVariables.goUp=false;
+        sharedVariables.goDown=false;
     }
 
     @Override

@@ -30,7 +30,6 @@ public class Main extends ApplicationAdapter {
     private static final int TILE_MAP_ROWS = 20;
     private static final int TILE_MAP_SCALE_FACTOR = 2;
 
-    private int yPosPixelSoldier;
     private int xPosTileSoldier;
     private int yPosTileSoldier;
     private boolean isWalkingLeft = false;
@@ -57,7 +56,8 @@ public class Main extends ApplicationAdapter {
         sharedVariables = SharedVariables.getInstance();
         sharedVariables.setCurrentSolderDirection(Directions.dn);
 
-        sharedVariables.setMain_xpos(Math.round(Gdx.graphics.getWidth() / 2f));
+        sharedVariables.getMainCharacter().setX( //setMain_xpos(
+            Math.round(Gdx.graphics.getWidth() / 2f));
         sharedVariables.setLeftMargin(200);
         sharedVariables.setRightMargin(200);
 
@@ -69,7 +69,8 @@ public class Main extends ApplicationAdapter {
 
         batch = new SpriteBatch();
 
-        yPosPixelSoldier = (TILE_MAP_ROWS * TILE_HEIGHT) / TILE_MAP_SCALE_FACTOR;
+        sharedVariables.getMainCharacter().setY((TILE_MAP_ROWS * TILE_HEIGHT) / TILE_MAP_SCALE_FACTOR); //; setMain_ypos((TILE_MAP_ROWS * TILE_HEIGHT) / TILE_MAP_SCALE_FACTOR);
+
     }
 
     @Override
@@ -95,11 +96,12 @@ public class Main extends ApplicationAdapter {
         doMainCharacterMovement();
 
         handleZoomKeyPress();
+        handleMusicKeyPress();
 
 
         batch.begin();
         drawBackground();
-        drawMainCharacter();
+        if (!sharedVariables.isDebugScreen()) drawMainCharacter();
 
         batch.end();
         if (sharedVariables.isDebugScreen()) drawMainCharacterBorder();
@@ -176,7 +178,7 @@ public class Main extends ApplicationAdapter {
         title += "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " ";
         title += "leftOffset " + sharedVariables.getLeftOffset() + " ";
         title += "XPOS = " + xPosTileSoldier + " YPOS = " + yPosTileSoldier + " ";
-        title += "XPOS PIX = " + sharedVariables.getMain_xpos() + " ";
+        title += "XPOS PIX = " + sharedVariables.getMainCharacter().getX() + " ";// //getMain_xpos() + " ";
         title += "Debug (INS) : " + sharedVariables.isDebugScreen() + " ";
 
         int tileValueUnderMainCharacter = tileMapIds[xPosTileSoldier][yPosTileSoldier];
@@ -233,11 +235,12 @@ public class Main extends ApplicationAdapter {
 
 
     private void drawMainCharacter() {
+
         batch.draw(
             solderTextureRegion[sharedVariables.getCurrentSolderDirection().getValue()]
                 [sharedVariables.getTextureIndexSoldier()],
-            sharedVariables.getMain_xpos() - sharedVariables.getLeftOffset(),
-            getMainCharacterYPos(),
+            sharedVariables.getMainCharacter().getX()-sharedVariables.getLeftOffset(),  // getMain_xpos() - sharedVariables.getLeftOffset(),
+            sharedVariables.getMainCharacter().getY(),  //getMain_ypos(),
             WIDTH_SOLDIER, HEIGHT_SOLDIER);
     }
 
@@ -246,34 +249,48 @@ public class Main extends ApplicationAdapter {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line); // Draw the rectangle as lines
         shapeRenderer.setColor(1, 1, 1, 1); // Set color to white (RGBA)
-        shapeRenderer.rect(sharedVariables.getMain_xpos() - sharedVariables.getLeftOffset(), getMainCharacterYPos(), WIDTH_SOLDIER, HEIGHT_SOLDIER); // Draw the rectangle around the sprite
+        shapeRenderer.rect(
+            sharedVariables.getMainCharacter().getX()-sharedVariables.getLeftOffset(),   //getMain_xpos() - sharedVariables.getLeftOffset(),
+            sharedVariables.getMainCharacter().getY(), //  getMain_ypos(),
+            WIDTH_SOLDIER,
+            HEIGHT_SOLDIER); // Draw the rectangle around the sprite
         shapeRenderer.setColor(0, 0.2f, 0.5f, 1); // Set color to dark blue (RGBA)
-        shapeRenderer.circle(getMainCharacterXPosCenter() - sharedVariables.getLeftOffset(),getMainCharacterYPosCenter() , 6);
+        shapeRenderer.rect(
+            sharedVariables.getMainCharacter().getX()-sharedVariables.getLeftOffset(),  //getMain_xpos() - sharedVariables.getLeftOffset(),
+            sharedVariables.getMainCharacter().getY(),  //getMain_ypos(),
+            TILE_WIDTH * TILE_MAP_SCALE_FACTOR,
+            TILE_HEIGHT * TILE_MAP_SCALE_FACTOR); // Draw the rectangle around the sprite
+
+
+        shapeRenderer.circle(getMainCharacterXPosCenter() - sharedVariables.getLeftOffset(), getMainCharacterYPosCenter(), 6);
         shapeRenderer.end();
 
     }
 
     private int getMainCharacterXPosCenter() {
-        return sharedVariables.getMain_xpos()+(WIDTH_SOLDIER/2);
-    }
-    private int getMainCharacterYPosCenter() {
-        return  getMainCharacterYPos() + (HEIGHT_SOLDIER/2);
+        return sharedVariables.getMainCharacter().getX()+ (WIDTH_SOLDIER/TILE_MAP_SCALE_FACTOR);   //getMain_xpos() + (WIDTH_SOLDIER / TILE_MAP_SCALE_FACTOR);
     }
 
-    private int getMainCharacterYPos() {
-        return yPosPixelSoldier;
+    private int getMainCharacterYPosCenter() {
+        return sharedVariables.getMainCharacter().getY()+(HEIGHT_SOLDIER/TILE_MAP_SCALE_FACTOR);  //getMain_ypos() + (HEIGHT_SOLDIER / TILE_MAP_SCALE_FACTOR);
     }
 
 
     private void doMainCharacterMovement() {
         int indexSoldier = sharedVariables.getTextureIndexSoldier();
         handleContradictingDirections();
-        handleGoDown();
-        handleGoUp();
-        handleGoLeft();
-        handleGoRight();
+        boolean changedYPos = handleGoDown() || handleGoUp();
+        boolean changedXPos = handleGoLeft() || handleGoRight();
         if (isWalkingLeft || isWalkingRight || isWalkingDown || isWalkingUp) indexSoldier++;
         setMainCharacterAnimationFrame(indexSoldier);
+
+        if (!changedXPos) {
+            // do something
+        }
+
+        if (!changedYPos) {
+            // do something
+        }
         calculateTilePositionsMainCharacter();
     }
 
@@ -282,73 +299,130 @@ public class Main extends ApplicationAdapter {
         isWalkingLeft = isWalkingLeft && !isWalkingRight;
     }
 
-    private void handleGoRight() {
+    private boolean handleGoRight() {
+        int oldXPos = sharedVariables.getMainCharacter().getX();  //  getMain_xpos();
         if (sharedVariables.goRight && xPosTileSoldier - 1 < TILE_MAP_COLS
             && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier + 1][yPosTileSoldier])) {
+
             isWalkingRight = true;
             sharedVariables.setCurrentSolderDirection(Directions.rt);
-            sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() + sharedVariables.STEP_SIZE);
-        } else if (isWalkingRight && sharedVariables.getMain_xpos() % TILE_WIDTH != 0) {
-            sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() + 1);
+            sharedVariables.getMainCharacter().setX(sharedVariables.getMainCharacter().getX()+sharedVariables.STEP_SIZE);//******** USE ADD
+                //setMain_xpos(sharedVariables.getMain_xpos() + sharedVariables.STEP_SIZE);
+
+
+        } else if (isWalkingRight &&  sharedVariables.getMainCharacter().getX()  //sharedVariables.getMain_xpos()
+            % (TILE_WIDTH * TILE_MAP_SCALE_FACTOR) != sharedVariables.STEP_SIZE /*0 XXXXXXXXXXXXXXXXX*/) {
+            //sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() + 1);
+            sharedVariables.getMainCharacter().setX(sharedVariables.getMainCharacter().getX()+1); //******* USE ADD
         } else {
             isWalkingRight = false;
         }
-        while (sharedVariables.getMain_xpos() - sharedVariables.getLeftOffset() > (Gdx.graphics.getWidth()- sharedVariables.getRightMargin())) {
-            sharedVariables.setLeftOffset(sharedVariables.getLeftOffset() + 1);
-        }
+
+        adjustLeftOffsetWithinMarginBounds();
+
+        return oldXPos != sharedVariables.getMainCharacter().getX();  //getMain_xpos();
     }
 
 
-    private void handleGoLeft() {
+    private boolean handleGoLeft() {
+        int oldXPos = sharedVariables.getMainCharacter().getX(); //getMain_xpos();
+        int predictNextTileXPos = (getMain_xpos_center() - sharedVariables.STEP_SIZE) / (TILE_WIDTH * TILE_MAP_SCALE_FACTOR);
+        predictNextTileXPos = Math.max(predictNextTileXPos, 0);
         // Ensure we don't go out of bounds by checking if xPosTileSoldier - 1 >= 0
-        if (sharedVariables.goLeft && xPosTileSoldier - 1 >= 0
-            && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier][yPosTileSoldier])) {
-            isWalkingLeft = true;
-            sharedVariables.setCurrentSolderDirection(Directions.lt);
-            sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() - sharedVariables.STEP_SIZE);
-
-        } else if (isWalkingLeft && ((sharedVariables.getMain_xpos() - TILE_WIDTH / 2) % TILE_WIDTH != 0)) {
-            sharedVariables.setMain_xpos(sharedVariables.getMain_xpos() + 1);
+        if (sharedVariables.goLeft /*&& predictNextTileXPos >= 0*/
+            && sharedVariables.WALKABLE_TILES.contains(tileMapIds[predictNextTileXPos][yPosTileSoldier])) {
+            if (sharedVariables.WALKABLE_TILES.contains(tileMapIds[predictNextTileXPos][yPosTileSoldier])) {
+                isWalkingLeft = true;
+                sharedVariables.setCurrentSolderDirection(Directions.lt);
+                sharedVariables.getMainCharacter().setX( //setMain_xpos(
+                    sharedVariables.getMainCharacter().getX() //getMain_xpos()
+                    - sharedVariables.STEP_SIZE);
+            }
+        } else if (isWalkingLeft && ((sharedVariables.getMainCharacter().getX()  //getMain_xpos()
+            - (TILE_WIDTH * TILE_MAP_SCALE_FACTOR)) % TILE_WIDTH != 0)) {
+            sharedVariables.getMainCharacter().setX(sharedVariables.getMainCharacter().getX()-1);// ********* USE ADD
+                //setMain_xpos(sharedVariables.getMain_xpos() - 1);
         } else {
             isWalkingLeft = false;
         }
-        while (sharedVariables.getMain_xpos() - sharedVariables.getLeftOffset() < sharedVariables.getLeftMargin()) {
-            sharedVariables.setLeftOffset(sharedVariables.getLeftOffset()-1);
+
+
+        int leftLimitInWindow = sharedVariables.getLeftMargin();
+        int mainCharacterXPosInWindow = sharedVariables.getMainCharacter().getX() //getMain_xpos()
+            - sharedVariables.getLeftOffset();
+
+        if (mainCharacterXPosInWindow < leftLimitInWindow) {
+            // Compute the exact adjustment needed for leftOffset
+            int adjustment = mainCharacterXPosInWindow - leftLimitInWindow;
+            sharedVariables.setLeftOffset(sharedVariables.getLeftOffset() + adjustment);
         }
-        if (sharedVariables.getLeftOffset() < 0) sharedVariables.setLeftOffset(0);
+
+        adjustLeftOffsetWithinMarginBounds();
+        return oldXPos != sharedVariables.getMainCharacter().getX(); //getMain_xpos();
+
+    }
+
+    private void adjustLeftOffsetWithinMarginBounds() {
+        int rightLimitInWindow = Gdx.graphics.getWidth() - sharedVariables.getRightMargin();
+        int leftLimitInWindow = sharedVariables.getLeftMargin();
+        int mainCharacterXPosInWindow = sharedVariables.getMainCharacter().getX() //getMain_xpos()
+            - sharedVariables.getLeftOffset();
+        int adjustment = 0;
+
+        if (mainCharacterXPosInWindow > rightLimitInWindow) {
+            // Compute adjustment for the right margin
+            adjustment = mainCharacterXPosInWindow - rightLimitInWindow;
+        } else if (mainCharacterXPosInWindow < leftLimitInWindow) {
+            // Compute adjustment for the left margin
+            adjustment = mainCharacterXPosInWindow - leftLimitInWindow;
+        }
+
+        sharedVariables.setLeftOffset(Math.max(0, sharedVariables.getLeftOffset() + adjustment));
     }
 
 
-    private void handleGoUp() {
-
+    private boolean handleGoUp() {
+        int oldYPos = sharedVariables.getMainCharacter().getY(); //getMain_ypos();
         if (sharedVariables.goUp && yPosTileSoldier + 1 < tileMapIds[0].length
             && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier][yPosTileSoldier + 1])) {
 
             isWalkingUp = true;
             sharedVariables.setCurrentSolderDirection(Directions.up);
-            yPosPixelSoldier += sharedVariables.STEP_SIZE;
+            sharedVariables.getMainCharacter().setY( //setMain_ypos(
+                sharedVariables.getMainCharacter().getY() //getMain_ypos()
+                    + sharedVariables.STEP_SIZE);
 
-        } else if (isWalkingUp && yPosPixelSoldier % TILE_HEIGHT != 0) {
-            yPosPixelSoldier++;
+        } else if (isWalkingUp && sharedVariables.getMainCharacter().getY() //getMain_ypos()
+            % (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR) != 0) {
+            sharedVariables.getMainCharacter().setY( //setMain_ypos(
+                sharedVariables.getMainCharacter().getY() // getMain_ypos()
+                    + 1); // ************ USE ADD
         } else {
             isWalkingUp = false;
         }
+        return oldYPos != sharedVariables.getMainCharacter().getY(); //getMain_ypos();
     }
 
-    private void handleGoDown() {
-
+    private boolean handleGoDown() {
+        int oldYPos = sharedVariables.getMainCharacter().getY(); //getMain_ypos();
         if (sharedVariables.goDown && yPosTileSoldier - 1 >= 0
             && sharedVariables.WALKABLE_TILES.contains(tileMapIds[xPosTileSoldier][yPosTileSoldier - 1])) {
 
             isWalkingDown = true;
             sharedVariables.setCurrentSolderDirection(Directions.dn);
-            yPosPixelSoldier -= sharedVariables.STEP_SIZE;
+            sharedVariables.getMainCharacter().setY( // setMain_ypos(
+                sharedVariables.getMainCharacter().getY() //getMain_ypos()
+                    - sharedVariables.STEP_SIZE);
 
-        } else if (isWalkingDown && (yPosPixelSoldier - TILE_HEIGHT / 2) % TILE_HEIGHT != 0) {
-            yPosPixelSoldier--;
+        } else if (isWalkingDown && (sharedVariables.getMainCharacter().getY() //getMain_ypos()
+            - TILE_HEIGHT / 2) % (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR) != 0) {
+            sharedVariables.getMainCharacter().setY( //setMain_ypos(
+                sharedVariables.getMainCharacter().getY() //getMain_ypos()
+                    - 1);
         } else {
             isWalkingDown = false;
         }
+        return oldYPos != sharedVariables.getMainCharacter().getY(); //getMain_ypos();
     }
 
     private void setMainCharacterAnimationFrame(int indexSoldier) {
@@ -357,12 +431,24 @@ public class Main extends ApplicationAdapter {
     }
 
 
+    private int getMain_xpos_center() {
+        return sharedVariables.getMainCharacter().getX() //getMain_xpos()
+            + (TILE_WIDTH * TILE_MAP_SCALE_FACTOR / 2);
+    }
+
+    private int getMain_ypos_center() {
+        return sharedVariables.getMainCharacter().getY()// getMain_ypos()
+            + (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR / 2);
+    }
+
     private void calculateTilePositionsMainCharacter() {
-        xPosTileSoldier = (sharedVariables.getMain_xpos() / TILE_WIDTH) /2 ;
-        yPosTileSoldier = ((yPosPixelSoldier + TILE_HEIGHT / 2) / TILE_HEIGHT);
-        yPosTileSoldier = (yPosTileSoldier != 0) ? yPosTileSoldier / 2 : yPosTileSoldier;
+        xPosTileSoldier = getMain_xpos_center() / (TILE_WIDTH * TILE_MAP_SCALE_FACTOR);
+        yPosTileSoldier = getMain_ypos_center() / (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR);
         if (yPosTileSoldier < 0) {
             yPosTileSoldier = 0;
+        }
+        if (xPosTileSoldier < 0) {
+            xPosTileSoldier = 0;
         }
     }
 
@@ -379,5 +465,16 @@ public class Main extends ApplicationAdapter {
         }
         newZoomValue = MathUtils.clamp(newZoomValue, sharedVariables.ZOOM_MIN_VALUE, sharedVariables.ZOOM_MAX_VALUE);
         sharedVariables.setzoomValue(newZoomValue);
+    }
+
+    private void handleMusicKeyPress() {
+        if (sharedVariables.musicAllowed) {
+            if (backgroundMusic.isPlaying()) {
+                backgroundMusic.pause();
+            } else {
+                backgroundMusic.play();
+            }
+            sharedVariables.musicAllowed = false;
+        }
     }
 }
