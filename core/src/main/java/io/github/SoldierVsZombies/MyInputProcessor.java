@@ -1,4 +1,4 @@
-package io.github.some_example_name;
+package io.github.SoldierVsZombies;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;

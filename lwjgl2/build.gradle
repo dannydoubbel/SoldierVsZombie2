@@ -2,7 +2,7 @@ apply plugin: 'application'
 
 
 sourceSets.main.resources.srcDirs += [ rootProject.file('assets').path ]
-mainClassName = 'io.github.some_example_name.lwjgl2.Lwjgl2Launcher'
+mainClassName = 'io.github.SoldierVsZombies.lwjgl2.Lwjgl2Launcher'
 application.setMainClass(mainClassName)
 eclipse.project.name = appName + '-lwjgl2'
 java.sourceCompatibility = 11

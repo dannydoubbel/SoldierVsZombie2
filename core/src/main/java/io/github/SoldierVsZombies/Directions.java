@@ -1,4 +1,4 @@
-package io.github.some_example_name;
+package io.github.SoldierVsZombies;
 
 public enum Directions {
     dn(1, "going down"),

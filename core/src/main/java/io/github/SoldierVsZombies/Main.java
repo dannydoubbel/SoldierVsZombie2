@@ -1,4 +1,4 @@
-package io.github.some_example_name;
+package io.github.SoldierVsZombies;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -17,24 +17,16 @@ import com.badlogic.gdx.utils.viewport.Viewport;
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
 public class Main extends ApplicationAdapter {
-    private static final int MAX_PLAYER_FRAMES_PER_DIRECTION = 11;
-    private static final int MAX_PLAYER_DIRECTIONS = 4;
-    private static final int WIDTH_PLAYER_IN_FILE = 1650 / MAX_PLAYER_FRAMES_PER_DIRECTION;
-    private static final int WIDTH_PLAYER_WITH_RIGHT_MARGE = WIDTH_PLAYER_IN_FILE - 70;
-    private static final int PLAYER_WIDTH = WIDTH_PLAYER_WITH_RIGHT_MARGE - 10;
-    private static final int HEIGHT_PLAYER_IN_FILE = 468 / MAX_PLAYER_DIRECTIONS;
-    private static final int PLAYER_HEIGHT = HEIGHT_PLAYER_IN_FILE - 35;
+
     private static final int TILE_WIDTH = 32;
     private static final int TILE_HEIGHT = 32;
     private static final int HALF_TILE_WIDTH = TILE_WIDTH / 2;
     private static final int HALF_TILE_HEIGHT = TILE_HEIGHT / 2;
-
     private static final int TILE_MAP_COLS = 100;
     private static final int TILE_MAP_ROWS = 20;
     private static final int TILE_MAP_SCALE_FACTOR = 2;
     private int[][] backgroundTileMap = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
     private SpriteBatch batch;
-    private Sprite[][] playerFramesSprites;
     private Sprite[] sourceBackgroundTiles;
     private OrthographicCamera camera;
     private Viewport viewport;
@@ -43,7 +35,7 @@ public class Main extends ApplicationAdapter {
     //private Sound soundEffect;
     private SharedVariables sharedVariables;
     private PressedKeys pressedKeys;
-    private PlayerFrames playerFrames;
+    private PlayerFrames playerFrames; // To Do implement this
     private PlayerState playerState;
     private ViewParameters viewParameters;
 
@@ -55,7 +47,7 @@ public class Main extends ApplicationAdapter {
         initializeGameComponents();
         initializePortals();
 
-        loadSpritesAndTiles();
+        loadTiles();
 
         batch = new SpriteBatch();
 
@@ -108,13 +100,9 @@ public class Main extends ApplicationAdapter {
         batch.setProjectionMatrix(camera.combined);
 
         handlePlayerMovement();
-
         handlePortals();
-
-
         handleZoomKeyPress();
         handleMusicKeyPress();
-
 
         batch.begin();
         drawBackground();
@@ -129,24 +117,6 @@ public class Main extends ApplicationAdapter {
     public void dispose() {
         batch.dispose();
     }
-
-
-    Sprite[][] loadPlayerFrames() {
-        Texture spriteSheet = new Texture(Gdx.files.internal("images/top down soldier.png"));
-        Sprite[][] resultPlayerFrames = new Sprite[MAX_PLAYER_DIRECTIONS][MAX_PLAYER_FRAMES_PER_DIRECTION];
-
-
-        for (int row = 0; row < MAX_PLAYER_DIRECTIONS; row++) {
-            for (int col = 0; col < MAX_PLAYER_FRAMES_PER_DIRECTION; col++) {
-                Sprite spriteAsInSpriteSheet = new Sprite(spriteSheet, col * WIDTH_PLAYER_IN_FILE, row * HEIGHT_PLAYER_IN_FILE, WIDTH_PLAYER_IN_FILE, HEIGHT_PLAYER_IN_FILE);
-
-                resultPlayerFrames[row][col] = new Sprite(spriteAsInSpriteSheet, (WIDTH_PLAYER_IN_FILE - WIDTH_PLAYER_WITH_RIGHT_MARGE) / TILE_MAP_SCALE_FACTOR, (HEIGHT_PLAYER_IN_FILE - PLAYER_HEIGHT), PLAYER_WIDTH, PLAYER_HEIGHT);
-            }
-        }
-        return resultPlayerFrames;
-    }
-
-
 
     Sprite[] loadSourceBackgroundTiles() {
         final int TILE_SOURCE_COLS = 23;
@@ -179,10 +149,10 @@ public class Main extends ApplicationAdapter {
         String title = "";
         title += "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " ";
         //title += "leftOffset " + sharedVariables.getLeftOffset() + " ";
-        title += "XPOS = " + playerState.getxPosTilePlayer() + " YPOS = " + playerState.getyPosTilePlayer()+ " ";
+        title += "XPOS = " + playerState.getXPosTilePlayer() + " YPOS = " + playerState.getYPosTilePlayer()+ " ";
         title += "Debug (INS) : " + viewParameters.isDebugScreen() + " ";
 
-        int tileValueUnderMainCharacter = backgroundTileMap[playerState.getxPosTilePlayer()][playerState.getyPosTilePlayer()];
+        int tileValueUnderMainCharacter = backgroundTileMap[playerState.getXPosTilePlayer()][playerState.getYPosTilePlayer()];
         title += "Value under = " + tileValueUnderMainCharacter + " ";
         //title += "Zoom =  " + viewParameters.getZoomValue() + " ";
 
@@ -206,8 +176,7 @@ public class Main extends ApplicationAdapter {
         backgroundMusic.setLooping(true); // Loop the background music
     }
 
-    private void loadSpritesAndTiles() {
-        playerFramesSprites = loadPlayerFrames();
+    private void loadTiles() {
         sourceBackgroundTiles = loadSourceBackgroundTiles();
         backgroundTileMap = setupBackgroundTileMap();
     }
@@ -219,7 +188,11 @@ public class Main extends ApplicationAdapter {
             for (int col = 0; col < TILE_MAP_COLS && col < rightStopDrawing; col++) {
                 int tileNr = backgroundTileMap[col][row];
                 tileNr = tileNr > 0 ? tileNr - 1 : tileNr;
-                batch.draw(sourceBackgroundTiles[tileNr], col * TILE_WIDTH * TILE_MAP_SCALE_FACTOR - viewParameters.getLeftOffset(), row * TILE_HEIGHT * TILE_MAP_SCALE_FACTOR, TILE_WIDTH * TILE_MAP_SCALE_FACTOR, TILE_HEIGHT * TILE_MAP_SCALE_FACTOR);
+                batch.draw(sourceBackgroundTiles[tileNr],
+                    col * TILE_WIDTH * TILE_MAP_SCALE_FACTOR - viewParameters.getLeftOffset(),
+                    row * TILE_HEIGHT * TILE_MAP_SCALE_FACTOR,
+                    TILE_WIDTH * TILE_MAP_SCALE_FACTOR,
+                    TILE_HEIGHT * TILE_MAP_SCALE_FACTOR);
             }
         }
     }
@@ -227,12 +200,13 @@ public class Main extends ApplicationAdapter {
 
     private void drawPlayerFromCenterPosition() {
         int direction = calculatePlayerFrameIndex();
-
-        batch.draw(playerFramesSprites[direction][playerState.getPlayerFrameIndex()], playerState.getPlayerCenterPos().getX() - viewParameters.getLeftOffset() - ((TILE_WIDTH * TILE_MAP_SCALE_FACTOR) / 2) + (15), playerState.getPlayerCenterPos().getY() - ((TILE_HEIGHT * TILE_MAP_SCALE_FACTOR) / 2) + (15), PLAYER_WIDTH, PLAYER_HEIGHT);
+        batch.draw(playerFrames.getPlayerFramesSprites()[direction][playerState.getPlayerFrameIndex()],
+            playerState.getPlayerCenterPos().getX() - viewParameters.getLeftOffset() - ((TILE_WIDTH * TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            playerState.getPlayerCenterPos().getY() - ((TILE_HEIGHT * TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            PlayerFrames.PLAYER_WIDTH, PlayerFrames.PLAYER_HEIGHT);
     }
 
     private int calculatePlayerFrameIndex() {
-        //int directionValue = sharedVariables.getPlayerCurrentDirection().getValue();
         int directionValue = playerState.getPlayerCurrentDirection().getValue();
         if (directionValue > 0) {
             //sharedVariables.setPlayerPreviousDirection(sharedVariables.getPlayerCurrentDirection());
@@ -250,14 +224,16 @@ public class Main extends ApplicationAdapter {
         shapeRenderer.setProjectionMatrix(camera.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line); // Draw the rectangle as lines
         shapeRenderer.setColor(1, 1, 1, 1); // Set color to white (RGBA)
-        shapeRenderer.rect(playerState.getPlayerCenterPos().getX() - viewParameters.getLeftOffset(), playerState.getPlayerCenterPos().getY(), PLAYER_WIDTH, PLAYER_HEIGHT); // Draw the rectangle around the sprite
+        shapeRenderer.rect(
+            playerState.getPlayerCenterPos().getX() - viewParameters.getLeftOffset(),
+            playerState.getPlayerCenterPos().getY(),
+            PlayerFrames.PLAYER_WIDTH,
+            PlayerFrames.PLAYER_HEIGHT); // Draw the rectangle around the sprite
         shapeRenderer.setColor(0, 0.2f, 0.5f, 1); // Set color to dark blue (RGBA)
         shapeRenderer.rect(playerState.getPlayerCenterPos().getX() - viewParameters.getLeftOffset(), playerState.getPlayerCenterPos().getY(), TILE_WIDTH * TILE_MAP_SCALE_FACTOR, TILE_HEIGHT * TILE_MAP_SCALE_FACTOR); // Draw the rectangle around the sprite
 
-
         shapeRenderer.circle(playerState.getPlayerTargetCenterPos().getX() - viewParameters.getLeftOffset(), playerState.getPlayerCenterPos().getY(), 6);
         shapeRenderer.end();
-
     }
 
 
@@ -280,8 +256,8 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleGoRight() {
-        int targetTileX = playerState.getxPosTilePlayer() + 1;
-        int targetTileY = playerState.getyPosTilePlayer();
+        int targetTileX = playerState.getXPosTilePlayer() + 1;
+        int targetTileY = playerState.getYPosTilePlayer();
         boolean isValidStartCondition = !isPlayerWalking();
         if (pressedKeys.goRight && isValidStartCondition && isTileWalkable(targetTileX, targetTileY)) {
             playerState.setPlayerCurrentDirection(Directions.rt);
@@ -298,8 +274,8 @@ public class Main extends ApplicationAdapter {
 
 
     private void handleGoLeft() {
-        int targetTileX = playerState.getxPosTilePlayer() - 1;
-        int targetTileY = playerState.getyPosTilePlayer();
+        int targetTileX = playerState.getXPosTilePlayer() - 1;
+        int targetTileY = playerState.getYPosTilePlayer();
         boolean isValidStartCondition = !isPlayerWalking();
         if (pressedKeys.goLeft && isValidStartCondition && isTileWalkable(targetTileX, targetTileY)) {
             playerState.setPlayerCurrentDirection(Directions.lt);
@@ -311,13 +287,12 @@ public class Main extends ApplicationAdapter {
                 playerState.setPlayerCurrentDirection(Directions.no);
             }
         }
-
     }
 
 
     private void handleGoUp() {
-        int targetTileX = playerState.getxPosTilePlayer();
-        int targetTileY = playerState.getyPosTilePlayer()+1;
+        int targetTileX = playerState.getXPosTilePlayer();
+        int targetTileY = playerState.getYPosTilePlayer()+1;
         boolean isValidStartCondition = !isPlayerWalking();
         if (pressedKeys.goUp && isValidStartCondition && isTileWalkable(targetTileX, targetTileY)) {
             playerState.setPlayerCurrentDirection(Directions.up);
@@ -332,8 +307,8 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleGoDown() {
-        int targetTileX = playerState.getxPosTilePlayer();
-        int targetTileY = playerState.getyPosTilePlayer() - 1;
+        int targetTileX = playerState.getXPosTilePlayer();
+        int targetTileY = playerState.getYPosTilePlayer() - 1;
         boolean isValidStartCondition = !isPlayerWalking();
         if (pressedKeys.goDown && isValidStartCondition && isTileWalkable(targetTileX, targetTileY)) {
             playerState.setPlayerCurrentDirection(Directions.dn);
@@ -397,15 +372,15 @@ public class Main extends ApplicationAdapter {
     }
 
     private void calculatePlayerTilePosition() {
-        playerState.setxPosTilePlayer( getPlayerXPosCenter() / (TILE_WIDTH * TILE_MAP_SCALE_FACTOR));
-        playerState.setyPosTilePlayer( getPlayerYPosCenter() / (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR));
+        playerState.setXPosTilePlayer( getPlayerXPosCenter() / (TILE_WIDTH * TILE_MAP_SCALE_FACTOR));
+        playerState.setYPosTilePlayer( getPlayerYPosCenter() / (TILE_HEIGHT * TILE_MAP_SCALE_FACTOR));
 
 
-        if (playerState.getyPosTilePlayer() < 0) {
-            playerState.setyPosTilePlayer(0);
+        if (playerState.getYPosTilePlayer() < 0) {
+            playerState.setYPosTilePlayer(0);
         }
-        if (playerState.getxPosTilePlayer() < 0) {
-            playerState.setxPosTilePlayer(0);
+        if (playerState.getXPosTilePlayer() < 0) {
+            playerState.setXPosTilePlayer(0);
         }
     }
 

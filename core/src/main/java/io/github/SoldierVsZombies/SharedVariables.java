@@ -1,4 +1,4 @@
-package io.github.some_example_name;
+package io.github.SoldierVsZombies;
 
 import java.util.Arrays;
 import java.util.HashSet;

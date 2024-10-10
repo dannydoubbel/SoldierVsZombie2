@@ -1,4 +1,4 @@
-package io.github.some_example_name;
+package io.github.SoldierVsZombies;
 
 public class PlayerState {
     private static PlayerState instance;
@@ -12,19 +12,19 @@ public class PlayerState {
     private int xPosTilePlayer;
     private int yPosTilePlayer;
 
-    public int getxPosTilePlayer() {
+    public int getXPosTilePlayer() {
         return xPosTilePlayer;
     }
 
-    public void setxPosTilePlayer(int xPosTilePlayer) {
+    public void setXPosTilePlayer(int xPosTilePlayer) {
         this.xPosTilePlayer = xPosTilePlayer;
     }
 
-    public int getyPosTilePlayer() {
+    public int getYPosTilePlayer() {
         return yPosTilePlayer;
     }
 
-    public void setyPosTilePlayer(int yPosTilePlayer) {
+    public void setYPosTilePlayer(int yPosTilePlayer) {
         this.yPosTilePlayer = yPosTilePlayer;
     }
 

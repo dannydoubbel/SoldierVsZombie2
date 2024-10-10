@@ -1,9 +1,9 @@
-package io.github.some_example_name.lwjgl2;
+package io.github.SoldierVsZombies.lwjgl2;
 
 import com.badlogic.gdx.Files.FileType;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
-import io.github.some_example_name.Main;
+import io.github.SoldierVsZombies.Main;
 
 /** Launches the desktop (LWJGL2) application. */
 public class Lwjgl2Launcher {
