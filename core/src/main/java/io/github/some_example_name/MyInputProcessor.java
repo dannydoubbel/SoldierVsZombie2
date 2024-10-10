@@ -4,29 +4,32 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 
 public class MyInputProcessor implements InputProcessor {
+    PressedKeys pressedKeys = PressedKeys.getInstance();
     SharedVariables sharedVariables = SharedVariables.getInstance();
+    ViewParameters viewParameters = ViewParameters.getInstance();
+
     @Override
     public boolean keyDown(int keycode) {
         switch (keycode) {
-            case Input.Keys.M : {
+            case Input.Keys.M: {
                 sharedVariables.musicAllowed = true;
                 break;
             }
             case Input.Keys.LEFT:
-                resetAllgoDirections();
-                sharedVariables.goLeft = true;
+                resetAllGoDirections();
+                pressedKeys.goLeft = true;
                 break;
             case Input.Keys.RIGHT:
-                resetAllgoDirections();
-                sharedVariables.goRight = true;
+                resetAllGoDirections();
+                pressedKeys.goRight = true;
                 break;
             case Input.Keys.UP:
-                resetAllgoDirections();
-                sharedVariables.goUp = true;
+                resetAllGoDirections();
+                pressedKeys.goUp = true;
                 break;
             case Input.Keys.DOWN:
-                resetAllgoDirections();
-                sharedVariables.goDown = true;
+                resetAllGoDirections();
+                pressedKeys.goDown = true;
                 break;
             case Input.Keys.ENTER:
                 handleAction("enterAction");
@@ -41,13 +44,13 @@ public class MyInputProcessor implements InputProcessor {
                 handleAction("pauseAction");
                 break;
             case Input.Keys.PAGE_DOWN:
-                sharedVariables.setZoomIn(true);
+                pressedKeys.zoomIn = true;
                 break;
             case Input.Keys.PAGE_UP:
-                sharedVariables.setZoomOut(true);
+                pressedKeys.zoomOut = true;
                 break;
             case Input.Keys.INSERT:
-                sharedVariables.setDebugScreen(!sharedVariables.isDebugScreen());
+                viewParameters.setDebugScreen(!viewParameters.isDebugScreen());
                 break;
             default:
                 break;
@@ -59,26 +62,26 @@ public class MyInputProcessor implements InputProcessor {
     public boolean keyUp(int keycode) {
         switch (keycode) {
             case Input.Keys.LEFT:
-                sharedVariables.goLeft = false;
+                pressedKeys.goLeft = false;
                 break;
             case Input.Keys.RIGHT:
-                sharedVariables.goRight = false;
+                pressedKeys.goRight = false;
                 break;
             case Input.Keys.UP:
-                sharedVariables.goUp = false;
+                pressedKeys.goUp = false;
                 break;
             case Input.Keys.DOWN:
-                sharedVariables.goDown = false;
+                pressedKeys.goDown = false;
                 break;
         }
         return false;
     }
 
-    private void resetAllgoDirections(){
-        sharedVariables.goRight=false;
-        sharedVariables.goLeft=false;
-        sharedVariables.goUp=false;
-        sharedVariables.goDown=false;
+    private void resetAllGoDirections() {
+        pressedKeys.goRight = false;
+        pressedKeys.goLeft = false;
+        pressedKeys.goUp = false;
+        pressedKeys.goDown = false;
     }
 
     @Override

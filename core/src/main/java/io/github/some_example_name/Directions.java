@@ -1,7 +1,11 @@
 package io.github.some_example_name;
 
 public enum Directions {
-    dn(0, "down"), up(1, "up"), lt(2, "left"), rt(3, "right"), no(4, "none");
+    dn(1, "going down"),
+    up(2, "going up"),
+    lt(3, "going left"),
+    rt(4, "going right"),
+    no(0, "going nowhere");
 
     private final int value;
     private final String name;
