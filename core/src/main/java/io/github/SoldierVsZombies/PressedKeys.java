@@ -9,6 +9,8 @@ public class PressedKeys {
     boolean zoomIn = false;
     boolean zoomOut = false;
 
+    boolean fire = false;
+
 
     public static PressedKeys getInstance() {
         if (instance == null) {

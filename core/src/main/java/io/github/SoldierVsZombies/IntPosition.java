@@ -51,6 +51,10 @@ public class IntPosition {
         this.y += deltaY;
     }
 
+    public IntPosition clone() {
+        return new IntPosition(this.x, this.y);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

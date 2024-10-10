@@ -10,6 +10,10 @@ public class ViewParameters {
     private int leftMargin = 100; // walking position main figure left margin in the window
     private boolean debugScreen = false;
 
+    ViewParameters(){
+        setUpWindowMargins();
+    }
+
     public boolean isDebugScreen() {
         return debugScreen;
     }

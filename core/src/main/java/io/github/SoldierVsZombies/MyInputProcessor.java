@@ -34,9 +34,6 @@ public class MyInputProcessor implements InputProcessor {
             case Input.Keys.ENTER:
                 handleAction("enterAction");
                 break;
-            case Input.Keys.SPACE:
-                handleAction("spaceAction");
-                break;
             case Input.Keys.ESCAPE:
                 handleAction("escapeAction");
                 break;
@@ -51,6 +48,9 @@ public class MyInputProcessor implements InputProcessor {
                 break;
             case Input.Keys.INSERT:
                 viewParameters.setDebugScreen(!viewParameters.isDebugScreen());
+                break;
+            case Input.Keys.SPACE:
+                pressedKeys.fire = true;
                 break;
             default:
                 break;
@@ -73,6 +73,9 @@ public class MyInputProcessor implements InputProcessor {
             case Input.Keys.DOWN:
                 pressedKeys.goDown = false;
                 break;
+            case Input.Keys.SPACE:
+                pressedKeys.fire = false;
+                break;
         }
         return false;
     }
@@ -82,6 +85,7 @@ public class MyInputProcessor implements InputProcessor {
         pressedKeys.goLeft = false;
         pressedKeys.goUp = false;
         pressedKeys.goDown = false;
+        pressedKeys.fire = false;
     }
 
     @Override
