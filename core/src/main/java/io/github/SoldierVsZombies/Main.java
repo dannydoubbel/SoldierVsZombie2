@@ -25,6 +25,8 @@ public class Main extends ApplicationAdapter {
     private ShapeRenderer shapeRenderer;
     private Music backgroundMusic;
     //private Sound soundEffect;
+
+    private CollisionDetector collisionDetector;
     private SkullManager skullManager;
     private BulletManager bulletManager;
     private ZombieManager zombieManager;
@@ -145,6 +147,7 @@ public class Main extends ApplicationAdapter {
         pressedKeys = PressedKeys.getInstance();
         sharedVariables = SharedVariables.getInstance();
         playerFrames = PlayerFrames.getInstance();
+        collisionDetector = CollisionDetector.getInstance();
     }
 
     @Override
@@ -253,6 +256,20 @@ public class Main extends ApplicationAdapter {
         handleSkullsMovement();
         handleSkullFrames();
         handleSkullDrawing();
+        handleSkullCollision();
+    }
+
+    private void handleSkullCollision() {
+        Iterator<Skull> iterator = skullManager.getSkulls().iterator();
+        while (iterator.hasNext()) {
+            Skull skull  = iterator.next();
+            if (collisionDetector.isColliding(playerState.getPlayerCenterPos(),skull.getPosition())) {
+                System.out.println("You're so dead");
+            } else
+            {
+                System.out.println("I will kill you");
+            }
+        }
     }
 
     private void handleSkullsMovement() {
