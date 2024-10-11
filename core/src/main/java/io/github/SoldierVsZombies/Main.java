@@ -3,8 +3,8 @@ package io.github.SoldierVsZombies;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.files.FileHandle;
+import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
@@ -17,6 +17,7 @@ import java.util.Iterator;
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
 public class Main extends ApplicationAdapter {
+    static boolean justOnce = false;
     private SpriteBatch batch;
     //private Sprite[] sourceBackgroundTiles;
     private OrthographicCamera camera;
@@ -25,6 +26,7 @@ public class Main extends ApplicationAdapter {
     private Music backgroundMusic;
     //private Sound soundEffect;
     private BulletManager bulletManager;
+    private ZombieManager zombieManager;
     private SharedVariables sharedVariables;
     private PressedKeys pressedKeys;
     private PlayerFrames playerFrames; // To Do implement this
@@ -40,6 +42,8 @@ public class Main extends ApplicationAdapter {
     @Override
     public void create() {
         bulletManager = new BulletManager();
+        zombieManager = new ZombieManager();
+        zombieManager.addZombie(new IntPosition(200, 200));
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
@@ -47,6 +51,72 @@ public class Main extends ApplicationAdapter {
         batch = new SpriteBatch();
 
         playerState.setPlayerCenterPos(getCenterPositionOfTile(new IntPosition(11, 5)));
+    }
+
+    public void splitUpAndReArangeHelper() {
+        // Load the image file as a texture
+        FileHandle fileHandle = Gdx.files.internal("images/zombie.png"); // Your PNG file path here
+        Texture texture = new Texture(fileHandle);
+
+        // Get the texture data
+        TextureData textureData = texture.getTextureData();
+
+        // Make sure the texture data is prepared
+        if (!textureData.isPrepared()) {
+            textureData.prepare();
+        }
+
+
+        // Get the texture data and create a Pixmap
+        Pixmap pixmap = texture.getTextureData().consumePixmap();
+
+
+        // Make sure the texture data is prepared
+        if (!textureData.isPrepared()) {
+            textureData.prepare();
+        }
+
+        // Dimensions of each part
+        int width = 128;
+        int height = 48; // 192 / 4
+
+        // Create four pixmaps from the original image
+        Pixmap part1 = new Pixmap(width, height, pixmap.getFormat());
+        Pixmap part2 = new Pixmap(width, height, pixmap.getFormat());
+        Pixmap part3 = new Pixmap(width, height, pixmap.getFormat());
+        Pixmap part4 = new Pixmap(width, height, pixmap.getFormat());
+
+        // Copy each part from the original pixmap
+        part1.drawPixmap(pixmap, 0, 0, 0, 0, width, height);        // Top (part 1)
+        part2.drawPixmap(pixmap, 0, 0, 0, height, width, height);   // Second (part 2)
+        part3.drawPixmap(pixmap, 0, 0, 0, 2 * height, width, height); // Third (part 3)
+        part4.drawPixmap(pixmap, 0, 0, 0, 3 * height, width, height); // Bottom (part 4)
+
+        // Create a new pixmap for the rearranged image
+        Pixmap resultPixmap = new Pixmap(width, 192, pixmap.getFormat());
+
+        // Draw the parts in the desired order (1, 4, 2, 3)
+        resultPixmap.drawPixmap(part1, 0, 0);                     // Part 1 on top
+        resultPixmap.drawPixmap(part4, 0, height);                // Part 4 under Part 1
+        resultPixmap.drawPixmap(part2, 0, 2 * height);            // Part 2 under Part 4
+        resultPixmap.drawPixmap(part3, 0, 3 * height);            // Part 3 on the bottom
+
+        // Save the new image to a file
+        FileHandle outputFile = Gdx.files.local("images/zombie128x192DnUpLtRt.png"); // Output file path
+        PixmapIO.writePNG(outputFile, resultPixmap);
+        System.out.println("Saved file");
+// Print the local storage path for verification
+        System.out.println("Saved file at: " + Gdx.files.getLocalStoragePath() + "images/zombie128x192DnUpLtRt.png");
+        // Dispose resources
+        pixmap.dispose();
+        part1.dispose();
+        part2.dispose();
+        part3.dispose();
+        part4.dispose();
+        resultPixmap.dispose();
+        texture.dispose();
+
+
     }
 
     private void initializePortals() {
@@ -99,10 +169,17 @@ public class Main extends ApplicationAdapter {
         handleMusicKeyPress();
 
         batch.begin();
+
+        if (justOnce) {
+            splitUpAndReArangeHelper();
+            justOnce = false;
+        }
+
+
         drawBackground();
         handleBullets();
+        handleZombies();
         if (!viewParameters.isDebugScreen()) drawPlayerFromCenterPosition();
-
 
 
         batch.end();
@@ -168,6 +245,22 @@ public class Main extends ApplicationAdapter {
             PlayerFrames.PLAYER_WIDTH, PlayerFrames.PLAYER_HEIGHT);
     }
 
+    private void handleZombies() {
+        handleZombiesDrawing();
+    }
+
+    private void handleZombiesDrawing() {
+        for (Zombie zombie : zombieManager.getZombies()) {
+
+            batch.draw(
+                zombieManager.getZombieFrame(Directions.dn, 1),
+                zombie.getPosition().getX() - viewParameters.getLeftOffset() - zombieManager.ZOMBIE_WIDTH / 2,
+                zombie.getPosition().getY() - zombieManager.ZOMBIE_HEIGHT / 2,
+                zombieManager.ZOMBIE_WIDTH,
+                zombieManager.ZOMBIE_HEIGHT);
+        }
+    }
+
     private void handleBullets() {
         handleBulletCreation();
         handleBulletsMovement();
@@ -204,7 +297,7 @@ public class Main extends ApplicationAdapter {
                 continue;
             }
 
-            if (positionToTest.getY() < - bulletManager.BULLET_HEIGHT) {
+            if (positionToTest.getY() < -bulletManager.BULLET_HEIGHT) {
                 iterator.remove();
                 continue;
             }
@@ -218,7 +311,7 @@ public class Main extends ApplicationAdapter {
         for (Bullet bullet : bulletManager.getBullets()) {
             batch.draw(
                 bulletManager.getBulletFrame(bullet.getDirection().getValue() - 1),
-                bullet.getPosition().getX() -viewParameters.getLeftOffset() - bulletManager.BULLET_WIDTH / 2,
+                bullet.getPosition().getX() - viewParameters.getLeftOffset() - bulletManager.BULLET_WIDTH / 2,
                 bullet.getPosition().getY() - bulletManager.BULLET_HEIGHT / 2,
                 bulletManager.BULLET_WIDTH,
                 bulletManager.BULLET_HEIGHT);
@@ -414,17 +507,18 @@ public class Main extends ApplicationAdapter {
 
     private IntPosition calculateTilePositionFromPixels(IntPosition pixelPosition) {
         int x = pixelPosition.getX() / (Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR);
-        int y = pixelPosition.getY() / (Tiles.TILE_HEIGHT* Tiles.TILE_MAP_SCALE_FACTOR);
-        return new IntPosition(x,y);
+        int y = pixelPosition.getY() / (Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR);
+        return new IntPosition(x, y);
     }
 
     private void calculatePlayerTilePosition() {
 
         playerState.setTilePosPlayer(
-            calculateTilePositionFromPixels(new IntPosition(getPlayerXPosCenter(),getPlayerYPosCenter())));
+            calculateTilePositionFromPixels(new IntPosition(getPlayerXPosCenter(), getPlayerYPosCenter())));
 
         ensurePlayerPositivePosition();
     }
+
     private void ensurePlayerPositivePosition() {
         playerState.setYPosTilePlayer(Math.max(0, playerState.getYPosTilePlayer()));
         playerState.setXPosTilePlayer(Math.max(0, playerState.getXPosTilePlayer()));
