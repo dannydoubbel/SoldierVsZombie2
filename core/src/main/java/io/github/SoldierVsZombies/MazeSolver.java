@@ -2,45 +2,73 @@ package io.github.SoldierVsZombies;
 
 public class MazeSolver {
 
-    public IntPosition predictNextMove(boolean[][] backGroundTileMap, IntPosition start, IntPosition end) { // refactor to int[][]
-        int startX = start.getX();
-        int startY = start.getY();
-        int endX = end.getX();
-        int endY = end.getY();
+    private static MazeSolver instance;
+    private Tiles tiles;
 
-        // Possible directions: up, down, left, right
-        int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+    private MazeSolver() {
+        tiles = Tiles.getInstance();
+    }
 
-        // Best next move initialization
-        IntPosition bestMove = null;
+    public static MazeSolver getInstance() {
+        if (instance == null) {
+            instance = new MazeSolver();
+        }
+        return instance;
+    }
+
+    // Predict the next move direction based on the start and end positions
+    public Directions getBestDirection(IntPosition startTilePosition, IntPosition endTilePosition) {
+        int startX = startTilePosition.getX();
+        int startY = startTilePosition.getY();
+        int endX = endTilePosition.getX();
+        int endY = endTilePosition.getY();
+
+        // Possible directions: down, up, right, left
+        int[][] possibleDirectionPositions = {
+            {0, 1},  // Down
+            {0, -1}, // Up
+            {1, 0},  // Right
+            {-1, 0}  // Left
+        };
+
+        // Corresponding directions in the Directions enum
+        Directions[] possibleDirections = {
+            Directions.dn,
+            Directions.up,
+            Directions.rt,
+            Directions.lt
+        };
+
+        Directions bestDirection = Directions.no;
         int minDistance = Integer.MAX_VALUE;
 
-        for (int[] direction : directions) {
-            int newX = startX + direction[0];
-            int newY = startY + direction[1];
+        // Iterate through possible directions
+        for (int i = 0; i < possibleDirectionPositions.length; i++) {
+            int newX = startX + possibleDirectionPositions[i][0];
+            int newY = startY + possibleDirectionPositions[i][1];
 
             // If the immediate next move is valid
-            if (isValidMove(backGroundTileMap, newX, newY)) {
+            if (isValidMove(newX, newY)) {
 
                 // Perform a BFS-like scan for the next move to avoid dead ends
-                if (!isDeadEnd(backGroundTileMap, newX, newY)) {
+                if (!isDeadEnd(newX, newY)) {
                     int distance = manhattanDistance(newX, newY, endX, endY);
                     if (distance < minDistance) {
                         minDistance = distance;
-                        bestMove = new IntPosition(newX, newY);
+                        bestDirection = possibleDirections[i];
                     }
                 }
             }
         }
 
-        return bestMove;  // Return the next best position based on lookahead
+        return bestDirection;  // Return the best direction based on the lookahead
     }
 
     // Check if the position is within bounds and walkable
-    private boolean isValidMove(boolean[][] map, int x, int y) { // refactor to int[][]
-        int cols = map.length;
-        int rows = map[0].length;
-        return x >= 0 && x < cols && y >= 0 && y < rows && map[x][y]; // refactor to isWalkable
+    private boolean isValidMove(int x, int y) {
+        int cols = Tiles.TILE_MAP_COLS;
+        int rows = Tiles.TILE_MAP_ROWS;
+        return x >= 0 && x < cols && y >= 0 && y < rows && tiles.isTileWalkable(new IntPosition(x, y));
     }
 
     // Calculate Manhattan distance between two points
@@ -49,15 +77,15 @@ public class MazeSolver {
     }
 
     // Check if the next move leads to a dead-end (scan ahead one more step)
-    private boolean isDeadEnd(boolean[][] map, int x, int y) {
-        int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+    private boolean isDeadEnd(int x, int y) {
+        int[][] possibleDirections = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
         int possibleMoves = 0;
 
         // Look at the next possible moves from the current position
-        for (int[] direction : directions) {
+        for (int[] direction : possibleDirections) {
             int nextX = x + direction[0];
             int nextY = y + direction[1];
-            if (isValidMove(map, nextX, nextY)) {
+            if (isValidMove(nextX, nextY)) {
                 possibleMoves++;
             }
         }
@@ -66,3 +94,6 @@ public class MazeSolver {
         return possibleMoves == 0;
     }
 }
+
+
+

@@ -25,6 +25,7 @@ public class Main extends ApplicationAdapter {
     private ShapeRenderer shapeRenderer;
     private Music backgroundMusic;
     //private Sound soundEffect;
+    private SkullManager skullManager;
     private BulletManager bulletManager;
     private ZombieManager zombieManager;
     private SharedVariables sharedVariables;
@@ -43,7 +44,9 @@ public class Main extends ApplicationAdapter {
     public void create() {
         bulletManager = new BulletManager();
         zombieManager = new ZombieManager();
+        skullManager = new SkullManager();
         zombieManager.addZombie(new IntPosition(200, 200));
+        skullManager.addSkull(new IntPosition(350, 350),2);
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
@@ -179,6 +182,7 @@ public class Main extends ApplicationAdapter {
         drawBackground();
         handleBullets();
         handleZombies();
+        handleSkulls();
         if (!viewParameters.isDebugScreen()) drawPlayerFromCenterPosition();
 
 
@@ -245,8 +249,68 @@ public class Main extends ApplicationAdapter {
             PlayerFrames.PLAYER_WIDTH, PlayerFrames.PLAYER_HEIGHT);
     }
 
+    private void handleSkulls() {
+        handleSkullsMovement();
+        handleSkullFrames();
+        handleSkullDrawing();
+    }
+
+    private void handleSkullsMovement() {
+        for (Skull skull : skullManager.getSkulls()) {
+            int xPos = skull.getPosition().getX();
+            int yPos = skull.getPosition().getY();
+            int targetxPos = playerState.getPlayerCenterPos().getX();
+            int targetyPos = playerState.getPlayerCenterPos().getY();
+            if (xPos < targetxPos) {
+                xPos += skull.getStepSize();
+            } else {
+                xPos -= skull.getStepSize();
+            }
+            if (yPos < targetyPos) {
+                yPos += skull.getStepSize();
+            } else {
+                yPos -= skull.getStepSize();
+            }
+            skull.setPosition(new IntPosition(xPos, yPos));
+        }
+    }
+    private void handleSkullFrames() {
+        for (Skull skull : skullManager.getSkulls()) {
+            int waitCycli = skull.getWaitCycli() - 1;
+            if (waitCycli <= 0) {
+                int frameIndex = skull.getFrameIndex();
+                frameIndex++;
+                if (frameIndex > skullManager.SKULL_COLS_IN_FILE - 1) {
+                    frameIndex = 0;
+                }
+                skull.setFrameIndex(frameIndex);
+                waitCycli = skull.RESET_TIME_VALUE;
+            }
+            skull.setWaitCycli(waitCycli);
+        }
+    }
+
+    private void handleSkullDrawing() {
+        for (Skull skull : skullManager.getSkulls()) {
+            batch.draw(
+                skullManager.getSkullFrame(skull.getFrameIndex()),
+                skull.getPosition().getX() - viewParameters.getLeftOffset() - skullManager.SKULL_WIDTH / 2,
+                skull.getPosition().getY() - skullManager.SKULL_HEIGHT / 2,
+                skullManager.SKULL_WIDTH,
+                skullManager.SKULL_HEIGHT);
+        }
+    }
+
     private void handleZombies() {
+        handleZombiesMovement();
         handleZombiesDrawing();
+    }
+
+    private void handleZombiesMovement() {
+        for (Zombie zombie : zombieManager.getZombies()) {
+            zombie.setTargetTilePosition(playerState.getPlayerTilePosition());
+            zombie.move();
+        }
     }
 
     private void handleZombiesDrawing() {

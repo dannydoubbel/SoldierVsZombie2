@@ -3,6 +3,8 @@ package io.github.SoldierVsZombies;
 public class BaseSprite {
 
     private IntPosition position;
+
+    private IntPosition targetTilePosition;
     private Directions direction;
 
     private int stepSize=0;
@@ -43,6 +45,14 @@ public class BaseSprite {
 
     public void setPosition(IntPosition position) {
         this.position = position;
+    }
+
+    public IntPosition getTargetTilePosition() {
+        return targetTilePosition;
+    }
+
+    public void setTargetTilePosition(IntPosition targetTilePosition) {
+        this.targetTilePosition = targetTilePosition;
     }
 
     public Directions getDirection() {
