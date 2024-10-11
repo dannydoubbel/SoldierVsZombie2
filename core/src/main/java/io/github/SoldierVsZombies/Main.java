@@ -11,6 +11,8 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import java.util.Iterator;
+
 /**
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
@@ -98,9 +100,9 @@ public class Main extends ApplicationAdapter {
 
         batch.begin();
         drawBackground();
+        handleBullets();
         if (!viewParameters.isDebugScreen()) drawPlayerFromCenterPosition();
 
-        handleBullets();
 
 
         batch.end();
@@ -169,21 +171,57 @@ public class Main extends ApplicationAdapter {
     private void handleBullets() {
         handleBulletCreation();
         handleBulletsMovement();
-        handleBulletDrawing();
-        handleBulletCollisions(); // to do implement this
+        handleBulletsDrawing();
+        handleBulletsOutOfPlayField();
+        handleBulletsCollisions(); // to do implement this more
     }
 
-    private void handleBulletCollisions() {
-        // todo implement this
+    private void handleBulletsCollisions() {
+        Iterator<Bullet> iterator = bulletManager.getBullets().iterator();
+        while (iterator.hasNext()) {
+            Bullet bullet = iterator.next();
+            IntPosition positionToTest = calculateTilePositionFromPixels(bullet.getPosition());
+            if (!tiles.isTileWalkable(positionToTest)) {
+                iterator.remove();
+                continue;
+            }
+            // to do implement this more
+        }
     }
-    private void handleBulletDrawing() {
-        for (Bullet bullet: bulletManager.getBullets() ) {
+
+    private void handleBulletsOutOfPlayField() {
+        Iterator<Bullet> iterator = bulletManager.getBullets().iterator();
+        while (iterator.hasNext()) {
+            Bullet bullet = iterator.next();
+            IntPosition positionToTest = bullet.getPosition();
+            if (positionToTest.getX() > viewParameters.getLeftOffset() + Gdx.graphics.getWidth()) {
+                // ToDo checkout if the check to the right boundery is correct, maybe it's to limited ...
+                iterator.remove();
+                continue;
+            }
+            if (positionToTest.getX() < viewParameters.getLeftOffset() - bulletManager.BULLET_WIDTH) {
+                iterator.remove();
+                continue;
+            }
+
+            if (positionToTest.getY() < - bulletManager.BULLET_HEIGHT) {
+                iterator.remove();
+                continue;
+            }
+            if (positionToTest.getY() > Gdx.graphics.getHeight()) {
+                iterator.remove();
+            }
+        }
+    }
+
+    private void handleBulletsDrawing() {
+        for (Bullet bullet : bulletManager.getBullets()) {
             batch.draw(
-                bulletManager.getBulletFrame(bullet.getDirection().getValue()-1),
-                bullet.getPosition().getX(),
-                bullet.getPosition().getY(),
-                64,
-                64);
+                bulletManager.getBulletFrame(bullet.getDirection().getValue() - 1),
+                bullet.getPosition().getX() -viewParameters.getLeftOffset() - bulletManager.BULLET_WIDTH / 2,
+                bullet.getPosition().getY() - bulletManager.BULLET_HEIGHT / 2,
+                bulletManager.BULLET_WIDTH,
+                bulletManager.BULLET_HEIGHT);
         }
     }
 
@@ -195,9 +233,24 @@ public class Main extends ApplicationAdapter {
 
     private void handleBulletCreation() {
         if (pressedKeys.fire) {
-            System.out.println("Fire");
+            IntPosition startPositionBullet = playerState.getPlayerCenterPos().clone();
+            switch (playerState.getPlayerPreviousDirection()) {
+                case rt:
+                    startPositionBullet.addX(Tiles.TILE_WIDTH);
+                    startPositionBullet.addY(5);
+                    break;
+                case lt:
+                    startPositionBullet.addY(5);
+                    break;
+                case up:
+                    startPositionBullet.addX(PlayerFrames.PLAYER_WIDTH / 3);
+                    break;
+                case dn:
+                    break;
+            }
+
             bulletManager.addBullet(
-                playerState.getPlayerCenterPos(),
+                startPositionBullet,
                 playerState.getPlayerPreviousDirection(),
                 6);
         }
@@ -358,17 +411,23 @@ public class Main extends ApplicationAdapter {
         return playerState.getPlayerCenterPos().getY() + (Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR / 2);
     }
 
+
+    private IntPosition calculateTilePositionFromPixels(IntPosition pixelPosition) {
+        int x = pixelPosition.getX() / (Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR);
+        int y = pixelPosition.getY() / (Tiles.TILE_HEIGHT* Tiles.TILE_MAP_SCALE_FACTOR);
+        return new IntPosition(x,y);
+    }
+
     private void calculatePlayerTilePosition() {
-        playerState.setXPosTilePlayer(getPlayerXPosCenter() / (Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR));
-        playerState.setYPosTilePlayer(getPlayerYPosCenter() / (Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR));
 
+        playerState.setTilePosPlayer(
+            calculateTilePositionFromPixels(new IntPosition(getPlayerXPosCenter(),getPlayerYPosCenter())));
 
-        if (playerState.getYPosTilePlayer() < 0) {
-            playerState.setYPosTilePlayer(0);
-        }
-        if (playerState.getXPosTilePlayer() < 0) {
-            playerState.setXPosTilePlayer(0);
-        }
+        ensurePlayerPositivePosition();
+    }
+    private void ensurePlayerPositivePosition() {
+        playerState.setYPosTilePlayer(Math.max(0, playerState.getYPosTilePlayer()));
+        playerState.setXPosTilePlayer(Math.max(0, playerState.getXPosTilePlayer()));
     }
 
     private void handleZoomKeyPress() {

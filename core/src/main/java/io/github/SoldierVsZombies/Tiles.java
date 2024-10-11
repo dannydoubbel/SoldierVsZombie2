@@ -46,19 +46,27 @@ public class Tiles {
         return slicedTiles;
     }
 
-    public boolean isTileWalkable(int x, int y) {
-        return WALKABLE_TILES.contains(getBackgroundTileMap()[x][y]);
+    public boolean isTileWalkable(int XPosTile, int YPosTile) {
+
+        return WALKABLE_TILES.contains(getBackgroundTileMap()[XPosTile][YPosTile]);
+    }
+    public boolean isTileWalkable(IntPosition tilePos) {
+
+        return WALKABLE_TILES.contains(getBackgroundTileMap()[tilePos.getX()][tilePos.getY()]);
     }
 
     public int[][] getBackgroundTileMap() {
+
         return backgroundTileMap;
     }
 
     public Sprite[] getSourceBackgroundTiles() {
+
         return sourceBackgroundTiles;
     }
 
     public int[] getTileMap() {
+
         return tileMap;
     }
 

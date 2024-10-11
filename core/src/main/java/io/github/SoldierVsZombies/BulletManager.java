@@ -8,7 +8,10 @@ import java.util.ArrayList;
 
 public class BulletManager {
 
-    private final int WAIT_CYCLES = 25;
+    public final int BULLET_WIDTH = 64;
+    public final int BULLET_HEIGHT = 64;
+
+    private final int WAIT_CYCLES = 10;
 
     private int waitCylesToAddBullets=0;
     private Sprite[] bulletFrames;
@@ -37,9 +40,7 @@ public class BulletManager {
         return bullets;
     }
 
-    public void removeBullet(Bullet bulletToRemove) {
-        bullets.remove(bulletToRemove);
-    }
+
 
     void loadBulletFrames() {
 
@@ -50,7 +51,7 @@ public class BulletManager {
         for (int col = 0; col < TILE_SOURCE_COLS; col++) {
             // the image is here, transfer writeable image to image
             bulletFrames[col] = new Sprite(fullFile,
-                col*64, 0, 64, 64);
+                col*BULLET_WIDTH, 0, BULLET_WIDTH, BULLET_HEIGHT);
         }
     }
 }

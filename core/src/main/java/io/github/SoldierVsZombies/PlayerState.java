@@ -4,7 +4,7 @@ public class PlayerState {
     private static PlayerState instance;
     public final int STEP_SIZE = 5;
     private Directions playerCurrentDirection = Directions.no;
-    private Directions playerPreviousDirection = Directions.no;
+    private Directions playerPreviousDirection = Directions.dn; // Make sure it's not Directions.no !!
     private int playerFrameIndex = 0;
     private final IntPosition playerCenterPos = new IntPosition();
     private final IntPosition playerTargetCenterPos = new IntPosition();
@@ -14,6 +14,11 @@ public class PlayerState {
 
     public int getXPosTilePlayer() {
         return xPosTilePlayer;
+    }
+
+    public void setTilePosPlayer(IntPosition tilePosPlayer) {
+        setXPosTilePlayer(tilePosPlayer.getX());
+        setYPosTilePlayer(tilePosPlayer.getY());
     }
 
     public void setXPosTilePlayer(int xPosTilePlayer) {
