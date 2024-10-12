@@ -11,7 +11,10 @@ import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.Random;
 
 /**
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
@@ -48,7 +51,7 @@ public class Main extends ApplicationAdapter {
         zombieManager = new ZombieManager();
         skullManager = new SkullManager();
         zombieManager.addZombie(new IntPosition(200, 200));
-        skullManager.addSkull(new IntPosition(350, 350),2);
+        skullManager.addSkull(new IntPosition(350, 350), 1);
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
@@ -262,35 +265,54 @@ public class Main extends ApplicationAdapter {
     private void handleSkullCollision() {
         Iterator<Skull> iterator = skullManager.getSkulls().iterator();
         while (iterator.hasNext()) {
-            Skull skull  = iterator.next();
-            if (collisionDetector.isColliding(playerState.getPlayerCenterPos(),skull.getPosition())) {
+            Skull skull = iterator.next();
+            if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), skull.getPosition())) {
                 System.out.println("You're so dead");
-            } else
-            {
-                System.out.println("I will kill you");
+            } else {
+                //System.out.println("I will kill you");
             }
         }
     }
 
     private void handleSkullsMovement() {
+        Random random = new Random();
         for (Skull skull : skullManager.getSkulls()) {
+            boolean actStupid = random.nextInt(100) == 2;
             int xPos = skull.getPosition().getX();
             int yPos = skull.getPosition().getY();
             int targetxPos = playerState.getPlayerCenterPos().getX();
             int targetyPos = playerState.getPlayerCenterPos().getY();
-            if (xPos < targetxPos) {
+
+            int stupidMoveCounter = skull.getStupidMoveCounter();
+
+            if (actStupid && stupidMoveCounter == 0) {
+                stupidMoveCounter = 20 + random.nextInt(20);
+                skull.setStupidMoveCounter(stupidMoveCounter);
+            }
+
+            if (!actStupid && stupidMoveCounter > 0) {
+                stupidMoveCounter--;
+                skull.setStupidMoveCounter(stupidMoveCounter);
+            }
+            boolean commitToStupidMove =  stupidMoveCounter > 0;
+
+
+            if (xPos < targetxPos && (!commitToStupidMove || random.nextBoolean() )) {
                 xPos += skull.getStepSize();
             } else {
                 xPos -= skull.getStepSize();
             }
-            if (yPos < targetyPos) {
-                yPos += skull.getStepSize();
+            if (yPos < targetyPos && !commitToStupidMove ) {
+                if (random.nextBoolean() ) {
+                    yPos += skull.getStepSize();
+                }
             } else {
                 yPos -= skull.getStepSize();
             }
             skull.setPosition(new IntPosition(xPos, yPos));
         }
     }
+
     private void handleSkullFrames() {
         for (Skull skull : skullManager.getSkulls()) {
             int waitCycli = skull.getWaitCycli() - 1;
@@ -347,10 +369,42 @@ public class Main extends ApplicationAdapter {
         handleBulletsMovement();
         handleBulletsDrawing();
         handleBulletsOutOfPlayField();
-        handleBulletsCollisions(); // to do implement this more
+        handleBulletsTileCollisions(); // to do implement this more
+        handleBulletsEnemyCollisions();
     }
 
-    private void handleBulletsCollisions() {
+    private void handleBulletsEnemyCollisions() {
+        Collection<Skull> newSkulls = new ArrayList<>(); // Store new skulls to be added later
+        Random random = new Random();
+        int randomCol;// =random.nextInt(351); // 351 is exclusive, so this generates numbers between 0 and 350 inclusive
+        int randomRow;
+        Iterator<Bullet> bulletIterator = bulletManager.getBullets().iterator();
+        while (bulletIterator.hasNext()) {
+            Bullet bullet = bulletIterator.next();
+            Iterator<Skull> skullIterator = skullManager.getSkulls().iterator();
+            while (skullIterator.hasNext()) {
+                Skull skull = skullIterator.next();
+                if (collisionDetector.isColliding(bullet.getPosition(), skull.getPosition())) {
+                    System.out.println("My bullet got you");
+                    skullIterator.remove();
+                    bulletIterator.remove();
+                    randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
+                    randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
+                    IntPosition positionForNewSkull = getCenterPositionOfTile(new IntPosition(randomCol, randomRow));
+                    newSkulls.add(new Skull(positionForNewSkull.clone(), 1));
+                    randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
+                    randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
+                    positionForNewSkull = getCenterPositionOfTile(new IntPosition(randomCol, randomRow));
+                    newSkulls.add(new Skull(positionForNewSkull.clone(), 1));
+                    break;
+                }
+                // to do implement this more
+            }
+        }
+        skullManager.addSkulls(newSkulls);
+    }
+
+    private void handleBulletsTileCollisions() {
         Iterator<Bullet> iterator = bulletManager.getBullets().iterator();
         while (iterator.hasNext()) {
             Bullet bullet = iterator.next();
@@ -426,7 +480,7 @@ public class Main extends ApplicationAdapter {
             bulletManager.addBullet(
                 startPositionBullet,
                 playerState.getPlayerPreviousDirection(),
-                6);
+                7);
         }
     }
 

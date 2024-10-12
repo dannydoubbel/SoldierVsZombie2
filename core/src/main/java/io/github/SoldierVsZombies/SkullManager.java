@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
 import java.util.ArrayList;
+import java.util.Collection;
 
 public class SkullManager {
 
@@ -23,6 +24,9 @@ public class SkullManager {
     public void addSkull(IntPosition position,int stepSize) {
         Skull skullToAdd = new Skull(position,stepSize);
         skulls.add(skullToAdd);
+    }
+    public void addSkulls(Collection<Skull> skullsToAdd) {
+        skulls.addAll(skullsToAdd);
     }
 
     public Sprite getSkullFrame(int index) {

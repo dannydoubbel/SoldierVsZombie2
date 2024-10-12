@@ -7,9 +7,20 @@ public class Skull extends BaseSprite {
 
     private int waitCycli = 0;
 
+    private int stupidMoveCounter = 0;
+
     Skull(IntPosition position,int stepSize){
         setPosition(position);
         setStepSize(stepSize);
+    }
+
+
+    public int getStupidMoveCounter() {
+        return stupidMoveCounter;
+    }
+
+    public void setStupidMoveCounter(int stupidMoveCounter) {
+        this.stupidMoveCounter = stupidMoveCounter;
     }
 
     public int getFrameIndex() {
