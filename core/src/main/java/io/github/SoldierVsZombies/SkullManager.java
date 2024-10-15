@@ -21,12 +21,21 @@ public class SkullManager {
         loadSkullFrames();
     }
 
-    public void addSkull(IntPosition position,int stepSize) {
-        Skull skullToAdd = new Skull(position,stepSize);
+    public void addSkull(Skull skullToAdd) {
+        System.out.println("addSkull(Skull skullToAdd)           Adding one with dir " + skullToAdd.getDirection().getName());
+        skulls.add(skullToAdd);
+    }
+
+    public void addSkull(IntPosition position,Directions direction, int stepSize,int MaxFrames) {
+        Skull skullToAdd = new Skull(position, direction == Directions.lt ? Directions.lt : Directions.rt,  stepSize,SKULL_COLS_IN_FILE);
+        System.out.println("addSkull(IntPosition position,Directions direction, int stepSize,int MaxFrames) Adding one with dir " + skullToAdd.getDirection().getName());
         skulls.add(skullToAdd);
     }
     public void addSkulls(Collection<Skull> skullsToAdd) {
-        skulls.addAll(skullsToAdd);
+        for (Skull skullToAdd :skullsToAdd) {
+            System.out.println("addSkulls(Collection<Skull> skullsToAdd) Adding one with dir " + skullToAdd.getDirection().getName());
+            skulls.add(skullToAdd);
+        }
     }
 
     public Sprite getSkullFrame(int index) {

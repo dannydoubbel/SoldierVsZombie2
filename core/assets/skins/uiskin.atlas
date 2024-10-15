@@ -1,0 +1,65 @@
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+default: default.png
+default-down: default-down.png
+default-checked: default-checked.png
+default-round: default-round.png
+default-round-down: default-round-down.png
+default-round-checked: default-round-checked.png
+doebiFontSegoe: doebiFontSegoe.png
+default
+  rotate: false
+  xy: 0, 0
+  size: 50, 50
+  orig: 50, 50
+  offset: 0, 0
+  index: -1
+
+default-down
+  rotate: false
+  xy: 50, 0
+  size: 50, 50
+  orig: 50, 50
+  offset: 0, 0
+  index: -1
+
+default-checked
+  rotate: false
+  xy: 0, 50
+  size: 50, 50
+  orig: 50, 50
+  offset: 0, 0
+  index: -1
+
+default-round
+  rotate: false
+  xy: 100, 0
+  size: 50, 50
+  orig: 50, 50
+  offset: 0, 0
+  index: -1
+
+default-round-down
+  rotate: false
+  xy: 100, 50
+  size: 50, 50
+  orig: 50, 50
+  offset: 0, 0
+  index: -1
+
+default-round-checked
+  rotate: false
+  xy: 150, 0
+  size: 50, 50
+  orig: 50, 50
+  offset: 0, 0
+  index: -1
+
+default
+  rotate: false
+  xy: 200, 0
+  size: 50, 50
+  orig: 50, 50
+  offset: 0, 0
+  index: -1

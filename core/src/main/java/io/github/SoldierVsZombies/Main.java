@@ -5,9 +5,13 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -45,13 +49,36 @@ public class Main extends ApplicationAdapter {
         Gdx.input.setInputProcessor(new MyInputProcessor());
     }
 
+
+    // todo move this to the ScoreBoard class
+    private BitmapFont fontSmall;
+    private BitmapFont fontBig;
+    private Stage stage;
+
+    private int lives = 3;
+    private int ammo = 50;
+    private float time = 0; // Time in seconds
+    private int kills = 10;
+
+    private Label livesLabel;
+    private Label livesNumber;
+    private Label ammoLabel;
+    private Label ammoNumber;
+    private Label timeLabel;
+    private Label killsLabel;
+
+
+
+
     @Override
     public void create() {
+
+
         bulletManager = new BulletManager();
         zombieManager = new ZombieManager();
         skullManager = new SkullManager();
         zombieManager.addZombie(new IntPosition(200, 200));
-        skullManager.addSkull(new IntPosition(350, 350), 1);
+        skullManager.addSkull(new IntPosition(350, 350), Directions.lt,1 ,skullManager.SKULL_COLS_IN_FILE);
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
@@ -59,9 +86,74 @@ public class Main extends ApplicationAdapter {
         batch = new SpriteBatch();
 
         playerState.setPlayerCenterPos(getCenterPositionOfTile(new IntPosition(11, 5)));
+
+
+        // todo move that to the ScoreBoard Class
+        fontSmall = new BitmapFont();
+        fontSmall.getData().setScale(0.4f);
+        fontBig = new BitmapFont();
+        fontBig.getData().setScale(0.6f);
+
+        stage = new Stage(new ScreenViewport(), batch);
+
+        /*
+        try {
+            Gdx.app.log("FileHandle", "File exists: " + Gdx.files.internal("skins/uiskin.json").exists());
+            FileHandle fileHandle = Gdx.files.internal("skins/uiskin.json");
+            Skin skin = new Skin(fileHandle); // Use a skin file for UI styles
+        } catch (Exception exception) {
+            System.out.println("Exception : " + exception.getMessage()+ " "+exception.getLocalizedMessage() + exception.getStackTrace().toString());
+        }
+    */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Table to arrange labels
+        Table table = new Table();
+        table.top().left();
+        table.setFillParent(false); // The table will take up the whole stage
+        table.setPosition(0, Gdx.graphics.getHeight() - table.getHeight());
+
+
+        // Create your labels
+        livesLabel = new Label("Lives: " + lives, new Label.LabelStyle(fontSmall, Color.WHITE));
+        livesNumber = new Label("100", new Label.LabelStyle(fontBig, Color.PURPLE));
+
+        ammoLabel = new Label("Ammo: " + ammo, new Label.LabelStyle(fontSmall, Color.WHITE));
+        ammoNumber = new Label("30", new Label.LabelStyle(fontBig, Color.PURPLE));
+
+
+
+// Add labels to the table for lives
+        table.add(livesLabel).pad(10).expandX().left(); // Align livesLabel to left
+        //table.add().expandX().fillX(); // This creates a blank cell in between
+        table.add(livesNumber).pad(10).expandX().right(); // Align livesNumber to right
+        table.row(); // Move to the next row
+
+// Add labels to the table for ammo
+        table.add(ammoLabel).pad(10).expandX().left(); // Align ammoLabel to left
+        //table.add().expandX().fillX(); // This creates a blank cell in between
+        table.add(ammoNumber).pad(10).expandX().right(); // Align ammoNumber to right
+        table.row(); // Move to the next row
+
+
+        stage.addActor(table);
+
     }
 
-    public void splitUpAndReArangeHelper() {
+    public void splitUpAndReArrangeHelper() {
         // Load the image file as a texture
         FileHandle fileHandle = Gdx.files.internal("images/zombie.png"); // Your PNG file path here
         Texture texture = new Texture(fileHandle);
@@ -180,7 +272,7 @@ public class Main extends ApplicationAdapter {
         batch.begin();
 
         if (justOnce) {
-            splitUpAndReArangeHelper();
+            splitUpAndReArrangeHelper();
             justOnce = false;
         }
 
@@ -195,6 +287,13 @@ public class Main extends ApplicationAdapter {
         batch.end();
         if (viewParameters.isDebugScreen()) drawPlayerBorder();
         updateWindowTitle();
+
+        time += Gdx.graphics.getDeltaTime();
+        livesLabel.setText("Lives:");//lives
+        ammoLabel.setText("Ammo:");//ammo
+        stage.act(Gdx.graphics.getDeltaTime());
+        stage.draw();
+
     }
 
     @Override
@@ -267,7 +366,7 @@ public class Main extends ApplicationAdapter {
         while (iterator.hasNext()) {
             Skull skull = iterator.next();
             if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), skull.getPosition())) {
-                System.out.println("You're so dead");
+                //System.out.println("You're so dead");
             } else {
                 //System.out.println("I will kill you");
             }
@@ -307,6 +406,7 @@ public class Main extends ApplicationAdapter {
                     yPos += skull.getStepSize();
                 }
             } else {
+
                 yPos -= skull.getStepSize();
             }
             skull.setPosition(new IntPosition(xPos, yPos));
@@ -317,12 +417,11 @@ public class Main extends ApplicationAdapter {
         for (Skull skull : skullManager.getSkulls()) {
             int waitCycli = skull.getWaitCycli() - 1;
             if (waitCycli <= 0) {
-                int frameIndex = skull.getFrameIndex();
-                frameIndex++;
-                if (frameIndex > skullManager.SKULL_COLS_IN_FILE - 1) {
-                    frameIndex = 0;
-                }
-                skull.setFrameIndex(frameIndex);
+
+                skull.changeFrameIndexByDirection();
+
+
+
                 waitCycli = skull.RESET_TIME_VALUE;
             }
             skull.setWaitCycli(waitCycli);
@@ -378,6 +477,7 @@ public class Main extends ApplicationAdapter {
         Random random = new Random();
         int randomCol;// =random.nextInt(351); // 351 is exclusive, so this generates numbers between 0 and 350 inclusive
         int randomRow;
+        int randomSpeed;
         Iterator<Bullet> bulletIterator = bulletManager.getBullets().iterator();
         while (bulletIterator.hasNext()) {
             Bullet bullet = bulletIterator.next();
@@ -390,12 +490,14 @@ public class Main extends ApplicationAdapter {
                     bulletIterator.remove();
                     randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
                     randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
+                    randomSpeed = random.nextInt(3)+1;
                     IntPosition positionForNewSkull = getCenterPositionOfTile(new IntPosition(randomCol, randomRow));
-                    newSkulls.add(new Skull(positionForNewSkull.clone(), 1));
+                    newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.lt,randomSpeed, skullManager.SKULL_COLS_IN_FILE));
                     randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
                     randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
+                    randomSpeed = random.nextInt(3)+1;
                     positionForNewSkull = getCenterPositionOfTile(new IntPosition(randomCol, randomRow));
-                    newSkulls.add(new Skull(positionForNewSkull.clone(), 1));
+                    newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.rt ,randomSpeed, skullManager.SKULL_COLS_IN_FILE));
                     break;
                 }
                 // to do implement this more
