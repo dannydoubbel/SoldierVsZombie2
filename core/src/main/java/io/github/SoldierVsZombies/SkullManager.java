@@ -22,18 +22,15 @@ public class SkullManager {
     }
 
     public void addSkull(Skull skullToAdd) {
-        System.out.println("addSkull(Skull skullToAdd)           Adding one with dir " + skullToAdd.getDirection().getName());
         skulls.add(skullToAdd);
     }
 
     public void addSkull(IntPosition position,Directions direction, int stepSize,int MaxFrames) {
         Skull skullToAdd = new Skull(position, direction == Directions.lt ? Directions.lt : Directions.rt,  stepSize,SKULL_COLS_IN_FILE);
-        System.out.println("addSkull(IntPosition position,Directions direction, int stepSize,int MaxFrames) Adding one with dir " + skullToAdd.getDirection().getName());
         skulls.add(skullToAdd);
     }
     public void addSkulls(Collection<Skull> skullsToAdd) {
         for (Skull skullToAdd :skullsToAdd) {
-            System.out.println("addSkulls(Collection<Skull> skullsToAdd) Adding one with dir " + skullToAdd.getDirection().getName());
             skulls.add(skullToAdd);
         }
     }

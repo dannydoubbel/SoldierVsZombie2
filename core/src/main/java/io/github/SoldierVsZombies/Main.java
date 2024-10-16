@@ -5,13 +5,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.*;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
-import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -25,7 +21,7 @@ import java.util.Random;
  */
 public class Main extends ApplicationAdapter {
     static boolean justOnce = false;
-    private SpriteBatch batch;
+    private SpriteBatch spriteBatch;
     //private Sprite[] sourceBackgroundTiles;
     private OrthographicCamera camera;
     private Viewport viewport;
@@ -37,6 +33,7 @@ public class Main extends ApplicationAdapter {
     private SkullManager skullManager;
     private BulletManager bulletManager;
     private ZombieManager zombieManager;
+    private ScoreBoardManager scoreBoardManager;
     private SharedVariables sharedVariables;
     private PressedKeys pressedKeys;
     private PlayerFrames playerFrames; // To Do implement this
@@ -49,107 +46,23 @@ public class Main extends ApplicationAdapter {
         Gdx.input.setInputProcessor(new MyInputProcessor());
     }
 
-
-    // todo move this to the ScoreBoard class
-    private BitmapFont fontSmall;
-    private BitmapFont fontBig;
-    private Stage stage;
-
-    private int lives = 3;
-    private int ammo = 50;
-    private float time = 0; // Time in seconds
-    private int kills = 10;
-
-    private Label livesLabel;
-    private Label livesNumber;
-    private Label ammoLabel;
-    private Label ammoNumber;
-    private Label timeLabel;
-    private Label killsLabel;
-
-
-
-
     @Override
     public void create() {
 
+        spriteBatch = new SpriteBatch();
 
         bulletManager = new BulletManager();
         zombieManager = new ZombieManager();
         skullManager = new SkullManager();
         zombieManager.addZombie(new IntPosition(200, 200));
-        skullManager.addSkull(new IntPosition(350, 350), Directions.lt,1 ,skullManager.SKULL_COLS_IN_FILE);
+        skullManager.addSkull(new IntPosition(350, 350), Directions.lt, 1, skullManager.SKULL_COLS_IN_FILE);
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
 
-        batch = new SpriteBatch();
 
         playerState.setPlayerCenterPos(getCenterPositionOfTile(new IntPosition(11, 5)));
 
-
-        // todo move that to the ScoreBoard Class
-        fontSmall = new BitmapFont();
-        fontSmall.getData().setScale(0.4f);
-        fontBig = new BitmapFont();
-        fontBig.getData().setScale(0.6f);
-
-        stage = new Stage(new ScreenViewport(), batch);
-
-        /*
-        try {
-            Gdx.app.log("FileHandle", "File exists: " + Gdx.files.internal("skins/uiskin.json").exists());
-            FileHandle fileHandle = Gdx.files.internal("skins/uiskin.json");
-            Skin skin = new Skin(fileHandle); // Use a skin file for UI styles
-        } catch (Exception exception) {
-            System.out.println("Exception : " + exception.getMessage()+ " "+exception.getLocalizedMessage() + exception.getStackTrace().toString());
-        }
-    */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // Table to arrange labels
-        Table table = new Table();
-        table.top().left();
-        table.setFillParent(false); // The table will take up the whole stage
-        table.setPosition(0, Gdx.graphics.getHeight() - table.getHeight());
-
-
-        // Create your labels
-        livesLabel = new Label("Lives: " + lives, new Label.LabelStyle(fontSmall, Color.WHITE));
-        livesNumber = new Label("100", new Label.LabelStyle(fontBig, Color.PURPLE));
-
-        ammoLabel = new Label("Ammo: " + ammo, new Label.LabelStyle(fontSmall, Color.WHITE));
-        ammoNumber = new Label("30", new Label.LabelStyle(fontBig, Color.PURPLE));
-
-
-
-// Add labels to the table for lives
-        table.add(livesLabel).pad(10).expandX().left(); // Align livesLabel to left
-        //table.add().expandX().fillX(); // This creates a blank cell in between
-        table.add(livesNumber).pad(10).expandX().right(); // Align livesNumber to right
-        table.row(); // Move to the next row
-
-// Add labels to the table for ammo
-        table.add(ammoLabel).pad(10).expandX().left(); // Align ammoLabel to left
-        //table.add().expandX().fillX(); // This creates a blank cell in between
-        table.add(ammoNumber).pad(10).expandX().right(); // Align ammoNumber to right
-        table.row(); // Move to the next row
-
-
-        stage.addActor(table);
 
     }
 
@@ -243,6 +156,7 @@ public class Main extends ApplicationAdapter {
         sharedVariables = SharedVariables.getInstance();
         playerFrames = PlayerFrames.getInstance();
         collisionDetector = CollisionDetector.getInstance();
+        scoreBoardManager = ScoreBoardManager.getInstance(spriteBatch);
     }
 
     @Override
@@ -262,20 +176,19 @@ public class Main extends ApplicationAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.zoom = viewParameters.getZoomValue();
         camera.update();
-        batch.setProjectionMatrix(camera.combined);
+        spriteBatch.setProjectionMatrix(camera.combined);
 
         handlePlayerMovement();
         handlePortals();
         handleZoomKeyPress();
         handleMusicKeyPress();
 
-        batch.begin();
+        spriteBatch.begin();
 
         if (justOnce) {
             splitUpAndReArrangeHelper();
             justOnce = false;
         }
-
 
         drawBackground();
         handleBullets();
@@ -283,22 +196,16 @@ public class Main extends ApplicationAdapter {
         handleSkulls();
         if (!viewParameters.isDebugScreen()) drawPlayerFromCenterPosition();
 
-
-        batch.end();
+        spriteBatch.end();
         if (viewParameters.isDebugScreen()) drawPlayerBorder();
         updateWindowTitle();
 
-        time += Gdx.graphics.getDeltaTime();
-        livesLabel.setText("Lives:");//lives
-        ammoLabel.setText("Ammo:");//ammo
-        stage.act(Gdx.graphics.getDeltaTime());
-        stage.draw();
-
+        scoreBoardManager.draw();//must be called after batch.end() !
     }
 
     @Override
     public void dispose() {
-        batch.dispose();
+        spriteBatch.dispose();
     }
 
     private void updateWindowTitle() {
@@ -337,7 +244,7 @@ public class Main extends ApplicationAdapter {
             for (int col = 0; col < Tiles.TILE_MAP_COLS && col < rightStopDrawing; col++) {
                 int tileNr = tiles.getBackgroundTileMap()[col][row];
                 tileNr = tileNr > 0 ? tileNr - 1 : tileNr;
-                batch.draw(tiles.getSourceBackgroundTiles()[tileNr],
+                spriteBatch.draw(tiles.getSourceBackgroundTiles()[tileNr],
                     col * Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR - viewParameters.getLeftOffset(),
                     row * Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR,
                     Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR,
@@ -348,7 +255,7 @@ public class Main extends ApplicationAdapter {
 
     private void drawPlayerFromCenterPosition() {
         int direction = calculatePlayerFrameIndex();
-        batch.draw(playerFrames.getPlayerFramesSprites()[direction][playerState.getPlayerFrameIndex()],
+        spriteBatch.draw(playerFrames.getPlayerFramesSprites()[direction][playerState.getPlayerFrameIndex()],
             playerState.getPlayerCenterPos().getX() - viewParameters.getLeftOffset() - ((Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             playerState.getPlayerCenterPos().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             PlayerFrames.PLAYER_WIDTH, PlayerFrames.PLAYER_HEIGHT);
@@ -393,16 +300,16 @@ public class Main extends ApplicationAdapter {
                 stupidMoveCounter--;
                 skull.setStupidMoveCounter(stupidMoveCounter);
             }
-            boolean commitToStupidMove =  stupidMoveCounter > 0;
+            boolean commitToStupidMove = stupidMoveCounter > 0;
 
 
-            if (xPos < targetxPos && (!commitToStupidMove || random.nextBoolean() )) {
+            if (xPos < targetxPos && (!commitToStupidMove || random.nextBoolean())) {
                 xPos += skull.getStepSize();
             } else {
                 xPos -= skull.getStepSize();
             }
-            if (yPos < targetyPos && !commitToStupidMove ) {
-                if (random.nextBoolean() ) {
+            if (yPos < targetyPos && !commitToStupidMove) {
+                if (random.nextBoolean()) {
                     yPos += skull.getStepSize();
                 }
             } else {
@@ -421,7 +328,6 @@ public class Main extends ApplicationAdapter {
                 skull.changeFrameIndexByDirection();
 
 
-
                 waitCycli = skull.RESET_TIME_VALUE;
             }
             skull.setWaitCycli(waitCycli);
@@ -430,7 +336,7 @@ public class Main extends ApplicationAdapter {
 
     private void handleSkullDrawing() {
         for (Skull skull : skullManager.getSkulls()) {
-            batch.draw(
+            spriteBatch.draw(
                 skullManager.getSkullFrame(skull.getFrameIndex()),
                 skull.getPosition().getX() - viewParameters.getLeftOffset() - skullManager.SKULL_WIDTH / 2,
                 skull.getPosition().getY() - skullManager.SKULL_HEIGHT / 2,
@@ -454,7 +360,7 @@ public class Main extends ApplicationAdapter {
     private void handleZombiesDrawing() {
         for (Zombie zombie : zombieManager.getZombies()) {
 
-            batch.draw(
+            spriteBatch.draw(
                 zombieManager.getZombieFrame(Directions.dn, 1),
                 zombie.getPosition().getX() - viewParameters.getLeftOffset() - zombieManager.ZOMBIE_WIDTH / 2,
                 zombie.getPosition().getY() - zombieManager.ZOMBIE_HEIGHT / 2,
@@ -490,14 +396,15 @@ public class Main extends ApplicationAdapter {
                     bulletIterator.remove();
                     randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
                     randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
-                    randomSpeed = random.nextInt(3)+1;
+                    randomSpeed = random.nextInt(3) + 1;
                     IntPosition positionForNewSkull = getCenterPositionOfTile(new IntPosition(randomCol, randomRow));
-                    newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.lt,randomSpeed, skullManager.SKULL_COLS_IN_FILE));
+                    newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.lt, randomSpeed, skullManager.SKULL_COLS_IN_FILE));
                     randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
                     randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
-                    randomSpeed = random.nextInt(3)+1;
+                    randomSpeed = random.nextInt(3) + 1;
                     positionForNewSkull = getCenterPositionOfTile(new IntPosition(randomCol, randomRow));
-                    newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.rt ,randomSpeed, skullManager.SKULL_COLS_IN_FILE));
+                    newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.rt, randomSpeed, skullManager.SKULL_COLS_IN_FILE));
+                    scoreBoardManager.setKills(scoreBoardManager.getKills()+1);
                     break;
                 }
                 // to do implement this more
@@ -546,7 +453,7 @@ public class Main extends ApplicationAdapter {
 
     private void handleBulletsDrawing() {
         for (Bullet bullet : bulletManager.getBullets()) {
-            batch.draw(
+            spriteBatch.draw(
                 bulletManager.getBulletFrame(bullet.getDirection().getValue() - 1),
                 bullet.getPosition().getX() - viewParameters.getLeftOffset() - bulletManager.BULLET_WIDTH / 2,
                 bullet.getPosition().getY() - bulletManager.BULLET_HEIGHT / 2,
