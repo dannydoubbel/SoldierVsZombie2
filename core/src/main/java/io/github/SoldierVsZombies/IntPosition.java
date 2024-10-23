@@ -12,6 +12,11 @@ public class IntPosition {
         y = 0;
     }
 
+    public IntPosition(IntPosition position) {
+        x = position.getX();
+        y = position.getY();
+    }
+
     public IntPosition(int x, int y) {
         this.x = x;
         this.y = y;

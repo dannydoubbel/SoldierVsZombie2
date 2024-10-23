@@ -3,11 +3,12 @@ package io.github.SoldierVsZombies;
 public class BaseSprite {
 
     private IntPosition position;
-
     private IntPosition targetTilePosition;
     private Directions direction;
 
     private int stepSize=0;
+
+    private int frameIndex = 0;
 
     public BaseSprite() {
         position = new IntPosition(0, 0);
@@ -63,5 +64,12 @@ public class BaseSprite {
         this.direction = direction;
     }
 
+    public int getFrameIndex() {
+        return frameIndex;
+    }
+
+    public void setFrameIndex(int frameIndex) {
+        this.frameIndex = frameIndex;
+    }
 }
 

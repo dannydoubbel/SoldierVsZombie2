@@ -3,7 +3,7 @@ package io.github.SoldierVsZombies;
 public class Skull extends BaseSprite {
 
     public final int RESET_TIME_VALUE = 10;
-    private int frameIndex = 0;
+
 
     private int waitCycli = 0;
 
@@ -21,22 +21,20 @@ public class Skull extends BaseSprite {
 
     public void changeFrameIndexByDirection() {
         if (getDirection()==Directions.lt) {
-            frameIndex++;
-            if (frameIndex > MAX_FRAMES - 1) {
-                frameIndex = 0;
+            setFrameIndex(getFrameIndex()+1);
+            if (getFrameIndex() > MAX_FRAMES - 1) {
+                setFrameIndex(0);
             }
         } else {
-            frameIndex--;
-            if (frameIndex < 0) {
-                frameIndex= MAX_FRAMES-1;
+            setFrameIndex(getFrameIndex()-1);
+            if (getFrameIndex()< 0) {
+                setFrameIndex(MAX_FRAMES-1);
             }
         }
     }
 
 
-    public int getFrameIndex() {
-        return frameIndex;
-    }
+
 
     public int getStupidMoveCounter() {
         return stupidMoveCounter;

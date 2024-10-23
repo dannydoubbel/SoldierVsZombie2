@@ -13,9 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class ScoreBoardManager  {
     private static ScoreBoardManager instance;
@@ -23,11 +21,14 @@ public class ScoreBoardManager  {
     private BitmapFont fontBig;
     private Stage stage;
 
-    private Table table;
+    private Table scoreBoardTable;
     private Float timer = 0f; // Time in seconds
     private Integer lives = 3;
-    private Integer ammo = 50;
     private Integer kills = 10;
+    private Integer ammoLeft = 50;
+
+    private Integer ammoFired = 0;
+    private Float efficiency = 0f;
     private Label livesLabel;
     private Label livesNumber;
     private Label ammoLabel;
@@ -37,6 +38,8 @@ public class ScoreBoardManager  {
     private Label timerLabel;
     private Label timerNumber;
 
+    private Label efficiencyLabel;
+    private Label efficiencyNumber;
     private boolean timerRunning;
     private ScheduledExecutorService scheduler;
 
@@ -47,7 +50,6 @@ public class ScoreBoardManager  {
 
 
     public ScoreBoardManager(SpriteBatch spriteBatch) {
-        System.out.println("manager");
         this.spriteBatch = spriteBatch;
         stage = new Stage(new ScreenViewport(), spriteBatch);
         setDefaultValues();
@@ -58,24 +60,26 @@ public class ScoreBoardManager  {
         pixmap.dispose(); // Dispose the pixmap after use (to avoid memory leaks)
         createLabels();
         addLabelsToTable();
-        stage.addActor(table);
+        stage.addActor(scoreBoardTable);
     }
 
     private void setDefaultValues() {
+        efficiency = 0f;
         kills = 0;
-        ammo = 10000;
+        ammoLeft = 200;
+        ammoFired = 0;
         lives = 3;
         startTimer();
     }
 
     private void createTable(TextureRegionDrawable drawable) {
         // Table to arrange labels
-        table = new Table();
-        table.top().left();
-        table.setSize(40,100);
-        table.setFillParent(false); // The table will take up the whole stage
-        table.setPosition(0, Gdx.graphics.getHeight() - table.getHeight());
-        table.setBackground(drawable);
+        scoreBoardTable = new Table();
+        scoreBoardTable.top().left();
+        scoreBoardTable.setSize(60,100);
+        scoreBoardTable.setFillParent(false); // The table will take up the whole stage
+        scoreBoardTable.setPosition(0, Gdx.graphics.getHeight() - scoreBoardTable.getHeight());
+        scoreBoardTable.setBackground(drawable);
     }
 
     private static TextureRegionDrawable createDrawableTextureRegion(Pixmap pixmap) {
@@ -93,38 +97,39 @@ public class ScoreBoardManager  {
     }
 
     private void addLabelsToTable() {
-        // Add labels to the table for lives
-        table.add(livesLabel).pad(0,0,0,0).expandX().left(); // Align livesLabel to left
-        table.add(livesNumber).pad(0,0,0,2).expandX().right(); // Align livesNumber to right
-        table.row(); // Move to the next row
+        addLabelPair(livesLabel, livesNumber);
+        addLabelPair(ammoLabel, ammoNumber);
+        addLabelPair(killsLabel, killsNumber);
+        addLabelPair(timerLabel, timerNumber);
+        addLabelPair(efficiencyLabel, efficiencyNumber);
 
-        // Add labels to the table for ammo
-        table.add(ammoLabel).pad(0,0,0,0).expandX().left(); // Align ammoLabel to left
-        table.add(ammoNumber).pad(0,0,0,2).expandX().right(); // Align ammoNumber to right
-        table.row(); // Move to the next row
-
-        table.add(killsLabel).pad(0,0,0,0).expandX().left(); // Align ammoLabel to left
-        table.add(killsNumber).pad(0,0,0,2).expandX().right(); // Align ammoNumber to right
-        table.row(); // Move to the next row
-        table.row(); // Move to the next row
-        table.add(timerLabel).pad(0,0,0,0).expandX().left(); // Align ammoLabel to left
-        table.add(timerNumber).pad(0,0,0,2).expandX().right(); // Align ammoNumber to right
-        table.row(); // Move to the next row
+    }
+    private void addLabelPair(Label label, Label number) {
+        scoreBoardTable.add(label).pad(0, 0, 0, 0).expandX().left();  // Align label to the left
+        scoreBoardTable.add(number).pad(0, 0, 0, 2).expandX().right(); // Align number to the right
+        scoreBoardTable.row();  // Move to the next row
     }
 
     private void createLabels() {
         // Create your labels
-        livesLabel = new Label("Lives:" , new Label.LabelStyle(fontSmall, Color.WHITE));
-        livesNumber = new Label(lives.toString(), new Label.LabelStyle(fontBig, Color.PURPLE));
+        livesLabel = createLabel("Lives:", fontSmall, Color.WHITE);
+        livesNumber = createLabel(lives.toString(), fontBig, Color.PURPLE);
 
-        ammoLabel = new Label("Ammo:" , new Label.LabelStyle(fontSmall, Color.WHITE));
-        ammoNumber = new Label(ammo.toString(), new Label.LabelStyle(fontBig, Color.PURPLE));
+        ammoLabel = createLabel("Ammo:", fontSmall, Color.WHITE);
+        ammoNumber = createLabel(ammoLeft.toString(), fontBig, Color.PURPLE);
 
-        killsLabel = new Label("Kills:" , new Label.LabelStyle(fontSmall, Color.WHITE));
-        killsNumber = new Label(kills.toString(), new Label.LabelStyle(fontBig, Color.PURPLE));
+        killsLabel = createLabel("Kills:", fontSmall, Color.WHITE);
+        killsNumber = createLabel(kills.toString(), fontBig, Color.PURPLE);
 
-        timerLabel = new Label("Time left:" , new Label.LabelStyle(fontSmall, Color.WHITE));
-        timerNumber = new Label(timer.toString(), new Label.LabelStyle(fontBig, Color.PURPLE));
+        timerLabel = createLabel("Time left:", fontSmall, Color.WHITE);
+        timerNumber = createLabel(timer.toString(), fontBig, Color.PURPLE);
+
+        efficiencyLabel = createLabel("Efficiency %:", fontSmall, Color.WHITE);
+        efficiencyNumber = createLabel(efficiency.toString(), fontBig, Color.PURPLE);
+
+    }
+    private Label createLabel(String text, BitmapFont font, Color color) {
+        return new Label(text, new Label.LabelStyle(font, color));
     }
 
     private void setUpFonts() {
@@ -138,6 +143,12 @@ public class ScoreBoardManager  {
         stage.act();
         stage.draw();
         timerNumber.setText(String.format("%.1f", timer));
+        if (ammoFired > 0) {
+            efficiency = ((float) kills / ammoFired) * 100;
+        } else {
+            efficiency = 0f; // Avoid division by zero if no bullets have been fired
+        }
+        setEfficiency(efficiency);
     }
 
 
@@ -153,14 +164,23 @@ public class ScoreBoardManager  {
                     timer = 0f;
                     timerRunning = false;
                     System.out.println("Timer finished!");
+                    // todo implement this more
                     scheduler.shutdown(); // Stop the timer
                 }
                 // Update the timer label on the main thread
-                Gdx.app.postRunnable(() -> timerLabel.setText(String.format("%.1f", timer)));
+                Gdx.app.postRunnable(() -> timerNumber.setText(String.format("%.1f", timer)));
             }
-        }, 0, 1, TimeUnit.SECONDS); // Execute every second
+        }, 0, 1, TimeUnit.SECONDS); // Execute every second  ignore the error warning, it's a IntelliJ bug
     }
 
+    public Float getEfficiency() {
+        return efficiency;
+    }
+
+    public void setEfficiency(Float efficiency) {
+        this.efficiency = efficiency;
+        efficiencyNumber.setText(String.format("%.1f",efficiency));
+    }
 
     public Integer getLives() {
         return lives;
@@ -171,13 +191,21 @@ public class ScoreBoardManager  {
         this.lives = lives;
     }
 
-    public Integer getAmmo() {
-        return ammo;
+    public Integer getAmmoLeft() {
+        return ammoLeft;
     }
 
-    public void setAmmo(Integer ammo) {
-        ammoNumber.setText(ammo.toString());
-        this.ammo = ammo;
+    public void setAmmoLeft(Integer ammoLeft) {
+        ammoNumber.setText(ammoLeft.toString());
+        this.ammoLeft = ammoLeft;
+    }
+
+    public Integer getAmmoFired() {
+        return ammoFired;
+    }
+
+    public void setAmmoFired(Integer ammoFired) {
+        this.ammoFired = ammoFired;
     }
 
     public Float getTimer() {

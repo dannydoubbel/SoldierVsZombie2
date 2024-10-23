@@ -19,7 +19,7 @@ public class ZombieManager {
     }
 
     public void addZombie(IntPosition position) {
-        Zombie zombieToAdd = new Zombie(position);
+        Zombie zombieToAdd = new Zombie(position,ZOMBIE_COLS_IN_FILE);
         zombies.add(zombieToAdd);
     }
 

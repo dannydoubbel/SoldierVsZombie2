@@ -3,8 +3,8 @@ package io.github.SoldierVsZombies;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Music;
-import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.*;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
@@ -27,7 +27,7 @@ public class Main extends ApplicationAdapter {
     private Viewport viewport;
     private ShapeRenderer shapeRenderer;
     private Music backgroundMusic;
-    //private Sound soundEffect;
+    private Music soundEffect;
 
     private CollisionDetector collisionDetector;
     private SkullManager skullManager;
@@ -54,85 +54,28 @@ public class Main extends ApplicationAdapter {
         bulletManager = new BulletManager();
         zombieManager = new ZombieManager();
         skullManager = new SkullManager();
-        zombieManager.addZombie(new IntPosition(200, 200));
-        skullManager.addSkull(new IntPosition(350, 350), Directions.lt, 1, skullManager.SKULL_COLS_IN_FILE);
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
 
+        addInitialEnemies();
 
+        setPlayerInitialPosition();
+    }
+
+    private void setPlayerInitialPosition() {
         playerState.setPlayerCenterPos(getCenterPositionOfTile(new IntPosition(11, 5)));
-
-
     }
 
-    public void splitUpAndReArrangeHelper() {
-        // Load the image file as a texture
-        FileHandle fileHandle = Gdx.files.internal("images/zombie.png"); // Your PNG file path here
-        Texture texture = new Texture(fileHandle);
-
-        // Get the texture data
-        TextureData textureData = texture.getTextureData();
-
-        // Make sure the texture data is prepared
-        if (!textureData.isPrepared()) {
-            textureData.prepare();
-        }
-
-
-        // Get the texture data and create a Pixmap
-        Pixmap pixmap = texture.getTextureData().consumePixmap();
-
-
-        // Make sure the texture data is prepared
-        if (!textureData.isPrepared()) {
-            textureData.prepare();
-        }
-
-        // Dimensions of each part
-        int width = 128;
-        int height = 48; // 192 / 4
-
-        // Create four pixmaps from the original image
-        Pixmap part1 = new Pixmap(width, height, pixmap.getFormat());
-        Pixmap part2 = new Pixmap(width, height, pixmap.getFormat());
-        Pixmap part3 = new Pixmap(width, height, pixmap.getFormat());
-        Pixmap part4 = new Pixmap(width, height, pixmap.getFormat());
-
-        // Copy each part from the original pixmap
-        part1.drawPixmap(pixmap, 0, 0, 0, 0, width, height);        // Top (part 1)
-        part2.drawPixmap(pixmap, 0, 0, 0, height, width, height);   // Second (part 2)
-        part3.drawPixmap(pixmap, 0, 0, 0, 2 * height, width, height); // Third (part 3)
-        part4.drawPixmap(pixmap, 0, 0, 0, 3 * height, width, height); // Bottom (part 4)
-
-        // Create a new pixmap for the rearranged image
-        Pixmap resultPixmap = new Pixmap(width, 192, pixmap.getFormat());
-
-        // Draw the parts in the desired order (1, 4, 2, 3)
-        resultPixmap.drawPixmap(part1, 0, 0);                     // Part 1 on top
-        resultPixmap.drawPixmap(part4, 0, height);                // Part 4 under Part 1
-        resultPixmap.drawPixmap(part2, 0, 2 * height);            // Part 2 under Part 4
-        resultPixmap.drawPixmap(part3, 0, 3 * height);            // Part 3 on the bottom
-
-        // Save the new image to a file
-        FileHandle outputFile = Gdx.files.local("images/zombie128x192DnUpLtRt.png"); // Output file path
-        PixmapIO.writePNG(outputFile, resultPixmap);
-        System.out.println("Saved file");
-// Print the local storage path for verification
-        System.out.println("Saved file at: " + Gdx.files.getLocalStoragePath() + "images/zombie128x192DnUpLtRt.png");
-        // Dispose resources
-        pixmap.dispose();
-        part1.dispose();
-        part2.dispose();
-        part3.dispose();
-        part4.dispose();
-        resultPixmap.dispose();
-        texture.dispose();
-
-
+    private void addInitialEnemies() {
+        zombieManager.addZombie(new IntPosition(200, 200));
+        skullManager.addSkull(new IntPosition(350, 350),
+            Directions.lt, 1, skullManager.SKULL_COLS_IN_FILE);
     }
+
 
     private void initializePortals() {
+
         portals = new Portals();
     }
 
@@ -186,7 +129,8 @@ public class Main extends ApplicationAdapter {
         spriteBatch.begin();
 
         if (justOnce) {
-            splitUpAndReArrangeHelper();
+            SplitUpAndRearangePNGs splitUpAndRearangePNGs = new SplitUpAndRearangePNGs();
+            splitUpAndRearangePNGs.splitUpAndReArrangeHelper();
             justOnce = false;
         }
 
@@ -206,6 +150,8 @@ public class Main extends ApplicationAdapter {
     @Override
     public void dispose() {
         spriteBatch.dispose();
+        backgroundMusic.dispose();
+        soundEffect.dispose();
     }
 
     private void updateWindowTitle() {
@@ -232,7 +178,7 @@ public class Main extends ApplicationAdapter {
 
     void setupSoundRelatedStuff() {
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("sound/music.mp3"));
-        //soundEffect = Gdx.audio.newSound(Gdx.files.internal("sound/gun-single.mp3"));
+        soundEffect = Gdx.audio.newMusic(Gdx.files.internal("sound/gun-single.mp3"));
         backgroundMusic.play();
         backgroundMusic.setLooping(true); // Loop the background music
     }
@@ -345,6 +291,7 @@ public class Main extends ApplicationAdapter {
         }
     }
 
+
     private void handleZombies() {
         handleZombiesMovement();
         handleZombiesDrawing();
@@ -352,22 +299,99 @@ public class Main extends ApplicationAdapter {
 
     private void handleZombiesMovement() {
         for (Zombie zombie : zombieManager.getZombies()) {
-            zombie.setTargetTilePosition(playerState.getPlayerTilePosition());
-            zombie.move();
+            Directions directionTowardsPlayer = getZombieDirectionTowardsPlayer(zombie);
+            if (zombie.isWalking()) {
+                zombie.move();
+                zombie.setDirection(directionTowardsPlayer);
+            }
+
+            System.out.print("Xpos " + zombie.getPosition().getX() + " tile x " + calculateTilePositionFromPixels(zombie.getPosition()).getX());
+            System.out.println(" Ypos " + zombie.getPosition().getY() + " tile y " + calculateTilePositionFromPixels(zombie.getPosition()).getY());
+            if (directionTowardsPlayer != Directions.no) {
+                zombieCalculateAndSetNewFrame(zombie);
+            }
         }
     }
+
+    private  void zombieCalculateAndSetNewFrame(Zombie zombie) {
+        int frameIndex = zombie.getFrameIndex() - 1;
+        if (frameIndex < 0) {
+            frameIndex = zombie.MAX_FRAMES - 1;
+        }
+        zombie.setFrameIndex(frameIndex);
+    }
+
+    private Directions getZombieDirectionTowardsPlayer(Zombie zombie) {
+        IntPosition zombieTilePos = calculateTilePositionFromPixels(zombie.getPosition());
+        IntPosition playerTilePos = calculateTilePositionFromPixels(new IntPosition(getPlayerXPosCenter(), getPlayerYPosCenter()));
+
+        if (!zombie.isWalking()) {
+            return zombieStartWalking(zombie, zombieTilePos, playerTilePos);
+        }
+
+        if (zombieTilePos.equals(zombie.getTargetTilePosition())) {
+            zombie.setWalking(false);
+            zombie.setDirection(Directions.no);
+            System.out.println("Equals zombie and player");
+            //zombie.setPosition(getCenterPositionOfTile(zombieTilePos).clone());
+        }
+        return zombie.isWalking() ? zombie.getDirection() : Directions.no; // todo change as needed
+    }
+
+    private Directions zombieStartWalking(Zombie zombie, IntPosition zombieTilePos, IntPosition playerTilePos) {
+        Directions newDirection = Directions.no;
+        boolean isZombieXPosEqualToPlayerXPos = zombieTilePos.getX() == playerTilePos.getX();
+        boolean isZombieYPosEqualToPlayerYPos = zombieTilePos.getY() == playerTilePos.getY();
+        if (isZombieXPosEqualToPlayerXPos && isZombieYPosEqualToPlayerYPos) {
+            return newDirection;
+        }
+        zombie.setWalking(true);
+        if (isZombieXPosEqualToPlayerXPos) {
+            newDirection = (zombieTilePos.getY() < playerTilePos.getY()) ? Directions.up : Directions.dn;
+        }
+        if (isZombieYPosEqualToPlayerYPos) {
+            newDirection = (zombieTilePos.getX() < playerTilePos.getX()) ? Directions.rt : Directions.lt;
+        }
+        zombieSetNewTargetTilePosition(zombie, zombieTilePos, newDirection);
+        zombie.setDirection(newDirection);
+        return newDirection;
+    }
+
+    private void zombieSetNewTargetTilePosition(Zombie zombie, IntPosition zombieTilePos, Directions newDirection) {
+        IntPosition targetPosition = new IntPosition(zombieTilePos);
+        switch (newDirection) {
+            case lt: // HERE
+                targetPosition.addX(-1);
+                break;
+            case rt:
+                targetPosition.addX(1);
+                break;
+            case dn:
+                targetPosition.addY(-1);
+                break;
+            case up:
+                targetPosition.addY(1);
+                break;
+        }
+        zombie.setTargetTilePosition(targetPosition);
+    }
+
 
     private void handleZombiesDrawing() {
         for (Zombie zombie : zombieManager.getZombies()) {
-
-            spriteBatch.draw(
-                zombieManager.getZombieFrame(Directions.dn, 1),
-                zombie.getPosition().getX() - viewParameters.getLeftOffset() - zombieManager.ZOMBIE_WIDTH / 2,
-                zombie.getPosition().getY() - zombieManager.ZOMBIE_HEIGHT / 2,
-                zombieManager.ZOMBIE_WIDTH,
-                zombieManager.ZOMBIE_HEIGHT);
+            drawZombieFromCenterPosition(zombie);
         }
     }
+
+    private void drawZombieFromCenterPosition(Zombie zombie) {
+        spriteBatch.draw(
+            zombieManager.getZombieFrame(Directions.dn, zombie.getFrameIndex()),
+            zombie.getPosition().getX() - viewParameters.getLeftOffset() - ((Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            zombie.getPosition().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            zombieManager.ZOMBIE_WIDTH,
+            zombieManager.ZOMBIE_HEIGHT);
+    }
+
 
     private void handleBullets() {
         handleBulletCreation();
@@ -391,7 +415,7 @@ public class Main extends ApplicationAdapter {
             while (skullIterator.hasNext()) {
                 Skull skull = skullIterator.next();
                 if (collisionDetector.isColliding(bullet.getPosition(), skull.getPosition())) {
-                    System.out.println("My bullet got you");
+                    //ystem.out.println("My bullet got you");
                     skullIterator.remove();
                     bulletIterator.remove();
                     randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
@@ -404,7 +428,7 @@ public class Main extends ApplicationAdapter {
                     randomSpeed = random.nextInt(3) + 1;
                     positionForNewSkull = getCenterPositionOfTile(new IntPosition(randomCol, randomRow));
                     newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.rt, randomSpeed, skullManager.SKULL_COLS_IN_FILE));
-                    scoreBoardManager.setKills(scoreBoardManager.getKills()+1);
+                    scoreBoardManager.setKills(scoreBoardManager.getKills() + 1);
                     break;
                 }
                 // to do implement this more
@@ -486,10 +510,21 @@ public class Main extends ApplicationAdapter {
                     break;
             }
 
-            bulletManager.addBullet(
-                startPositionBullet,
-                playerState.getPlayerPreviousDirection(),
-                7);
+            int ammo = scoreBoardManager.getAmmoLeft() - 1;
+            ammo = Math.max(ammo, 0);
+            scoreBoardManager.setAmmoLeft(ammo);
+            if (ammo > 0) {
+                if (!soundEffect.isPlaying()) {
+                    soundEffect.play();
+                }
+                scoreBoardManager.setAmmoFired(scoreBoardManager.getAmmoFired() + 1);
+                bulletManager.addBullet(
+                    startPositionBullet,
+                    playerState.getPlayerPreviousDirection(),
+                    7);
+            } else {
+                // todo implement this
+            }
         }
     }
 
