@@ -18,9 +18,11 @@ public class ZombieManager {
         loadZombieFrames();
     }
 
-    public void addZombie(IntPosition position) {
-        Zombie zombieToAdd = new Zombie(position,ZOMBIE_COLS_IN_FILE);
+    public void addZombie(IntPosition pixelPosition,IntPosition tilePosition) {
+        Zombie zombieToAdd = new Zombie(pixelPosition,ZOMBIE_COLS_IN_FILE);
+        zombieToAdd.setTargetTilePosition(tilePosition);
         zombies.add(zombieToAdd);
+        System.out.println("Addzombie targettile " + tilePosition);
     }
 
     public Sprite getZombieFrame(Directions direction, int index) {

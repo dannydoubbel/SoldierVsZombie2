@@ -8,23 +8,11 @@ public class Zombie extends BaseSprite {
 
     Zombie(IntPosition position,int MAX_FRAMES){
         this.MAX_FRAMES = MAX_FRAMES;
+        setPreviousDirection(Directions.rt);
         setPosition(position);
         setStepSize(3);
     }
 
-    public void changeFrameIndexByDirection() {
-        if (getDirection()==Directions.lt) {
-            setFrameIndex(getFrameIndex()+1);
-            if (getFrameIndex() > MAX_FRAMES - 1) {
-                setFrameIndex(0);
-            }
-        } else {
-            setFrameIndex(getFrameIndex()-1);
-            if (getFrameIndex()< 0) {
-                setFrameIndex(MAX_FRAMES-1);
-            }
-        }
-    }
 
     public boolean isWalking() {
         return isWalking;
@@ -32,5 +20,17 @@ public class Zombie extends BaseSprite {
 
     public void setWalking(boolean walking) {
         isWalking = walking;
+    }
+
+    @Override
+    public void setDirection(Directions direction) {
+        super.setDirection(direction);
+        if (direction != Directions.no) {
+            setPreviousDirection(direction);
+            return;
+        }
+        if (getPreviousDirection() == Directions.no) {
+            setPreviousDirection(Directions.rt);
+        }
     }
 }

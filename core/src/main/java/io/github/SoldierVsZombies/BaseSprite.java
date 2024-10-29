@@ -6,6 +6,8 @@ public class BaseSprite {
     private IntPosition targetTilePosition;
     private Directions direction;
 
+    private Directions previousDirection;
+
     private int stepSize=0;
 
     private int frameIndex = 0;
@@ -53,7 +55,7 @@ public class BaseSprite {
     }
 
     public void setTargetTilePosition(IntPosition targetTilePosition) {
-        this.targetTilePosition = targetTilePosition;
+        this.targetTilePosition = targetTilePosition.clone();
     }
 
     public Directions getDirection() {
@@ -62,6 +64,14 @@ public class BaseSprite {
 
     public void setDirection(Directions direction) {
         this.direction = direction;
+    }
+
+    public Directions getPreviousDirection() {
+        return previousDirection;
+    }
+
+    public void setPreviousDirection(Directions previousDirection) {
+        this.previousDirection = previousDirection;
     }
 
     public int getFrameIndex() {

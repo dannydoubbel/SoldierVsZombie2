@@ -72,5 +72,10 @@ public class IntPosition {
     public int hashCode() {
         return Objects.hash(x, y);
     }
+
+    @Override
+    public String toString() {
+        return "X = " + getX()+ " Y = " + getY();
+    }
 }
 
