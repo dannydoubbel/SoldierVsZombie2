@@ -46,7 +46,9 @@ public class Main extends ApplicationAdapter {
         Gdx.input.setInputProcessor(new MyInputProcessor());
     }
 
-    private static IntPosition getNextTilePos(IntPosition tilePosStart, IntPosition returnResultTilePos, int x1, int y1) {
+    private static IntPosition getNextTilePos(IntPosition tilePosStart,/* IntPosition returnResultTilePosBlaBla,*/ int x1, int y1) {
+        IntPosition returnResultTilePos = tilePosStart.clone();
+
         if (x1 != tilePosStart.getX()) {
             if (x1 > tilePosStart.getX()) {
                 returnResultTilePos.addX(+1);
@@ -410,7 +412,7 @@ public class Main extends ApplicationAdapter {
 
         int deepnessLevel = 2;
         do{
-            directOrthogonal = pathNextLevelStartHorizontal(tilePositionStart, tilePositionDestination, deepnessLevel);
+            directOrthogonal = pathNextLevel(tilePositionStart, tilePositionDestination, deepnessLevel);
             if (!directOrthogonal.equals(tilePositionStart)) {
                 return directOrthogonal;
             }
@@ -419,93 +421,92 @@ public class Main extends ApplicationAdapter {
         return new IntPosition(-1, -1);
             }
 
-    private IntPosition pathNextLevelStartHorizontal(IntPosition tilePosStart, IntPosition tilePosDestination, int deepnessLevel) {
-        IntDuoNumbers horizontalRange1 = getHorizontalWalkableRange(tilePosStart);
+    private IntPosition pathNextLevel(IntPosition tilePosStart, IntPosition tilePosDestination, int searchDeepnessLevel) {
         IntPosition toTestTilePos;
-        IntPosition returnResultTilePos = tilePosStart.clone();
+        IntDuoNumbers horizontalRange1 = getHorizontalWalkableRange(tilePosStart);
+        int y0 = tilePosStart.getY();
         int x1 = horizontalRange1.getLowest();
         do {
-            IntDuoNumbers verticalRange1 = getVerticalWalkableRange(new IntPosition(x1, tilePosStart.getY()));
+            IntDuoNumbers verticalRange1 = getVerticalWalkableRange(new IntPosition(x1, y0));
             int y1 = verticalRange1.getLowest();
             do {
                 toTestTilePos = new IntPosition(x1, y1);
                 if (toTestTilePos.equals(tilePosDestination)) {
-                    return getNextTilePos(tilePosStart, returnResultTilePos, x1, y1);
+                    return getNextTilePos(tilePosStart,  x1, y1);
                 }
-                if (deepnessLevel >=3) {
+                if (searchDeepnessLevel >=3) {
                     IntDuoNumbers horizontalRange2 = getHorizontalWalkableRange(new IntPosition(x1, y1));
                     int x2 = horizontalRange2.getLowest();
                     do {
-                        if (deepnessLevel==3) {
+                        if (searchDeepnessLevel==3) {
                             toTestTilePos = new IntPosition(x2, y1);
                             if (toTestTilePos.equals(tilePosDestination)) {
-                                return getNextTilePos(tilePosStart, returnResultTilePos, x1, y1);
+                                return getNextTilePos(tilePosStart,  x1, y1);
                             }
                         }
-                        if (deepnessLevel >= 4) {
+                        if (searchDeepnessLevel >= 4) {
                             IntDuoNumbers verticalRange2 = getVerticalWalkableRange(new IntPosition(x2, y1));
                             int y2 = verticalRange2.getLowest();
                             do {
-                                if (deepnessLevel==4) {
+                                if (searchDeepnessLevel==4) {
                                     toTestTilePos = new IntPosition(x2, y2);
                                     if (toTestTilePos.equals(tilePosDestination)) {
-                                        return getNextTilePos(tilePosStart, returnResultTilePos, x1, y1);
+                                        return getNextTilePos(tilePosStart,  x1, y1);
                                     }
                                 }
-                                if (deepnessLevel >=5) {
+                                if (searchDeepnessLevel >=5) {
                                     IntDuoNumbers horizontalRange3 = getHorizontalWalkableRange(new IntPosition(x2, y2));
                                     int x3 = horizontalRange3.getLowest();
                                     do {
-                                        if (deepnessLevel == 5) {
+                                        if (searchDeepnessLevel == 5) {
                                             toTestTilePos = new IntPosition(x3, y2);
                                             if (toTestTilePos.equals(tilePosDestination)) {
-                                                return getNextTilePos(tilePosStart, returnResultTilePos, x1, y1);
+                                                return getNextTilePos(tilePosStart,  x1, y1);
                                             }
                                         }
-                                        if (deepnessLevel >= 6) {
-                                            IntDuoNumbers verticalRange3 = getVerticalWalkableRange(new IntPosition(x3, 2));
+                                        if (searchDeepnessLevel >= 6) {
+                                            IntDuoNumbers verticalRange3 = getVerticalWalkableRange(new IntPosition(x3, y2));
                                             int y3 = verticalRange3.getLowest();
                                             do {
-                                                if (deepnessLevel == 6) {
+                                                if (searchDeepnessLevel == 6) {
                                                     toTestTilePos = new IntPosition(x3, y3);
                                                     if (toTestTilePos.equals(tilePosDestination)) {
-                                                        return getNextTilePos(tilePosStart, returnResultTilePos, x1, y1);
+                                                        return getNextTilePos(tilePosStart,  x1, y1);
                                                     }
                                                 }
-                                                if (deepnessLevel >= 7) {
+                                                if (searchDeepnessLevel >= 7) {
                                                     IntDuoNumbers horizontalRange4 = getHorizontalWalkableRange(new IntPosition(x3,y3));
                                                     int x4 = horizontalRange4.getLowest();
                                                     do {
-                                                        if (deepnessLevel==7) {
+                                                        if (searchDeepnessLevel==7) {
                                                             toTestTilePos = new IntPosition(x4, y3);
                                                             if (toTestTilePos.equals(tilePosDestination)) {
-                                                                return getNextTilePos(tilePosStart, returnResultTilePos, x1, y1);
+                                                                return getNextTilePos(tilePosStart,  x1, y1);
                                                             }
                                                         }
-                                                        if (deepnessLevel >=8) {
+                                                        if (searchDeepnessLevel >=8) {
                                                             IntDuoNumbers verticalRange4 = getVerticalWalkableRange(new IntPosition(x4,y3));
                                                             int y4 = verticalRange4.getLowest();
                                                             do {
-                                                                toTestTilePos = new IntPosition(x4,y3);
+                                                                toTestTilePos = new IntPosition(x4,y4);
                                                                 if (toTestTilePos.equals(tilePosDestination)) {
-                                                                    return getNextTilePos(tilePosStart, returnResultTilePos, x1, y1);
+                                                                    return getNextTilePos(tilePosStart,  x1, y1);
                                                                 }
                                                                 y4++;
                                                             } while (y4<=verticalRange4.getHighest());
-
-                                                        } // end if deepnessLevel >=8
+                                                        } // end if searchDeepnessLevel >=8
                                                         x4++;
                                                     } while (x4 <= horizontalRange4.getHighest());
-                                                } // end if (deepnessLevel >= 7) {
+                                                } // end if (searchDeepnessLevel >= 7) {
                                                 y3++;
                                             } while (y3 <= verticalRange3.getHighest());
-                                        } //end if (deepnessLevel >=6)
+                                        } //end if (searchDeepnessLevel >=6)
                                         x3++;
                                     } while (x3 <= horizontalRange3.getHighest());
-                                } //end if (deepnessLevel >= 5)
+                                } //end if (searchDeepnessLevel >= 5)
                                 y2++;
                             } while (y2 <= verticalRange2.getHighest());
-                        } // end if deepnessLevel >= 4
+                        } // end if searchDeepnessLevel >= 4
                         x2++;
                     } while (x2 <= horizontalRange2.getHighest());
                 } // end if deepnesslevel >= 3
@@ -658,8 +659,7 @@ public class Main extends ApplicationAdapter {
             zombie.getPosition().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             zombieManager.ZOMBIE_WIDTH,
             zombieManager.ZOMBIE_HEIGHT);
-        //System.out.println("Zombie target tile = " + zombie.getTargetTilePosition());
-        //System.out.println("Zombie pixel       = " + zombie.getPosition());
+
     }
 
 
