@@ -33,6 +33,7 @@ public class Main extends ApplicationAdapter {
     private SkullManager skullManager;
     private BulletManager bulletManager;
     private ZombieManager zombieManager;
+    private GraveManager graveManager;
     private ScoreBoardManager scoreBoardManager;
     private SharedVariables sharedVariables;
     private PressedKeys pressedKeys;
@@ -46,17 +47,17 @@ public class Main extends ApplicationAdapter {
         Gdx.input.setInputProcessor(new MyInputProcessor());
     }
 
-    private static IntPosition getNextTilePos(IntPosition tilePosStart,/* IntPosition returnResultTilePosBlaBla,*/ int x1, int y1) {
+    private static IntPosition getNextTilePos(IntPosition tilePosStart, IntPosition tilePosTarget/* int x1, int y1*/) {
         IntPosition returnResultTilePos = tilePosStart.clone();
 
-        if (x1 != tilePosStart.getX()) {
-            if (x1 > tilePosStart.getX()) {
+        if (tilePosTarget.getX() != tilePosStart.getX()) {
+            if (tilePosTarget.getX() > tilePosStart.getX()) {
                 returnResultTilePos.addX(+1);
             } else {
                 returnResultTilePos.addX(-1);
             }
         } else {
-            if (y1 > tilePosStart.getY()) {
+            if (tilePosTarget.getY() > tilePosStart.getY()) {
                 returnResultTilePos.addY(+1);
             } else {
                 returnResultTilePos.addY(-1);
@@ -73,6 +74,7 @@ public class Main extends ApplicationAdapter {
         bulletManager = new BulletManager();
         zombieManager = new ZombieManager();
         skullManager = new SkullManager();
+        graveManager = new GraveManager();
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
@@ -88,12 +90,16 @@ public class Main extends ApplicationAdapter {
 
     private void addInitialEnemies() {
         for (int lus = 0; lus < 10; lus++) {
-            IntPosition startTilePosition = Tiles.getRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 10, 20);
-            IntPosition startPixelPosition = getPixelPositionFromTileCenterPosition(startTilePosition);
-            zombieManager.addZombie(startPixelPosition, startTilePosition);
+            addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 10, 20);
         }
         skullManager.addSkull(new IntPosition(350, 350),
             Directions.lt, 1, skullManager.SKULL_COLS_IN_FILE);
+    }
+
+    private void addZombieAtRandomWalkablePositionAround(IntPosition startPosition, int minSteps, int maxSteps) {
+        IntPosition startTilePosition = Tiles.getRandomWalkablePositionAround(startPosition, minSteps, maxSteps);
+        IntPosition startPixelPosition = getPixelPositionFromTileCenterPosition(startTilePosition);
+        zombieManager.addZombie(startPixelPosition, startTilePosition);
     }
 
     private void initializePortals() {
@@ -154,6 +160,7 @@ public class Main extends ApplicationAdapter {
         handleBullets();
         handleZombies();
         handleSkulls();
+        handleGraves();
         if (!viewParameters.isDebugScreen()) drawPlayerFromCenterPosition();
 
         spriteBatch.end();
@@ -227,17 +234,15 @@ public class Main extends ApplicationAdapter {
         handleSkullsMovement();
         handleSkullFrames();
         handleSkullDrawing();
-        handleSkullCollision();
+        handleSkullPlayerCollision();
     }
 
-    private void handleSkullCollision() {
+    private void handleSkullPlayerCollision() {
         Iterator<Skull> iterator = skullManager.getSkulls().iterator();
         while (iterator.hasNext()) {
             Skull skull = iterator.next();
             if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), skull.getPosition())) {
-                //System.out.println("You're so dead");
-            } else {
-                //System.out.println("I will kill you");
+                System.out.println("Skull says : You're so dead");
             }
         }
     }
@@ -307,30 +312,55 @@ public class Main extends ApplicationAdapter {
         }
     }
 
+    private void handleGraves() {
+        handleGravesCountDown();
+        handleGravesDrawing();
+    }
+
+    private void handleGravesCountDown() {
+        Iterator<Grave> graveIterator = graveManager.getGraves().iterator();
+        while (graveIterator.hasNext()) {
+            Grave grave = graveIterator.next();
+            if (grave.isPastCountDown()) {
+                graveIterator.remove();
+            }
+        }
+    }
+
+    private void handleGravesDrawing() {
+        for (Grave grave : graveManager.getGraves()) {
+            drawGraveFromCenterPosition(grave);
+        }
+    }
+    private void drawGraveFromCenterPosition(Grave grave) {
+        spriteBatch.draw(
+            graveManager.getGraveFrame(),
+            grave.getPosition().getX() - viewParameters.getLeftOffset() - ((Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            grave.getPosition().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            graveManager.GRAVE_WIDTH,
+            graveManager.GRAVE_HEIGHT);
+    }
+
+
+
     private void handleZombies() {
-        handleZombiesStartup();
-        handleZombiesCenterToTile();
         handleZombieStartMovement();
         handleZombiesMovement();
         handleZombiesFrames();
         handleZombiesDrawing();
+        handleZombiePlayerCollision();
     }
 
-    private void handleZombiesStartup() {
-        for (Zombie zombie : zombieManager.getZombies()) {
-
-        }
-    }
-
-    private void handleZombiesCenterToTile() {
-        for (Zombie zombie : zombieManager.getZombies()) {
-            IntPosition pixelPosition = getTilePositionFromPixelPosition(zombie.getTargetTilePosition());
-            if (!zombie.isWalking()) {
-            } else { // blabla
-
+    private void handleZombiePlayerCollision() {
+        Iterator<Zombie> iterator = zombieManager.getZombies().iterator();
+        while (iterator.hasNext()) {
+            Zombie zombie = iterator.next();
+            if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), zombie.getPosition())) {
+                System.out.println("Zombie says : You're so dead");
             }
         }
     }
+
 
     private Directions getDirectionToGoTo(IntPosition startPos, IntPosition endPos) {
         if (startPos.getX() < endPos.getX()) {
@@ -455,6 +485,10 @@ public class Main extends ApplicationAdapter {
         return false;
     }
 
+    boolean isAtTargetDepthAndPosition(int demandDeepNessLevel, int currentDeepNessLevel, IntPosition primTilePos, IntPosition secTilePos) {
+        return (currentDeepNessLevel == demandDeepNessLevel && primTilePos.equals(secTilePos));
+    }
+
     private IntPosition pathNextLevel(IntPosition tilePosStart, IntPosition tilePosDestination, int searchDeepnessLevel) {
         final int MAX_STEPS = 100000;
         int currentSteps = 0;
@@ -467,83 +501,55 @@ public class Main extends ApplicationAdapter {
             int y1 = verticalRange1.getLowest();
             do {
                 toTestTilePos = new IntPosition(x1, y1);
+                IntPosition nextTilePos = getNextTilePos(tilePosStart, toTestTilePos);
                 if (toTestTilePos.equals(tilePosDestination)) {
-                    return getNextTilePos(tilePosStart, x1, y1);
+                    return getNextTilePos(tilePosStart, toTestTilePos);
                 }
                 if (searchDeepnessLevel >= 3) {
                     IntDuoNumbers horizontalRange2 = getHorizontalWalkableRange(new IntPosition(x1, y1));
                     int x2 = horizontalRange2.getLowest();
                     do {
-                        if (searchDeepnessLevel == 3) {
-                            toTestTilePos = new IntPosition(x2, y1);
-                            if (toTestTilePos.equals(tilePosDestination)) {
-                                return getNextTilePos(tilePosStart, x1, y1);
-                            }
-                        }
+                        if (isAtTargetDepthAndPosition(searchDeepnessLevel, 3, new IntPosition(x2, y1), tilePosDestination))
+                            return nextTilePos;
                         if (searchDeepnessLevel >= 4) {
                             IntDuoNumbers verticalRange2 = getVerticalWalkableRange(new IntPosition(x2, y1));
                             int y2 = verticalRange2.getLowest();
                             do {
-                                if (searchDeepnessLevel == 4) {
-                                    toTestTilePos = new IntPosition(x2, y2);
-                                    if (toTestTilePos.equals(tilePosDestination)) {
-                                        return getNextTilePos(tilePosStart, x1, y1);
-                                    }
-                                }
+                                if (isAtTargetDepthAndPosition(searchDeepnessLevel, 4, new IntPosition(x2, y2), tilePosDestination))
+                                    return nextTilePos;
                                 if (searchDeepnessLevel >= 5) {
                                     IntDuoNumbers horizontalRange3 = getHorizontalWalkableRange(new IntPosition(x2, y2));
                                     int x3 = horizontalRange3.getLowest();
                                     do {
-                                        if (searchDeepnessLevel == 5) {
-                                            toTestTilePos = new IntPosition(x3, y2);
-                                            if (toTestTilePos.equals(tilePosDestination)) {
-                                                return getNextTilePos(tilePosStart, x1, y1);
-                                            }
-                                        }
+                                        if (isAtTargetDepthAndPosition(searchDeepnessLevel, 5, new IntPosition(x3, y2), tilePosDestination))
+                                            return nextTilePos;
                                         if (searchDeepnessLevel >= 6) {
                                             IntDuoNumbers verticalRange3 = getVerticalWalkableRange(new IntPosition(x3, y2));
                                             int y3 = verticalRange3.getLowest();
                                             do {
-                                                if (searchDeepnessLevel == 6) {
-                                                    toTestTilePos = new IntPosition(x3, y3);
-                                                    if (toTestTilePos.equals(tilePosDestination)) {
-                                                        return getNextTilePos(tilePosStart, x1, y1);
-                                                    }
-                                                }
+                                                if (isAtTargetDepthAndPosition(searchDeepnessLevel, 6, new IntPosition(x3, y3), tilePosDestination))
+                                                    return nextTilePos;
                                                 if (searchDeepnessLevel >= 7) {
                                                     IntDuoNumbers horizontalRange4 = getHorizontalWalkableRange(new IntPosition(x3, y3));
                                                     int x4 = horizontalRange4.getLowest();
                                                     do {
-                                                        if (searchDeepnessLevel == 7) {
-                                                            toTestTilePos = new IntPosition(x4, y3);
-                                                            if (toTestTilePos.equals(tilePosDestination)) {
-                                                                return getNextTilePos(tilePosStart, x1, y1);
-                                                            }
-                                                        }
-
-
+                                                        if (isAtTargetDepthAndPosition(searchDeepnessLevel, 7, new IntPosition(x4, y3), tilePosDestination))
+                                                            return nextTilePos;
                                                         if (searchDeepnessLevel >= 8) {
                                                             IntDuoNumbers verticalRange4 = getVerticalWalkableRange(new IntPosition(x4, y3));
                                                             int y4 = verticalRange4.getLowest();
                                                             do {
-                                                                if (searchDeepnessLevel == 8) {
-                                                                    toTestTilePos = new IntPosition(x4, y4);
-                                                                    if (toTestTilePos.equals(tilePosDestination)) {
-                                                                        return getNextTilePos(tilePosStart, x1, y1);
-                                                                    }
-                                                                }
+                                                                if (isAtTargetDepthAndPosition(searchDeepnessLevel, 8, new IntPosition(x4, y4), tilePosDestination))
+                                                                    return nextTilePos;
                                                                 if (searchDeepnessLevel >= 9) {
                                                                     IntDuoNumbers horizontalRange5 = getHorizontalWalkableRange(new IntPosition(x4, y4));
                                                                     int x5 = horizontalRange5.getLowest();
                                                                     do {
-                                                                        toTestTilePos = new IntPosition(x5, y4);
-                                                                        if (toTestTilePos.equals(tilePosDestination)) {
-                                                                            return getNextTilePos(tilePosStart, x1, y1);
-                                                                        }
+                                                                        if (isAtTargetDepthAndPosition(searchDeepnessLevel, 9, new IntPosition(x5, y4), tilePosDestination))
+                                                                            return nextTilePos;
                                                                         x5++;
                                                                     } while (x5 < horizontalRange5.getHighest());
                                                                 }
-
                                                                 y4++;
                                                                 currentSteps++;
                                                             } while (currentSteps < MAX_STEPS && y4 <= verticalRange4.getHighest());
@@ -575,11 +581,9 @@ public class Main extends ApplicationAdapter {
             x1++;
             currentSteps++;
         } while (currentSteps < MAX_STEPS && x1 <= horizontalRange1.getHighest());
-        if (currentSteps >= MAX_STEPS) {
-            System.out.println("Stopped because of to many steps");
-        }
         return tilePosStart;
     }
+
 
     private IntPosition pathDirectHorizontalLine(IntPosition tilePosStart, IntPosition tilePosDestination) {
         IntPosition directOrthogonal = tilePosStart.clone();
@@ -723,7 +727,6 @@ public class Main extends ApplicationAdapter {
             zombie.getPosition().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             zombieManager.ZOMBIE_WIDTH,
             zombieManager.ZOMBIE_HEIGHT);
-
     }
 
 
@@ -737,6 +740,34 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleBulletsEnemyCollisions() {
+        handleBulletSkullCollisions();
+        handleBulletZombieCollisions();
+    }
+
+    private void handleBulletZombieCollisions() {
+        Iterator<Bullet> bulletIterator = bulletManager.getBullets().iterator();
+        while (bulletIterator.hasNext()) {
+            Bullet bullet = bulletIterator.next();
+            Iterator<Zombie> zombieIterator = zombieManager.getZombies().iterator();
+            while (zombieIterator.hasNext()) {
+                Zombie zombie = zombieIterator.next();
+                if (collisionDetector.isColliding(bullet.getPosition(), zombie.getPosition())) {
+
+                    graveManager.addGrave(zombie.getPosition(),1000);
+
+                    zombieIterator.remove();
+                    bulletIterator.remove();
+                    addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 5, 30);
+                    scoreBoardManager.setKills(scoreBoardManager.getKills() + 1);
+                    scoreBoardManager.setAmmoLeft(scoreBoardManager.getAmmoLeft() + 100);
+                    break;
+                }
+                // to do implement this more
+            }
+        }
+    }
+
+    private void handleBulletSkullCollisions() {
         Collection<Skull> newSkulls = new ArrayList<>(); // Store new skulls to be added later
         Random random = new Random();
         int randomCol;// =random.nextInt(351); // 351 is exclusive, so this generates numbers between 0 and 350 inclusive
@@ -762,6 +793,7 @@ public class Main extends ApplicationAdapter {
                     positionForNewSkull = getPixelPositionFromTileCenterPosition(new IntPosition(randomCol, randomRow));
                     newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.rt, randomSpeed, skullManager.SKULL_COLS_IN_FILE));
                     scoreBoardManager.setKills(scoreBoardManager.getKills() + 1);
+                    scoreBoardManager.setAmmoLeft(scoreBoardManager.getAmmoLeft() + 100);
                     break;
                 }
                 // to do implement this more

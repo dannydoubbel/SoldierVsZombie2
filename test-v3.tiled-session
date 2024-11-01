@@ -5,8 +5,20 @@
     },
     "activeFile": "",
     "expandedProjectPaths": [
+        "."
     ],
     "fileStates": {
+        "5z1KX.tsx": {
+            "scaleInDock": 1
+        },
+        "test-v3.tmx": {
+            "scale": 0.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 80,
+                "y": 351
+            }
+        }
     },
     "last.exportedFilePath": "C:/Test LIB GDX 3",
     "last.imagePath": "C:/Test LIB GDX 3/core/src/main/resources/images",
@@ -17,6 +29,7 @@
     ],
     "project": "test-v3.tiled-project",
     "recentFiles": [
+        "test-v3.tmx"
     ],
     "tileset.lastUsedFormat": "tsx"
 }

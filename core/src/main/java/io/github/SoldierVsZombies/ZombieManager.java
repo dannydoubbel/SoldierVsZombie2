@@ -22,7 +22,6 @@ public class ZombieManager {
         Zombie zombieToAdd = new Zombie(pixelPosition,ZOMBIE_COLS_IN_FILE);
         zombieToAdd.setTargetTilePosition(tilePosition);
         zombies.add(zombieToAdd);
-        //System.out.println("Addzombie targettile " + tilePosition);
     }
 
     public Sprite getZombieFrame(Directions direction, int index) {
