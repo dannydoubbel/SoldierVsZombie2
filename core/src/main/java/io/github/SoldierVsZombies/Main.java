@@ -87,9 +87,11 @@ public class Main extends ApplicationAdapter {
     }
 
     private void addInitialEnemies() {
-        IntPosition startTilePosition = new IntPosition(10, 9);
-        IntPosition startPixelPosition = getPixelPositionFromTileCenterPosition(startTilePosition);
-        zombieManager.addZombie(startPixelPosition, startTilePosition);
+        for (int lus = 0; lus < 10; lus++) {
+            IntPosition startTilePosition = Tiles.getRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 10, 20);
+            IntPosition startPixelPosition = getPixelPositionFromTileCenterPosition(startTilePosition);
+            zombieManager.addZombie(startPixelPosition, startTilePosition);
+        }
         skullManager.addSkull(new IntPosition(350, 350),
             Directions.lt, 1, skullManager.SKULL_COLS_IN_FILE);
     }
@@ -331,7 +333,6 @@ public class Main extends ApplicationAdapter {
     }
 
     private Directions getDirectionToGoTo(IntPosition startPos, IntPosition endPos) {
-        //System.out.print("Vertical   start " + startPos+" destination " + endPos+" player "+ playerState.getPlayerTilePosition());
         if (startPos.getX() < endPos.getX()) {
             return Directions.rt;
         }
@@ -347,38 +348,60 @@ public class Main extends ApplicationAdapter {
         return Directions.no;
     }
 
-    private void showMoreThanOneTileMove(IntPosition startPos, IntPosition endPos) {
-        int diffHor = Math.abs(startPos.getX() - endPos.getX());
-        int diffVer = Math.abs(startPos.getY() - endPos.getY());
-        if (diffHor > 1) {
-            //System.out.println("Fuck horizontal");
-        }
-        if (diffVer > 1) {
-            //System.out.println("Fuck vertical");
-        }
-    }
-
     private void handleZombieStartMovement() {
+        Random random = new Random();
         for (Zombie zombie : zombieManager.getZombies()) {
-            if (!zombie.isWalking()) {
-                IntPosition tilePosZombie = getTilePositionFromPixelPosition(new IntPosition(zombie.getPosition()));
-                IntPosition tilePosPlayer = playerState.getPlayerTilePosition();
+            if (random.nextInt(10) != 8 && random.nextInt(6) != 4) {
+                if (!zombie.isWalking()) {
+                    IntPosition tilePosZombie = getTilePositionFromPixelPosition(new IntPosition(zombie.getPosition()));
+                    IntPosition tilePosPlayer = playerState.getPlayerTilePosition();
 
-                IntPosition resultPosition = findPath(tilePosZombie, tilePosPlayer);
+                    IntPosition resultPosition;
+                    Directions newDirection;
+                    if (random.nextInt(10) == 6) { // do stupid
+                        resultPosition = getRandomlyPath(tilePosZombie);
+                    } else {
+                        resultPosition = findPath(tilePosZombie, tilePosPlayer);
+                    }
+                    newDirection = getDirectionToGoTo(tilePosZombie, resultPosition);
 
-                if (!resultPosition.equals(tilePosZombie)) {
-                    Directions newDirection = getDirectionToGoTo(tilePosZombie, resultPosition);
-                    if (!newDirection.equals(Directions.no)) {
-                        if (tiles.isTileWalkable(resultPosition)) {
-                            showMoreThanOneTileMove(tilePosZombie, resultPosition);
-                            zombie.setTargetTilePosition(resultPosition);
-                            zombie.setDirection(newDirection);
-                            zombie.setWalking(true);
+                    if (!resultPosition.equals(tilePosZombie)) {
+                        if (!newDirection.equals(Directions.no)) {
+                            if (tiles.isTileWalkable(resultPosition)) {
+                                if (!isAnotherZombieOnTheSameTargetTile(zombie, resultPosition)) {
+                                    zombie.setTargetTilePosition(resultPosition);
+                                    zombie.setDirection(newDirection);
+                                    zombie.setWalking(true);
+                                }
+
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    private IntPosition getRandomlyPath(IntPosition tilePos) {
+        Random random = new Random();
+        IntPosition resultPosition = tilePos.clone();
+        switch (random.nextInt(4)) {
+            case 0:
+                resultPosition.addY(1);
+                break;
+            case 1:
+                resultPosition.addX(1);
+                break;
+            case 2:
+                resultPosition.addX(-1);
+                break;
+            default:
+                resultPosition.addY(-1);
+        }
+        if (tiles.isTileWalkable(resultPosition)) {
+            return resultPosition;
+        }
+        return tilePos;
     }
 
     private IntPosition findPath(IntPosition tileStartPos, IntPosition tileDestinationPos) {
@@ -388,7 +411,6 @@ public class Main extends ApplicationAdapter {
             return earlyDetectionPath;
         }
         return tileStartPos;
-
     }
 
     private IntPosition findEarlyPaths(IntPosition tilePositionStart, IntPosition tilePositionDestination) {
@@ -411,17 +433,31 @@ public class Main extends ApplicationAdapter {
         }
 
         int deepnessLevel = 2;
-        do{
+        do {
             directOrthogonal = pathNextLevel(tilePositionStart, tilePositionDestination, deepnessLevel);
             if (!directOrthogonal.equals(tilePositionStart)) {
                 return directOrthogonal;
             }
             deepnessLevel++;
-        } while (deepnessLevel<=8);
+        } while (deepnessLevel <= 9);
         return new IntPosition(-1, -1);
+    }
+
+
+    private boolean isAnotherZombieOnTheSameTargetTile(Zombie zombieToTest, IntPosition tilePosToTest) {
+        for (Zombie zombie : zombieManager.getZombies()) {
+            if (!zombie.equals(zombieToTest)) {
+                if (tilePosToTest.equals(zombie.getTargetTilePosition())) {
+                    return true;
+                }
             }
+        }
+        return false;
+    }
 
     private IntPosition pathNextLevel(IntPosition tilePosStart, IntPosition tilePosDestination, int searchDeepnessLevel) {
+        final int MAX_STEPS = 100000;
+        int currentSteps = 0;
         IntPosition toTestTilePos;
         IntDuoNumbers horizontalRange1 = getHorizontalWalkableRange(tilePosStart);
         int y0 = tilePosStart.getY();
@@ -432,36 +468,36 @@ public class Main extends ApplicationAdapter {
             do {
                 toTestTilePos = new IntPosition(x1, y1);
                 if (toTestTilePos.equals(tilePosDestination)) {
-                    return getNextTilePos(tilePosStart,  x1, y1);
+                    return getNextTilePos(tilePosStart, x1, y1);
                 }
-                if (searchDeepnessLevel >=3) {
+                if (searchDeepnessLevel >= 3) {
                     IntDuoNumbers horizontalRange2 = getHorizontalWalkableRange(new IntPosition(x1, y1));
                     int x2 = horizontalRange2.getLowest();
                     do {
-                        if (searchDeepnessLevel==3) {
+                        if (searchDeepnessLevel == 3) {
                             toTestTilePos = new IntPosition(x2, y1);
                             if (toTestTilePos.equals(tilePosDestination)) {
-                                return getNextTilePos(tilePosStart,  x1, y1);
+                                return getNextTilePos(tilePosStart, x1, y1);
                             }
                         }
                         if (searchDeepnessLevel >= 4) {
                             IntDuoNumbers verticalRange2 = getVerticalWalkableRange(new IntPosition(x2, y1));
                             int y2 = verticalRange2.getLowest();
                             do {
-                                if (searchDeepnessLevel==4) {
+                                if (searchDeepnessLevel == 4) {
                                     toTestTilePos = new IntPosition(x2, y2);
                                     if (toTestTilePos.equals(tilePosDestination)) {
-                                        return getNextTilePos(tilePosStart,  x1, y1);
+                                        return getNextTilePos(tilePosStart, x1, y1);
                                     }
                                 }
-                                if (searchDeepnessLevel >=5) {
+                                if (searchDeepnessLevel >= 5) {
                                     IntDuoNumbers horizontalRange3 = getHorizontalWalkableRange(new IntPosition(x2, y2));
                                     int x3 = horizontalRange3.getLowest();
                                     do {
                                         if (searchDeepnessLevel == 5) {
                                             toTestTilePos = new IntPosition(x3, y2);
                                             if (toTestTilePos.equals(tilePosDestination)) {
-                                                return getNextTilePos(tilePosStart,  x1, y1);
+                                                return getNextTilePos(tilePosStart, x1, y1);
                                             }
                                         }
                                         if (searchDeepnessLevel >= 6) {
@@ -471,49 +507,77 @@ public class Main extends ApplicationAdapter {
                                                 if (searchDeepnessLevel == 6) {
                                                     toTestTilePos = new IntPosition(x3, y3);
                                                     if (toTestTilePos.equals(tilePosDestination)) {
-                                                        return getNextTilePos(tilePosStart,  x1, y1);
+                                                        return getNextTilePos(tilePosStart, x1, y1);
                                                     }
                                                 }
                                                 if (searchDeepnessLevel >= 7) {
-                                                    IntDuoNumbers horizontalRange4 = getHorizontalWalkableRange(new IntPosition(x3,y3));
+                                                    IntDuoNumbers horizontalRange4 = getHorizontalWalkableRange(new IntPosition(x3, y3));
                                                     int x4 = horizontalRange4.getLowest();
                                                     do {
-                                                        if (searchDeepnessLevel==7) {
+                                                        if (searchDeepnessLevel == 7) {
                                                             toTestTilePos = new IntPosition(x4, y3);
                                                             if (toTestTilePos.equals(tilePosDestination)) {
-                                                                return getNextTilePos(tilePosStart,  x1, y1);
+                                                                return getNextTilePos(tilePosStart, x1, y1);
                                                             }
                                                         }
-                                                        if (searchDeepnessLevel >=8) {
-                                                            IntDuoNumbers verticalRange4 = getVerticalWalkableRange(new IntPosition(x4,y3));
+
+
+                                                        if (searchDeepnessLevel >= 8) {
+                                                            IntDuoNumbers verticalRange4 = getVerticalWalkableRange(new IntPosition(x4, y3));
                                                             int y4 = verticalRange4.getLowest();
                                                             do {
-                                                                toTestTilePos = new IntPosition(x4,y4);
-                                                                if (toTestTilePos.equals(tilePosDestination)) {
-                                                                    return getNextTilePos(tilePosStart,  x1, y1);
+                                                                if (searchDeepnessLevel == 8) {
+                                                                    toTestTilePos = new IntPosition(x4, y4);
+                                                                    if (toTestTilePos.equals(tilePosDestination)) {
+                                                                        return getNextTilePos(tilePosStart, x1, y1);
+                                                                    }
                                                                 }
+                                                                if (searchDeepnessLevel >= 9) {
+                                                                    IntDuoNumbers horizontalRange5 = getHorizontalWalkableRange(new IntPosition(x4, y4));
+                                                                    int x5 = horizontalRange5.getLowest();
+                                                                    do {
+                                                                        toTestTilePos = new IntPosition(x5, y4);
+                                                                        if (toTestTilePos.equals(tilePosDestination)) {
+                                                                            return getNextTilePos(tilePosStart, x1, y1);
+                                                                        }
+                                                                        x5++;
+                                                                    } while (x5 < horizontalRange5.getHighest());
+                                                                }
+
                                                                 y4++;
-                                                            } while (y4<=verticalRange4.getHighest());
+                                                                currentSteps++;
+                                                            } while (currentSteps < MAX_STEPS && y4 <= verticalRange4.getHighest());
                                                         } // end if searchDeepnessLevel >=8
+
                                                         x4++;
-                                                    } while (x4 <= horizontalRange4.getHighest());
+                                                        currentSteps++;
+                                                    } while (currentSteps < MAX_STEPS && x4 <= horizontalRange4.getHighest());
                                                 } // end if (searchDeepnessLevel >= 7) {
                                                 y3++;
-                                            } while (y3 <= verticalRange3.getHighest());
+                                                currentSteps++;
+                                            } while (currentSteps < MAX_STEPS && y3 <= verticalRange3.getHighest());
                                         } //end if (searchDeepnessLevel >=6)
                                         x3++;
-                                    } while (x3 <= horizontalRange3.getHighest());
+                                        currentSteps++;
+                                    } while (currentSteps < MAX_STEPS && x3 <= horizontalRange3.getHighest());
                                 } //end if (searchDeepnessLevel >= 5)
                                 y2++;
-                            } while (y2 <= verticalRange2.getHighest());
+                                currentSteps++;
+                            } while (currentSteps < MAX_STEPS && y2 <= verticalRange2.getHighest());
                         } // end if searchDeepnessLevel >= 4
                         x2++;
-                    } while (x2 <= horizontalRange2.getHighest());
+                        currentSteps++;
+                    } while (currentSteps < MAX_STEPS && x2 <= horizontalRange2.getHighest());
                 } // end if deepnesslevel >= 3
                 y1++;
-            } while (y1 <= verticalRange1.getHighest());
+                currentSteps++;
+            } while (currentSteps < MAX_STEPS && y1 <= verticalRange1.getHighest());
             x1++;
-        } while (x1 <= horizontalRange1.getHighest());
+            currentSteps++;
+        } while (currentSteps < MAX_STEPS && x1 <= horizontalRange1.getHighest());
+        if (currentSteps >= MAX_STEPS) {
+            System.out.println("Stopped because of to many steps");
+        }
         return tilePosStart;
     }
 
@@ -713,7 +777,6 @@ public class Main extends ApplicationAdapter {
             IntPosition positionToTest = getTilePositionFromPixelPosition(bullet.getPosition());
             if (!tiles.isTileWalkable(positionToTest)) {
                 iterator.remove();
-                continue;
             }
             // to do implement this more
         }

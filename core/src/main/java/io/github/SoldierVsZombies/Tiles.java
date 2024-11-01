@@ -6,7 +6,10 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
+
+import static java.lang.Math.abs;
 
 public class Tiles {
     public static final int TILE_WIDTH = 32;
@@ -47,13 +50,43 @@ public class Tiles {
     }
 
     public boolean isTileWalkable(int XPosTile, int YPosTile) {
-
+        if (XPosTile < 0 || YPosTile < 0) return false;
+        if (XPosTile >= TILE_MAP_COLS || YPosTile >= TILE_MAP_ROWS) return false;
         return WALKABLE_TILES.contains(getBackgroundTileMap()[XPosTile][YPosTile]);
     }
     public boolean isTileWalkable(IntPosition tilePos) {
-
+        if (tilePos.getX() < 0 || tilePos.getY() < 0) return false;
+        if ( tilePos.getX() >= TILE_MAP_COLS || tilePos.getY() >= TILE_MAP_ROWS) return false;
         return WALKABLE_TILES.contains(getBackgroundTileMap()[tilePos.getX()][tilePos.getY()]);
     }
+
+    public static IntPosition getRandomWalkablePositionAround(IntPosition start, int minSteps,int maxSteps) {
+        Random random = new Random();
+        int xPlayer = start.getX();
+        int yPlayer = start.getY();
+
+        IntPosition newPosition;
+        int maxAttempts = 100;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            // Randomize positive/negative offset around player
+            int randomX = abs(xPlayer + (random.nextBoolean() ? 1 : -1) * (minSteps + random.nextInt(maxSteps - minSteps)));
+            int randomY = abs(yPlayer + (random.nextBoolean() ? 1 : -1) * (minSteps + random.nextInt(maxSteps - minSteps)));
+                newPosition = new IntPosition(randomX, randomY);
+                //System.out.println("Testing position : " + newPosition);
+                if (instance.isTileWalkable(randomX, randomY)) {
+                    return newPosition;
+                }
+
+        }
+        System.out.println("No walkable spot found within attempts");
+        return start;
+    }
+
+
+
+
+
 
     public int[][] getBackgroundTileMap() {
 
