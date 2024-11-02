@@ -173,9 +173,7 @@ public class ScoreBoardManager  {
         }, 0, 1, TimeUnit.SECONDS); // Execute every second  ignore the error warning, it's a IntelliJ bug
     }
 
-    public Float getEfficiency() {
-        return efficiency;
-    }
+
 
     public void setEfficiency(Float efficiency) {
         this.efficiency = efficiency;

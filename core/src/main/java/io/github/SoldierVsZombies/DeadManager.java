@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class DeadManager {
 
@@ -33,6 +34,18 @@ public class DeadManager {
     public ArrayList<Dead> getAllTheDead() {
         return allTheDead;
     }
+
+
+    public void handleGravesCountDown() {
+        Iterator<Dead> deadsIterator = getAllTheDead().iterator();
+        while (deadsIterator.hasNext()) {
+            Dead dead = deadsIterator.next();
+            if (dead.isBeyondLifeTime()) {
+                deadsIterator.remove();
+            }
+        }
+    }
+
 
     void loadDeadFrames() {
         loadZombieDeadFrames();

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class SkullManager {
+    private final CollisionDetector collisionDetector=CollisionDetector.getInstance();
 
 
     public final int SKULL_ROWS_IN_FILE = 1;
@@ -33,6 +34,31 @@ public class SkullManager {
         for (Skull skullToAdd :skullsToAdd) {
             skulls.add(skullToAdd);
         }
+    }
+
+    public void handleSkullFramesCycles() {
+        for (Skull skull : getSkulls()) {
+            int waitCycli = skull.getWaitCycli() - 1;
+            if (waitCycli <= 0) {
+                skull.changeFrameIndexByDirection();
+                waitCycli = skull.RESET_TIME_VALUE;
+            }
+            skull.setWaitCycli(waitCycli);
+        }
+    }
+
+    public ArrayList<Skull>  getCollidingZombiesWithPixelPos(IntPosition pixelPosToCollideWith) {
+        ArrayList<Skull> collidingSkulls = new ArrayList<>();
+        for (Skull skull : getSkulls()) {
+            if (isSkullCollidingWithPixelPos(skull,pixelPosToCollideWith)) {
+                collidingSkulls.add(skull);
+            }
+        }
+        return collidingSkulls;
+    }
+
+    private boolean isSkullCollidingWithPixelPos(Skull skull, IntPosition pixelPosToCollideWith) {
+        return collisionDetector.isColliding(pixelPosToCollideWith, skull.getPosition());
     }
 
     public Sprite getSkullFrame(int index) {

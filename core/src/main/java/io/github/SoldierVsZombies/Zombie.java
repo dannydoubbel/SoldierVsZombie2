@@ -22,6 +22,12 @@ public class Zombie extends BaseSprite {
         isWalking = walking;
     }
 
+    public void startWalking(IntPosition newTargetTilePosition,Directions newDirection){
+        setTargetTilePosition(newTargetTilePosition);
+        setDirection(newDirection);
+        setWalking(true);
+    }
+
     @Override
     public void setDirection(Directions direction) {
         super.setDirection(direction);

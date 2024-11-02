@@ -12,20 +12,18 @@ public class BulletManager {
     public final int BULLET_HEIGHT = 64;
 
     private final int WAIT_CYCLES = 10;
-
-    private int waitCylesToAddBullets=0;
-    private Sprite[] bulletFrames;
-
     private final ArrayList<Bullet> bullets = new ArrayList<>();
+    private int waitCylesToAddBullets = 0;
+    private Sprite[] bulletFrames;
 
     BulletManager() {
         loadBulletFrames();
     }
 
-    public void addBullet(IntPosition position,Directions direction,int stepSize) {
+    public void addBullet(IntPosition position, Directions direction, int stepSize) {
         waitCylesToAddBullets--;
         waitCylesToAddBullets = Math.max(waitCylesToAddBullets, 0);
-        if (waitCylesToAddBullets==0) {
+        if (waitCylesToAddBullets == 0) {
             Bullet bulletToAdd = new Bullet(position.clone(), direction, stepSize);
             bullets.add(bulletToAdd);
             waitCylesToAddBullets = WAIT_CYCLES;
@@ -40,6 +38,11 @@ public class BulletManager {
         return bullets;
     }
 
+    public void handleBulletMovement() {
+        for (Bullet bullet : getBullets()) {
+            bullet.move();
+        }
+    }
 
 
     void loadBulletFrames() {
@@ -51,7 +54,7 @@ public class BulletManager {
         for (int col = 0; col < TILE_SOURCE_COLS; col++) {
             // the image is here, transfer writeable image to image
             bulletFrames[col] = new Sprite(fullFile,
-                col*BULLET_WIDTH, 0, BULLET_WIDTH, BULLET_HEIGHT);
+                col * BULLET_WIDTH, 0, BULLET_WIDTH, BULLET_HEIGHT);
         }
     }
 }

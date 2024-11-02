@@ -22,6 +22,7 @@ public class IntPosition {
         this.y = y;
     }
 
+
     public int getX() {
         return x;
     }

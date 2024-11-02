@@ -8,18 +8,9 @@ public class ViewParameters {
     private float zoomValue = 1;
     private int leftOffset = 0; // background tiles are drawn from the left 0 + leftOffset pixels
     private int leftMargin = 100; // walking position main figure left margin in the window
-    private boolean debugScreen = false;
 
     ViewParameters(){
         setUpWindowMargins();
-    }
-
-    public boolean isDebugScreen() {
-        return debugScreen;
-    }
-
-    public void setDebugScreen(boolean debugScreen) {
-        this.debugScreen = debugScreen;
     }
 
     public float getZoomValue() {

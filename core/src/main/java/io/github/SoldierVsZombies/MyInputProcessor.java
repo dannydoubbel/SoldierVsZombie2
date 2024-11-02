@@ -47,7 +47,6 @@ public class MyInputProcessor implements InputProcessor {
                 pressedKeys.zoomOut = true;
                 break;
             case Input.Keys.INSERT:
-                viewParameters.setDebugScreen(!viewParameters.isDebugScreen());
                 break;
             case Input.Keys.SPACE:
                 pressedKeys.fire = true;

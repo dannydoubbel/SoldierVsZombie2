@@ -6,6 +6,8 @@ public class PortalMap {
     private IntPosition entryPosition;
     private IntPosition outComePosition;
 
+    private long lastTimeUsedInMiliSeconds; // todo implement this
+
     public PortalMap(IntPosition entryPosition, IntPosition outComePosition) {
         this.entryPosition = entryPosition;
         this.outComePosition = outComePosition;

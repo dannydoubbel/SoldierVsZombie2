@@ -14,6 +14,9 @@ public class ZombieManager {
     private final ArrayList<Zombie> zombies = new ArrayList<>();
     private Sprite[][] zombieFrames;
 
+    private final CollisionDetector collisionDetector=CollisionDetector.getInstance();
+
+
     ZombieManager() {
         loadZombieFrames();
     }
@@ -23,6 +26,42 @@ public class ZombieManager {
         zombieToAdd.setTargetTilePosition(tilePosition);
         zombies.add(zombieToAdd);
     }
+/*
+    public boolean isAnotherZombieOnTheSameTargetTile(Zombie zombieToTest, IntPosition tilePosToTest) {
+        for (Zombie zombie : getZombies()) {
+            if (!zombie.equals(zombieToTest)) {
+                if (tilePosToTest.equals(zombie.getTargetTilePosition())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }*/
+    public boolean isTargetTileOccupiedByOtherZombie(Zombie currentZombie, IntPosition targetTile) {
+        for (Zombie zombie : getZombies()) {
+            if (!zombie.equals(currentZombie) && targetTile.equals(zombie.getTargetTilePosition())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public ArrayList<Zombie> getCollidingZombiesWithPixelPos(IntPosition pixelPosToCollideWith) {
+        ArrayList<Zombie> collidingZombies = new ArrayList<>();
+        for (Zombie zombie : getZombies()) {
+            if (isZombieCollidingWithPixelPos(zombie,pixelPosToCollideWith)) {
+                collidingZombies.add(zombie);
+            }
+        }
+        return collidingZombies;
+    }
+
+    private boolean isZombieCollidingWithPixelPos(Zombie zombie, IntPosition pixelPosToCollideWith) {
+        return collisionDetector.isColliding(pixelPosToCollideWith, zombie.getPosition());
+    }
+
+
+
 
     public Sprite getZombieFrame(Directions direction, int index) {
         return zombieFrames[direction.getValue() - 1][index];
