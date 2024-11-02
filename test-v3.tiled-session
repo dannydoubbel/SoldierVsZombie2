@@ -3,13 +3,19 @@
         "height": 4300,
         "width": 2
     },
-    "activeFile": "",
+    "activeFile": "versie2.tmj",
     "expandedProjectPaths": [
         "."
     ],
+    "file.lastUsedOpenFilter": "Alle Bestanden (*)",
     "fileStates": {
         "5z1KX.tsx": {
-            "scaleInDock": 1
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "platform1.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
         },
         "test-v3.tmx": {
             "scale": 0.5,
@@ -17,6 +23,14 @@
             "viewCenter": {
                 "x": 80,
                 "y": 351
+            }
+        },
+        "versie2.tmj": {
+            "scale": 0.75,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 2412,
+                "y": 398
             }
         }
     },
@@ -26,9 +40,15 @@
     "map.lastUsedFormat": "json",
     "map.width": 100,
     "openFiles": [
+        "platform1.tsx",
+        "5z1KX.tsx",
+        "versie2.tmj"
     ],
     "project": "test-v3.tiled-project",
     "recentFiles": [
+        "platform1.tsx",
+        "5z1KX.tsx",
+        "versie2.tmj",
         "test-v3.tmx"
     ],
     "tileset.lastUsedFormat": "tsx"

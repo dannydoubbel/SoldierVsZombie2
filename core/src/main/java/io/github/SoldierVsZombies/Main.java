@@ -21,19 +21,21 @@ import java.util.Random;
  */
 public class Main extends ApplicationAdapter {
     static boolean justOnce = false;
+    static boolean justOnce2 = false;
     private SpriteBatch spriteBatch;
     //private Sprite[] sourceBackgroundTiles;
     private OrthographicCamera camera;
     private Viewport viewport;
     private ShapeRenderer shapeRenderer;
     private Music backgroundMusic;
-    private Music soundEffect;
+    private Music soundEffectShot;
+    private Music soundEffectZombieIsShot;
 
     private CollisionDetector collisionDetector;
     private SkullManager skullManager;
     private BulletManager bulletManager;
     private ZombieManager zombieManager;
-    private GraveManager graveManager;
+    private DeadManager deadManager;
     private ScoreBoardManager scoreBoardManager;
     private SharedVariables sharedVariables;
     private PressedKeys pressedKeys;
@@ -74,7 +76,7 @@ public class Main extends ApplicationAdapter {
         bulletManager = new BulletManager();
         zombieManager = new ZombieManager();
         skullManager = new SkullManager();
-        graveManager = new GraveManager();
+        deadManager = new DeadManager();
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
@@ -155,6 +157,10 @@ public class Main extends ApplicationAdapter {
             splitUpAndRearangePNGs.splitUpAndReArrangeHelper();
             justOnce = false;
         }
+        if (justOnce2) {
+            AddTransparantCrossInPNG addTransparantCrossInPNG = new AddTransparantCrossInPNG();
+            justOnce2 = false;
+        }
 
         drawBackground();
         handleBullets();
@@ -174,7 +180,8 @@ public class Main extends ApplicationAdapter {
     public void dispose() {
         spriteBatch.dispose();
         backgroundMusic.dispose();
-        soundEffect.dispose();
+        soundEffectShot.dispose();
+        soundEffectZombieIsShot.dispose();
     }
 
     private void updateWindowTitle() {
@@ -201,7 +208,8 @@ public class Main extends ApplicationAdapter {
 
     void setupSoundRelatedStuff() {
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("sound/music.mp3"));
-        soundEffect = Gdx.audio.newMusic(Gdx.files.internal("sound/gun-single.mp3"));
+        soundEffectShot = Gdx.audio.newMusic(Gdx.files.internal("sound/gun-single.mp3"));
+        soundEffectZombieIsShot = Gdx.audio.newMusic(Gdx.files.internal("sound/strange_laugh.mp3"));
         backgroundMusic.play();
         backgroundMusic.setLooping(true); // Loop the background music
     }
@@ -318,27 +326,27 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleGravesCountDown() {
-        Iterator<Grave> graveIterator = graveManager.getGraves().iterator();
+        Iterator<Dead> graveIterator = deadManager.getAllTheDead().iterator();
         while (graveIterator.hasNext()) {
-            Grave grave = graveIterator.next();
-            if (grave.isPastCountDown()) {
+            Dead dead = graveIterator.next();
+            if (dead.isBeyondLifeTime()) {
                 graveIterator.remove();
             }
         }
     }
 
     private void handleGravesDrawing() {
-        for (Grave grave : graveManager.getGraves()) {
-            drawGraveFromCenterPosition(grave);
+        for (Dead dead : deadManager.getAllTheDead()) {
+            drawGraveFromCenterPosition(dead);
         }
     }
-    private void drawGraveFromCenterPosition(Grave grave) {
+    private void drawGraveFromCenterPosition(Dead dead) {
         spriteBatch.draw(
-            graveManager.getGraveFrame(),
-            grave.getPosition().getX() - viewParameters.getLeftOffset() - ((Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            grave.getPosition().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            graveManager.GRAVE_WIDTH,
-            graveManager.GRAVE_HEIGHT);
+            deadManager.getDeadFrame(dead),
+            dead.getPosition().getX() - viewParameters.getLeftOffset() - ((Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            dead.getPosition().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            deadManager.DEAD_WIDTH,
+            deadManager.DEAD_HEIGHT);
     }
 
 
@@ -753,8 +761,9 @@ public class Main extends ApplicationAdapter {
                 Zombie zombie = zombieIterator.next();
                 if (collisionDetector.isColliding(bullet.getPosition(), zombie.getPosition())) {
 
-                    graveManager.addGrave(zombie.getPosition(),1000);
-
+                    deadManager.addDead(new Dead(DeadType.DEAD_ZOMBIE, zombie.getPosition(),1000));
+                    soundEffectZombieIsShot.setVolume(100);
+                    soundEffectZombieIsShot.play();
                     zombieIterator.remove();
                     bulletIterator.remove();
                     addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 5, 30);
@@ -780,6 +789,7 @@ public class Main extends ApplicationAdapter {
             while (skullIterator.hasNext()) {
                 Skull skull = skullIterator.next();
                 if (collisionDetector.isColliding(bullet.getPosition(), skull.getPosition())) {
+                    deadManager.addDead(new Dead(DeadType.DEAD_SKULL,skull.getPosition(),1000));
                     skullIterator.remove();
                     bulletIterator.remove();
                     randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
@@ -878,8 +888,8 @@ public class Main extends ApplicationAdapter {
             ammo = Math.max(ammo, 0);
             scoreBoardManager.setAmmoLeft(ammo);
             if (ammo > 0) {
-                if (!soundEffect.isPlaying()) {
-                    soundEffect.play();
+                if (!soundEffectShot.isPlaying()) {
+                    soundEffectShot.play();
                 }
                 scoreBoardManager.setAmmoFired(scoreBoardManager.getAmmoFired() + 1);
                 bulletManager.addBullet(
