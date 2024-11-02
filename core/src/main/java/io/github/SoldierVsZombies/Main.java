@@ -45,7 +45,7 @@ public class Main extends ApplicationAdapter {
     private PlayerState playerState;
     private ViewParameters viewParameters;
     private Tiles tiles;
-    private Portals portals;
+    private PortalMapManager portalMapManager;
 
     private static void setUpInputRelatedStuff() {
         Gdx.input.setInputProcessor(new MyInputProcessor());
@@ -91,7 +91,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void setPlayerInitialPosition() {
-        playerState.setPlayerCenterPos(getPixelPositionFromTileCenterPosition(new IntPosition(11, 5)));
+        playerState.setPlayerCenterPos(getPixelPosFromTileCenterPos(new IntPosition(11, 5)));
     }
 
     private void addInitialEnemies() {
@@ -104,13 +104,13 @@ public class Main extends ApplicationAdapter {
 
     private void addZombieAtRandomWalkablePositionAround(IntPosition startPosition, int minSteps, int maxSteps) {
         IntPosition startTilePosition = Tiles.getRandomWalkablePositionAround(startPosition, minSteps, maxSteps);
-        IntPosition startPixelPosition = getPixelPositionFromTileCenterPosition(startTilePosition);
+        IntPosition startPixelPosition = getPixelPosFromTileCenterPos(startTilePosition);
         zombieManager.addZombie(startPixelPosition, startTilePosition);
     }
 
     private void initializePortals() {
 
-        portals = new Portals();
+        portalMapManager = new PortalMapManager();
     }
 
     private void initializeGameComponents() {
@@ -151,7 +151,9 @@ public class Main extends ApplicationAdapter {
         spriteBatch.setProjectionMatrix(camera.combined);
 
         handlePlayerMovement();
+
         handlePortals();
+
         handleZoomKeyPress();
         handleMusicKeyPress();
 
@@ -179,6 +181,8 @@ public class Main extends ApplicationAdapter {
 
         scoreBoardManager.draw();//must be called after batch.end() !
     }
+
+
 
     @Override
     public void dispose() {
@@ -446,7 +450,7 @@ public class Main extends ApplicationAdapter {
             if (!zombie.isWalking()) {
                 continue;
             }
-            IntPosition centerTilePosPixels = getPixelPositionFromTileCenterPosition(zombie.getTargetTilePosition());
+            IntPosition centerTilePosPixels = getPixelPosFromTileCenterPos(zombie.getTargetTilePosition());
             boolean zombieOnCenterTargetTile = false;
             int zombieX = zombie.getPosition().getX();
             int zombieY = zombie.getPosition().getY();
@@ -530,6 +534,7 @@ public class Main extends ApplicationAdapter {
 
                     deadManager.addDead(new Dead(DeadType.DEAD_ZOMBIE, zombie.getPosition(), 1000));
                     soundEffectZombieIsShot.setVolume(100);
+                    soundEffectZombieIsShot.stop();
                     soundEffectZombieIsShot.play();
                     zombieIterator.remove();
                     bulletIterator.remove();
@@ -562,12 +567,12 @@ public class Main extends ApplicationAdapter {
                     randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
                     randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
                     randomSpeed = random.nextInt(3) + 1;
-                    IntPosition positionForNewSkull = getPixelPositionFromTileCenterPosition(new IntPosition(randomCol, randomRow));
+                    IntPosition positionForNewSkull = getPixelPosFromTileCenterPos(new IntPosition(randomCol, randomRow));
                     newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.lt, randomSpeed, skullManager.SKULL_COLS_IN_FILE));
                     randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
                     randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
                     randomSpeed = random.nextInt(3) + 1;
-                    positionForNewSkull = getPixelPositionFromTileCenterPosition(new IntPosition(randomCol, randomRow));
+                    positionForNewSkull = getPixelPosFromTileCenterPos(new IntPosition(randomCol, randomRow));
                     newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.rt, randomSpeed, skullManager.SKULL_COLS_IN_FILE));
                     scoreBoardManager.setKills(scoreBoardManager.getKills() + 1);
                     scoreBoardManager.setAmmoLeft(scoreBoardManager.getAmmoLeft() + 100);
@@ -628,7 +633,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleBulletsMovement() {
-       bulletManager.handleBulletMovement();
+        bulletManager.handleBulletMovement();
     }
 
     private void handleBulletCreation() {
@@ -653,9 +658,13 @@ public class Main extends ApplicationAdapter {
             ammo = Math.max(ammo, 0);
             scoreBoardManager.setAmmoLeft(ammo);
             if (ammo > 0) {
+                /*
                 if (!soundEffectShot.isPlaying()) {
                     soundEffectShot.play();
                 }
+                 */
+                soundEffectShot.stop();
+                soundEffectShot.play();
                 scoreBoardManager.setAmmoFired(scoreBoardManager.getAmmoFired() + 1);
                 bulletManager.addBullet(
                     startPositionBullet,
@@ -677,7 +686,6 @@ public class Main extends ApplicationAdapter {
         // Decrement the directionValue if it's greater than 0
         return Math.max(directionValue - 1, 0);
     }
-
 
 
     private void handlePlayerMovement() {
@@ -704,7 +712,7 @@ public class Main extends ApplicationAdapter {
         boolean isValidStartCondition = !isPlayerWalking();
         if (pressedKeys.goRight && isValidStartCondition && tiles.isTileWalkable(targetTileX, targetTileY)) {
             playerState.setPlayerCurrentDirection(Directions.rt);
-            playerState.getPlayerTargetCenterPos().setPosition(getPixelPositionFromTileCenterPosition(new IntPosition(targetTileX, targetTileY)));
+            playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
 
         } else if (playerState.getPlayerCurrentDirection().equals(Directions.rt)) {
             playerState.getPlayerCenterPos().addX(playerState.STEP_SIZE);
@@ -721,7 +729,7 @@ public class Main extends ApplicationAdapter {
         boolean isValidStartCondition = !isPlayerWalking();
         if (pressedKeys.goLeft && isValidStartCondition && tiles.isTileWalkable(targetTileX, targetTileY)) {
             playerState.setPlayerCurrentDirection(Directions.lt);
-            playerState.getPlayerTargetCenterPos().setPosition(getPixelPositionFromTileCenterPosition(new IntPosition(targetTileX, targetTileY)));
+            playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
         } else if (playerState.getPlayerCurrentDirection().equals(Directions.lt)) {
             playerState.getPlayerCenterPos().addX(-playerState.STEP_SIZE);
             if (playerState.getPlayerCenterPos().getX() <= playerState.getPlayerTargetCenterPos().getX()) {
@@ -737,7 +745,7 @@ public class Main extends ApplicationAdapter {
         boolean isValidStartCondition = !isPlayerWalking();
         if (pressedKeys.goUp && isValidStartCondition && tiles.isTileWalkable(targetTileX, targetTileY)) {
             playerState.setPlayerCurrentDirection(Directions.up);
-            playerState.getPlayerTargetCenterPos().setPosition(getPixelPositionFromTileCenterPosition(new IntPosition(targetTileX, targetTileY)));
+            playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
         } else if (playerState.getPlayerCurrentDirection().equals(Directions.up)) {
             playerState.getPlayerCenterPos().addY(playerState.STEP_SIZE);
             if (playerState.getPlayerCenterPos().getY() >= playerState.getPlayerTargetCenterPos().getY()) {
@@ -753,7 +761,7 @@ public class Main extends ApplicationAdapter {
         boolean isValidStartCondition = !isPlayerWalking();
         if (pressedKeys.goDown && isValidStartCondition && tiles.isTileWalkable(targetTileX, targetTileY)) {
             playerState.setPlayerCurrentDirection(Directions.dn);
-            playerState.getPlayerTargetCenterPos().setPosition(getPixelPositionFromTileCenterPosition(new IntPosition(targetTileX, targetTileY)));
+            playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
         } else if (playerState.getPlayerCurrentDirection().equals(Directions.dn)) {
             playerState.getPlayerCenterPos().addY(-playerState.STEP_SIZE);
             if (playerState.getPlayerCenterPos().getY() <= playerState.getPlayerTargetCenterPos().getY()) {
@@ -780,12 +788,29 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handlePortals() {
+        handlePortalsSteppedOn();
+        handlePortalsOpenClosedState();
+    }
+
+    private void handlePortalsOpenClosedState() {
+        for (PortalMap portalMap : portalMapManager.getPortalMaps()) {
+            if (portalMap.isBeyondOutOfOrderTime()) {
+                tiles.setTile(portalMap.getEntryPosition(),tiles.TILE_PORTAL_OPEN);
+            } else {
+                tiles.setTile(portalMap.getEntryPosition(),tiles.TILE_PORTAL_CLOSE);
+            }
+        }
+    }
+    private void handlePortalsSteppedOn() {
         if (!isPlayerWalking()) {
-            IntPosition portalExitPosition = portals.findPortalExitForPortalEntry(playerState.getPlayerTilePosition());
-            if (!portalExitPosition.equals(portals.illegalPosition)) {
-                IntPosition newPlayerPos = getPixelPositionFromTileCenterPosition(portalExitPosition);
-                playerState.setPlayerCenterPos(newPlayerPos);
-                playerState.setPlayerTargetCenterPos(newPlayerPos);
+            PortalMap portalMapSteppedOn = portalMapManager.getPortalMapSteppedOn(playerState.getPlayerTilePosition());
+            if (!portalMapSteppedOn.equals(portalMapManager.illegalPortalMap)) {
+                if (portalMapSteppedOn.isBeyondOutOfOrderTime()) {
+                    portalMapSteppedOn.startOutOfOrder();
+                    IntPosition newPlayerPos = getPixelPosFromTileCenterPos(portalMapSteppedOn.getOutComePosition());
+                    playerState.setPlayerCenterPos(newPlayerPos);
+                    playerState.setPlayerTargetCenterPos(newPlayerPos);
+                }
             }
         }
     }
@@ -807,7 +832,7 @@ public class Main extends ApplicationAdapter {
         return playerState.getPlayerCenterPos().getY() + (Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR / 2);
     }
 
-    private IntPosition getPixelPositionFromTileCenterPosition(IntPosition tilePosition) {
+    private IntPosition getPixelPosFromTileCenterPos(IntPosition tilePosition) {
         return new IntPosition(
             tilePosition.getX() * Tiles.TILE_WIDTH * 2 + Tiles.HALF_TILE_WIDTH,
             tilePosition.getY() * Tiles.TILE_HEIGHT * 2 + Tiles.HALF_TILE_HEIGHT);

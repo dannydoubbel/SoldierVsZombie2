@@ -1,16 +1,30 @@
 package io.github.SoldierVsZombies;
 
+import com.badlogic.gdx.utils.TimeUtils;
+
 import java.util.Objects;
 
 public class PortalMap {
-    private IntPosition entryPosition;
-    private IntPosition outComePosition;
+    final private IntPosition entryPosition;
+    final private IntPosition outComePosition;
 
-    private long lastTimeUsedInMiliSeconds; // todo implement this
+    private long startTimeOutOfOrder;
+
+    private final long OUT_OF_ORDER_TIME = 20000; //20 sec
 
     public PortalMap(IntPosition entryPosition, IntPosition outComePosition) {
         this.entryPosition = entryPosition;
         this.outComePosition = outComePosition;
+        startTimeOutOfOrder = TimeUtils.millis()-OUT_OF_ORDER_TIME;
+    }
+
+    public boolean isBeyondOutOfOrderTime() {
+        long elapsedTime = TimeUtils.millis() - startTimeOutOfOrder;
+        return elapsedTime > OUT_OF_ORDER_TIME;
+    }
+
+    public void startOutOfOrder() {
+        startTimeOutOfOrder = TimeUtils.millis();
     }
 
     @Override
@@ -30,15 +44,10 @@ public class PortalMap {
         return entryPosition;
     }
 
-    public void setEntryPosition(IntPosition entryPosition) {
-        this.entryPosition = entryPosition;
-    }
 
     public IntPosition getOutComePosition() {
         return outComePosition;
     }
 
-    public void setOutComePosition(IntPosition outComePosition) {
-        this.outComePosition = outComePosition;
-    }
+
 }
