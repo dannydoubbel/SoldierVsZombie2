@@ -9,8 +9,6 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-import static java.lang.Math.abs;
-
 public class Tiles {
     public static final int TILE_WIDTH = 32;
     public static final int TILE_HEIGHT = 32;
@@ -25,15 +23,8 @@ public class Tiles {
     public final int TILE_PORTAL_OPEN = 398;
 
     public final int TILE_PORTAL_CLOSE = 397; // TODO implement this
-
-    private int[][] backgroundTileMap = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
-    private Sprite[] sourceBackgroundTiles;
-
     public final Set<Integer> WALKABLE_TILES = new HashSet<>(Arrays.asList(TILE_NOTHING, TILE_PORTAL_OPEN));
-
-
-
-    private final int[] tileMap= {397, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70,
+    private final int[] tileMap = {397, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70,
         70, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 70, 70, 0, 0, 0, 0, 70, 70, 0, 70, 0, 0, 0, 0, 70, 0, 70, 0, 70, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 0, 70, 0, 70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 70, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 70, 0, 0, 0, 70,
         70, 0, 70, 70, 70, 70, 0, 70, 0, 70, 0, 70, 0, 70, 70, 0, 70, 0, 70, 0, 0, 70, 0, 70, 70, 0, 0, 0, 0, 70, 0, 70, 70, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 70, 0, 0, 70, 70, 0, 70, 70, 70, 70, 0, 70, 0, 70, 70, 0, 70, 0, 0, 0, 70, 70, 70, 0, 70, 70, 70, 0, 70, 0, 70, 70, 0, 70, 0, 70, 70, 0, 70, 0, 70, 0, 70, 70, 70, 70, 70, 70, 70, 0, 70, 0, 0, 0, 70, 0, 70,
         70, 0, 70, 0, 0, 0, 0, 70, 0, 0, 0, 70, 0, 0, 0, 0, 70, 0, 70, 70, 0, 0, 0, 70, 70, 70, 70, 0, 70, 70, 0, 70, 0, 0, 70, 70, 0, 70, 70, 70, 0, 70, 0, 70, 0, 0, 70, 0, 0, 0, 70, 0, 0, 0, 70, 0, 70, 0, 0, 70, 0, 70, 0, 0, 70, 0, 0, 0, 0, 0, 0, 70, 0, 0, 70, 0, 0, 0, 0, 70, 0, 70, 0, 70, 0, 0, 0, 0, 0, 0, 0, 70, 0, 70, 70, 0, 70, 70, 0, 70,
@@ -53,12 +44,50 @@ public class Tiles {
         70, 0, 70, 0, 0, 70, 0, 70, 70, 70, 0, 70, 0, 70, 0, 70, 70, 0, 70, 70, 0, 70, 0, 70, 0, 70, 0, 70, 70, 70, 70, 70, 70, 0, 70, 0, 70, 0, 70, 70, 70, 0, 70, 0, 70, 0, 0, 0, 70, 0, 70, 0, 70, 0, 70, 70, 70, 70, 70, 70, 70, 70, 70, 0, 70, 70, 70, 0, 70, 0, 70, 0, 70, 70, 70, 70, 0, 70, 70, 70, 0, 70, 0, 70, 0, 0, 70, 0, 70, 0, 70, 0, 70, 70, 0, 70, 0, 70, 0, 70,
         70, 0, 0, 0, 70, 70, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 70, 0, 0, 0, 0, 0, 70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 0, 0, 70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 0, 70, 70, 0, 0, 0, 70, 0, 0, 0, 0, 70, 0, 0, 0, 70,
         70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 398, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70};
+    private int[][] backgroundTileMap = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
+    private Sprite[] sourceBackgroundTiles;
 
 
-
-    Tiles(){
+    Tiles() {
         loadTiles();
     }
+
+
+    public static int getRandomInt(int minDistance, int maxDistance) {
+        Random random = new Random();
+        int x = random.nextInt(minDistance,maxDistance+1);
+        return  random.nextBoolean() ? x : -x;
+    }
+
+    public static IntPosition getRandomWalkablePositionAround(IntPosition start, int minStepsX,int minStepsY, int maxSteps) {
+        //System.out.println("Start pos random " + start);
+            IntPosition newPosition;
+            int maxAttempts = 500;
+
+            for (int attempt = 0; attempt < maxAttempts; attempt++) {
+                int x = getRandomInt(minStepsX,maxSteps);
+                int y = getRandomInt(minStepsY,maxSteps);
+                int newX = start.getX() + x;
+                int newY = start.getY() + y;
+
+            newPosition = new IntPosition(newX,newY);
+            System.out.println("Testing position start = " + start+ " newX " + newX+ " newY " + newY);
+            if (instance.isTileWalkable(newX,newY)) {
+                return newPosition;
+            }
+
+        }
+        System.out.println("No walkable spot found within attempts");
+        return start;
+    }
+
+    public static Tiles getInstance() {
+        if (instance == null) {
+            instance = new Tiles();
+        }
+        return instance;
+    }
+
     Sprite[] loadSourceBackgroundTiles() {
         final int TILE_SOURCE_COLS = 23;
         final int TILE_SOURCE_ROWS = 21;
@@ -76,42 +105,17 @@ public class Tiles {
 
     public boolean isTileWalkable(int XPosTile, int YPosTile) {
         if (XPosTile < 0 || YPosTile < 0) return false;
-        if (XPosTile >= TILE_MAP_COLS || YPosTile >= TILE_MAP_ROWS) return false;
+        if (XPosTile >= TILE_MAP_COLS || YPosTile >= TILE_MAP_ROWS)
+            return false;
         return WALKABLE_TILES.contains(getBackgroundTileMap()[XPosTile][YPosTile]);
     }
+
     public boolean isTileWalkable(IntPosition tilePos) {
         if (tilePos.getX() < 0 || tilePos.getY() < 0) return false;
-        if ( tilePos.getX() >= TILE_MAP_COLS || tilePos.getY() >= TILE_MAP_ROWS) return false;
+        if (tilePos.getX() >= TILE_MAP_COLS || tilePos.getY() >= TILE_MAP_ROWS)
+            return false;
         return WALKABLE_TILES.contains(getBackgroundTileMap()[tilePos.getX()][tilePos.getY()]);
     }
-
-    public static IntPosition getRandomWalkablePositionAround(IntPosition start, int minSteps,int maxSteps) {
-        Random random = new Random();
-        int xPlayer = start.getX();
-        int yPlayer = start.getY();
-
-        IntPosition newPosition;
-        int maxAttempts = 100;
-
-        for (int attempt = 0; attempt < maxAttempts; attempt++) {
-            // Randomize positive/negative offset around player
-            int randomX = abs(xPlayer + (random.nextBoolean() ? 1 : -1) * (minSteps + random.nextInt(maxSteps - minSteps)));
-            int randomY = abs(yPlayer + (random.nextBoolean() ? 1 : -1) * (minSteps + random.nextInt(maxSteps - minSteps)));
-                newPosition = new IntPosition(randomX, randomY);
-                //System.out.println("Testing position : " + newPosition);
-                if (instance.isTileWalkable(randomX, randomY)) {
-                    return newPosition;
-                }
-
-        }
-        System.out.println("No walkable spot found within attempts");
-        return start;
-    }
-
-
-
-
-
 
     public int[][] getBackgroundTileMap() {
 
@@ -132,6 +136,7 @@ public class Tiles {
         sourceBackgroundTiles = loadSourceBackgroundTiles();
         backgroundTileMap = setupBackgroundTileMap();
     }
+
     public int[][] setupBackgroundTileMap() {
         int[] test = getTileMap();
         int[][] result = new int[TILE_MAP_COLS][TILE_MAP_ROWS];
@@ -141,12 +146,6 @@ public class Tiles {
             }
         }
         return result;
-    }
-    public static Tiles getInstance() {
-        if (instance == null) {
-            instance = new Tiles();
-        }
-        return instance;
     }
 
     public void setTile(IntPosition tilePos, int tileSetNumber) {

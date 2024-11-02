@@ -22,21 +22,11 @@ public class ZombieManager {
     }
 
     public void addZombie(IntPosition pixelPosition,IntPosition tilePosition) {
-        Zombie zombieToAdd = new Zombie(pixelPosition,ZOMBIE_COLS_IN_FILE);
+        Zombie zombieToAdd = new Zombie(pixelPosition,ZOMBIE_COLS_IN_FILE,10000);
         zombieToAdd.setTargetTilePosition(tilePosition);
         zombies.add(zombieToAdd);
     }
-/*
-    public boolean isAnotherZombieOnTheSameTargetTile(Zombie zombieToTest, IntPosition tilePosToTest) {
-        for (Zombie zombie : getZombies()) {
-            if (!zombie.equals(zombieToTest)) {
-                if (tilePosToTest.equals(zombie.getTargetTilePosition())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }*/
+
     public boolean isTargetTileOccupiedByOtherZombie(Zombie currentZombie, IntPosition targetTile) {
         for (Zombie zombie : getZombies()) {
             if (!zombie.equals(currentZombie) && targetTile.equals(zombie.getTargetTilePosition())) {
@@ -84,5 +74,15 @@ public class ZombieManager {
                     ZOMBIE_HEIGHT);
             }
         }
+    }
+
+    public ArrayList<Zombie> getZombiesLifeTimeExpired() {
+        ArrayList<Zombie> zombiesToDieOfOldAge = new ArrayList<>();
+        for (Zombie zombie : zombies) {
+            if (zombie.isLifeTimeExpired()) {
+                zombiesToDieOfOldAge.add(zombie);
+            }
+        }
+        return zombiesToDieOfOldAge;
     }
 }

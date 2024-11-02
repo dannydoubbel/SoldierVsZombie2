@@ -1,8 +1,15 @@
+// Set source and target compatibility for Java 14
+
+
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 eclipse.project.name = appName + '-core'
 
+
 dependencies {
   api "com.badlogicgames.gdx:gdx:$gdxVersion"
+  implementation 'junit:junit:4.13.1'
+  implementation 'junit:junit:4.13.1'
+  implementation 'org.junit.jupiter:junit-jupiter:5.8.1'
 
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"

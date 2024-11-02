@@ -13,13 +13,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 
-import java.util.concurrent.*;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class ScoreBoardManager  {
     private static ScoreBoardManager instance;
     private BitmapFont fontSmall;
     private BitmapFont fontBig;
-    private Stage stage;
+    private final Stage stage;
 
     private Table scoreBoardTable;
     private Float timer = 0f; // Time in seconds
@@ -28,7 +29,6 @@ public class ScoreBoardManager  {
     private Integer ammoLeft = 50;
 
     private Integer ammoFired = 0;
-    private Float efficiency = 0f;
     private Label livesLabel;
     private Label livesNumber;
     private Label ammoLabel;
@@ -38,10 +38,8 @@ public class ScoreBoardManager  {
     private Label timerLabel;
     private Label timerNumber;
 
-    private Label efficiencyLabel;
-    private Label efficiencyNumber;
     private boolean timerRunning;
-    private ScheduledExecutorService scheduler;
+    //private ScheduledExecutorService scheduler;
 
 
     final SpriteBatch spriteBatch;
@@ -64,7 +62,6 @@ public class ScoreBoardManager  {
     }
 
     private void setDefaultValues() {
-        efficiency = 0f;
         kills = 0;
         ammoLeft = 200;
         ammoFired = 0;
@@ -85,8 +82,7 @@ public class ScoreBoardManager  {
     private static TextureRegionDrawable createDrawableTextureRegion(Pixmap pixmap) {
         // Create a drawable from the pixmap
         Texture texture = new Texture(pixmap);
-        TextureRegionDrawable drawable = new TextureRegionDrawable(new TextureRegion(texture));
-        return drawable;
+        return new TextureRegionDrawable(new TextureRegion(texture));
     }
 
     private void createBackground() {
@@ -101,7 +97,6 @@ public class ScoreBoardManager  {
         addLabelPair(ammoLabel, ammoNumber);
         addLabelPair(killsLabel, killsNumber);
         addLabelPair(timerLabel, timerNumber);
-        addLabelPair(efficiencyLabel, efficiencyNumber);
 
     }
     private void addLabelPair(Label label, Label number) {
@@ -124,8 +119,6 @@ public class ScoreBoardManager  {
         timerLabel = createLabel("Time left:", fontSmall, Color.WHITE);
         timerNumber = createLabel(timer.toString(), fontBig, Color.PURPLE);
 
-        efficiencyLabel = createLabel("Efficiency %:", fontSmall, Color.WHITE);
-        efficiencyNumber = createLabel(efficiency.toString(), fontBig, Color.PURPLE);
 
     }
     private Label createLabel(String text, BitmapFont font, Color color) {
@@ -143,16 +136,10 @@ public class ScoreBoardManager  {
         stage.act();
         stage.draw();
         timerNumber.setText(String.format("%.1f", timer));
-        if (ammoFired > 0) {
-            efficiency = ((float) kills / ammoFired) * 100;
-        } else {
-            efficiency = 0f; // Avoid division by zero if no bullets have been fired
-        }
-        setEfficiency(efficiency);
     }
 
 
-
+/*
     public void startTimer() {
         timer = 300f; // Set timer to 300 seconds
         timerRunning = true; // Start the timer
@@ -170,24 +157,40 @@ public class ScoreBoardManager  {
                 // Update the timer label on the main thread
                 Gdx.app.postRunnable(() -> timerNumber.setText(String.format("%.1f", timer)));
             }
-        }, 0, 1, TimeUnit.SECONDS); // Execute every second  ignore the error warning, it's a IntelliJ bug
+        }, 0, 1,  TimeUnit.SECONDS); // Execute every second  ignore the error warning, it's a IntelliJ bug
     }
+*/
+public void startTimer() {
+    timer = 300f; // Set timer to 300 seconds
+    timerRunning = true; // Start the timer
+
+    Timer timerScheduler = new Timer();
+    timerScheduler.scheduleAtFixedRate(new TimerTask() {
+        @Override
+        public void run() {
+            if (timerRunning) {
+                timer -= 1; // Decrease timer by 1 second
+                if (timer <= 0) {
+                    timer = 0f;
+                    timerRunning = false;
+                    System.out.println("Timer finished!");
+                    // TODO: implement further actions here
+                    timerScheduler.cancel(); // Stop the timer
+                }
+                // Update the timer label on the main thread
+                Gdx.app.postRunnable(() -> timerNumber.setText(String.format("%.1f", timer)));
+            }
+        }
+    }, 0, 1000); // Start immediately and repeat every 1000 milliseconds (1 second)
+}
 
 
 
-    public void setEfficiency(Float efficiency) {
-        this.efficiency = efficiency;
-        efficiencyNumber.setText(String.format("%.1f",efficiency));
-    }
 
-    public Integer getLives() {
-        return lives;
-    }
 
-    public void setLives(Integer lives) {
-        livesNumber.setText(lives.toString());
-        this.lives = lives;
-    }
+
+
+
 
     public Integer getAmmoLeft() {
         return ammoLeft;
@@ -206,13 +209,9 @@ public class ScoreBoardManager  {
         this.ammoFired = ammoFired;
     }
 
-    public Float getTimer() {
-        return timer;
-    }
 
-    public void setTimer(Float timer) {
-        this.timer = timer;
-    }
+
+
 
     public Integer getKills() {
         return kills;

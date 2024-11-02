@@ -6,7 +6,6 @@ import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -26,7 +25,7 @@ public class Main extends ApplicationAdapter {
     //private Sprite[] sourceBackgroundTiles;
     private OrthographicCamera camera;
     private Viewport viewport;
-    private ShapeRenderer shapeRenderer;
+    //private ShapeRenderer shapeRenderer;
     private Music backgroundMusic;
     private Music soundEffectShot;
     private Music soundEffectZombieIsShot;
@@ -50,26 +49,7 @@ public class Main extends ApplicationAdapter {
     private static void setUpInputRelatedStuff() {
         Gdx.input.setInputProcessor(new MyInputProcessor());
     }
-/*
-    private static IntPosition getNextTilePos(IntPosition tilePosStart, IntPosition tilePosTarget) {
-        IntPosition returnResultTilePos = tilePosStart.clone();
 
-        if (tilePosTarget.getX() != tilePosStart.getX()) {
-            if (tilePosTarget.getX() > tilePosStart.getX()) {
-                returnResultTilePos.addX(+1);
-            } else {
-                returnResultTilePos.addX(-1);
-            }
-        } else {
-            if (tilePosTarget.getY() > tilePosStart.getY()) {
-                returnResultTilePos.addY(+1);
-            } else {
-                returnResultTilePos.addY(-1);
-            }
-        }
-        return returnResultTilePos;
-    }
-    */
 
     @Override
     public void create() {
@@ -81,29 +61,32 @@ public class Main extends ApplicationAdapter {
         skullManager = new SkullManager();
         deadManager = new DeadManager();
 
+
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
 
+        setPlayerInitialPosition();
+
         addInitialEnemies();
 
-        setPlayerInitialPosition();
     }
 
     private void setPlayerInitialPosition() {
+        playerState.setTilePosPlayer(new IntPosition(11,5));
         playerState.setPlayerCenterPos(getPixelPosFromTileCenterPos(new IntPosition(11, 5)));
     }
 
     private void addInitialEnemies() {
         for (int lus = 0; lus < 10; lus++) {
-            addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 10, 20);
+            addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 10,3, 15);
         }
         skullManager.addSkull(new IntPosition(350, 350),
             Directions.lt, 1, skullManager.SKULL_COLS_IN_FILE);
     }
 
-    private void addZombieAtRandomWalkablePositionAround(IntPosition startPosition, int minSteps, int maxSteps) {
-        IntPosition startTilePosition = Tiles.getRandomWalkablePositionAround(startPosition, minSteps, maxSteps);
+    private void addZombieAtRandomWalkablePositionAround(IntPosition startPosition, int minStepsX,int minStepsY, int maxSteps) {
+        IntPosition startTilePosition = Tiles.getRandomWalkablePositionAround(startPosition, minStepsX,minStepsY, maxSteps);
         IntPosition startPixelPosition = getPixelPosFromTileCenterPos(startTilePosition);
         zombieManager.addZombie(startPixelPosition, startTilePosition);
     }
@@ -183,7 +166,6 @@ public class Main extends ApplicationAdapter {
     }
 
 
-
     @Override
     public void dispose() {
         spriteBatch.dispose();
@@ -209,7 +191,7 @@ public class Main extends ApplicationAdapter {
         camera.update();
         viewport = new ScreenViewport(camera); // Use ScreenViewport to adapt to window size without scaling
         viewport.apply();
-        shapeRenderer = new ShapeRenderer();
+        //shapeRenderer = new ShapeRenderer();
         Gdx.graphics.setResizable(true);
     }
 
@@ -266,8 +248,8 @@ public class Main extends ApplicationAdapter {
             boolean actStupid = random.nextInt(100) == 2;
             int xPos = skull.getPosition().getX();
             int yPos = skull.getPosition().getY();
-            int targetxPos = playerState.getPlayerCenterPos().getX();
-            int targetyPos = playerState.getPlayerCenterPos().getY();
+            int targetXPos = playerState.getPlayerCenterPos().getX();
+            int targetYPos = playerState.getPlayerCenterPos().getY();
 
             int stupidMoveCounter = skull.getStupidMoveCounter();
 
@@ -283,12 +265,12 @@ public class Main extends ApplicationAdapter {
             boolean commitToStupidMove = stupidMoveCounter > 0;
 
 
-            if (xPos < targetxPos && (!commitToStupidMove || random.nextBoolean())) {
+            if (xPos < targetXPos && (!commitToStupidMove || random.nextBoolean())) {
                 xPos += skull.getStepSize();
             } else {
                 xPos -= skull.getStepSize();
             }
-            if (yPos < targetyPos && !commitToStupidMove) {
+            if (yPos < targetYPos && !commitToStupidMove) {
                 if (random.nextBoolean()) {
                     yPos += skull.getStepSize();
                 }
@@ -308,8 +290,8 @@ public class Main extends ApplicationAdapter {
         for (Skull skull : skullManager.getSkulls()) {
             spriteBatch.draw(
                 skullManager.getSkullFrame(skull.getFrameIndex()),
-                skull.getPosition().getX() - viewParameters.getLeftOffset() - skullManager.SKULL_WIDTH / 2,
-                skull.getPosition().getY() - skullManager.SKULL_HEIGHT / 2,
+                skull.getPosition().getX() - viewParameters.getLeftOffset() - skullManager.HALF_SKULL_WIDTH,
+                skull.getPosition().getY() - skullManager.HALF_SKULL_HEIGHT,
                 skullManager.SKULL_WIDTH,
                 skullManager.SKULL_HEIGHT);
         }
@@ -346,6 +328,17 @@ public class Main extends ApplicationAdapter {
         handleZombiesFrames();
         handleZombiesDrawing();
         handleZombiePlayerCollision();
+        handleZombieLifeTimeExpired();
+    }
+
+    private void handleZombieLifeTimeExpired() {
+       ArrayList<Zombie> zombiesLifeTimeExpired =  zombieManager.getZombiesLifeTimeExpired();
+       int counter = 0;
+       for (Zombie zombie : zombiesLifeTimeExpired) {
+           counter++;
+           System.out.println("Zombie " + counter+ " expired");
+           //addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 20, 30);
+       }
     }
 
     private void handleZombiePlayerCollision() {
@@ -408,7 +401,8 @@ public class Main extends ApplicationAdapter {
     private IntPosition getRandomlyPath(IntPosition tilePos) {
         Random random = new Random();
         IntPosition resultPosition = tilePos.clone();
-        switch (random.nextInt(4)) {
+
+         switch (random.nextInt(4)) {
             case 0:
                 resultPosition.addY(1);
                 break;
@@ -421,29 +415,13 @@ public class Main extends ApplicationAdapter {
             default:
                 resultPosition.addY(-1);
         }
+
         if (tiles.isTileWalkable(resultPosition)) {
             return resultPosition;
         }
         return tilePos;
     }
 
-
-
-
-
-
-    /*
-    private boolean isAnotherZombieOnTheSameTargetTile(Zombie zombieToTest, IntPosition tilePosToTest) {
-        for (Zombie zombie : zombieManager.getZombies()) {
-            if (!zombie.equals(zombieToTest)) {
-                if (tilePosToTest.equals(zombie.getTargetTilePosition())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    */
 
     private void handleZombiesMovement() {
         for (Zombie zombie : zombieManager.getZombies()) {
@@ -454,7 +432,7 @@ public class Main extends ApplicationAdapter {
             boolean zombieOnCenterTargetTile = false;
             int zombieX = zombie.getPosition().getX();
             int zombieY = zombie.getPosition().getY();
-            Orthogonal orthogonal = getOrthoganalFrom(zombie.getDirection());
+            Orthogonal orthogonal = getOrthogonalFrom(zombie.getDirection());
             if (!orthogonal.equals(Orthogonal.NOTHING)) {
                 if (orthogonal.equals(Orthogonal.HORIZONTAL)) {
                     zombieOnCenterTargetTile = Math.abs(zombieX - centerTilePosPixels.getX()) <= zombie.getStepSize() + 2;
@@ -538,7 +516,7 @@ public class Main extends ApplicationAdapter {
                     soundEffectZombieIsShot.play();
                     zombieIterator.remove();
                     bulletIterator.remove();
-                    addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 5, 30);
+                    addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 5,3, 20);
                     scoreBoardManager.setKills(scoreBoardManager.getKills() + 1);
                     scoreBoardManager.setAmmoLeft(scoreBoardManager.getAmmoLeft() + 100);
                     break;
@@ -602,7 +580,6 @@ public class Main extends ApplicationAdapter {
             Bullet bullet = iterator.next();
             IntPosition positionToTest = bullet.getPosition();
             if (positionToTest.getX() > viewParameters.getLeftOffset() + Gdx.graphics.getWidth()) {
-                // ToDo checkout if the check to the right boundery is correct, maybe it's to limited ...
                 iterator.remove();
                 continue;
             }
@@ -625,8 +602,8 @@ public class Main extends ApplicationAdapter {
         for (Bullet bullet : bulletManager.getBullets()) {
             spriteBatch.draw(
                 bulletManager.getBulletFrame(bullet.getDirection().getValue() - 1),
-                bullet.getPosition().getX() - viewParameters.getLeftOffset() - bulletManager.BULLET_WIDTH / 2,
-                bullet.getPosition().getY() - bulletManager.BULLET_HEIGHT / 2,
+                bullet.getPosition().getX() - viewParameters.getLeftOffset() - bulletManager.HALF_BULLET_WIDTH,
+                bullet.getPosition().getY() - bulletManager.HALF_BULLET_HEIGHT,
                 bulletManager.BULLET_WIDTH,
                 bulletManager.BULLET_HEIGHT);
         }
@@ -658,11 +635,6 @@ public class Main extends ApplicationAdapter {
             ammo = Math.max(ammo, 0);
             scoreBoardManager.setAmmoLeft(ammo);
             if (ammo > 0) {
-                /*
-                if (!soundEffectShot.isPlaying()) {
-                    soundEffectShot.play();
-                }
-                 */
                 soundEffectShot.stop();
                 soundEffectShot.play();
                 scoreBoardManager.setAmmoFired(scoreBoardManager.getAmmoFired() + 1);
@@ -670,8 +642,6 @@ public class Main extends ApplicationAdapter {
                     startPositionBullet,
                     playerState.getPlayerPreviousDirection(),
                     7);
-            } else {
-                // todo implement this
             }
         }
     }
@@ -795,12 +765,13 @@ public class Main extends ApplicationAdapter {
     private void handlePortalsOpenClosedState() {
         for (PortalMap portalMap : portalMapManager.getPortalMaps()) {
             if (portalMap.isBeyondOutOfOrderTime()) {
-                tiles.setTile(portalMap.getEntryPosition(),tiles.TILE_PORTAL_OPEN);
+                tiles.setTile(portalMap.getEntryPosition(), tiles.TILE_PORTAL_OPEN);
             } else {
-                tiles.setTile(portalMap.getEntryPosition(),tiles.TILE_PORTAL_CLOSE);
+                tiles.setTile(portalMap.getEntryPosition(), tiles.TILE_PORTAL_CLOSE);
             }
         }
     }
+
     private void handlePortalsSteppedOn() {
         if (!isPlayerWalking()) {
             PortalMap portalMapSteppedOn = portalMapManager.getPortalMapSteppedOn(playerState.getPlayerTilePosition());
@@ -880,7 +851,7 @@ public class Main extends ApplicationAdapter {
         }
     }
 
-    private Orthogonal getOrthoganalFrom(Directions directions) {
+    private Orthogonal getOrthogonalFrom(Directions directions) {
         if (directions.equals(Directions.lt) || (directions.equals(Directions.rt))) {
             return Orthogonal.HORIZONTAL;
         }

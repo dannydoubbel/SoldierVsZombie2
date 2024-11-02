@@ -11,6 +11,10 @@ public class BulletManager {
     public final int BULLET_WIDTH = 64;
     public final int BULLET_HEIGHT = 64;
 
+    public final int HALF_BULLET_WIDTH = 64 / 2;
+    public final int HALF_BULLET_HEIGHT = 64 / 2;
+
+
     private final int WAIT_CYCLES = 10;
     private final ArrayList<Bullet> bullets = new ArrayList<>();
     private int waitCylesToAddBullets = 0;

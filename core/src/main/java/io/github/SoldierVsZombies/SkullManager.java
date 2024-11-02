@@ -15,6 +15,9 @@ public class SkullManager {
     public final int SKULL_COLS_IN_FILE = 8;
     public final int SKULL_HEIGHT = 100/ SKULL_ROWS_IN_FILE;
     public final int SKULL_WIDTH = 800 / SKULL_COLS_IN_FILE;
+
+    public final int HALF_SKULL_WIDTH = SKULL_WIDTH / 2;
+    public final int HALF_SKULL_HEIGHT = SKULL_HEIGHT / 2;
     private final ArrayList<Skull> skulls = new ArrayList<>();
     private Sprite[] skullFrames;
 
