@@ -9,7 +9,7 @@ Stephen Challener (Redshrike),
 hosted by OpenGameArt.org)
 
 
-Seemless walls, obstacles, traps, and items are included in the zip file, with all most necessary underworld stuff in a convenient atlas. There are some minimal outdoor graphics including some farming (garlic, wheat, bread) some of which are in a separate file. This is a vastly expanded version of Redshrike's "A Load of Overworld 34 RPG Sprites" (not the low-fi rerelease sprite sheets of the enemies). Every tile is changed from that except for the open doors, keystones, quad swirl tile and creatures not noted below. I added dead versions of the enemies I selected for the atlas. For dead version of mimic and snail, you can use open treasure chest and snail shell. The atlas should cover almost everything except hero, and has room for one! There is room for 3x4 hero frames at 32x32 pixels each, plus 4 hero attacks, and 1 dead frame. I arranged the frames as "up" "left" "down" "right" to match that part of the LPC standard.
+Seemless walls, obstacles, traps, and items are included in the zip file, with all most necessary underworld stuff in a convenient atlas. There are some minimal outdoor graphics including some farming (garlic, wheat, bread) some of which are in a separate file. This is a vastly expanded version of Redshrike's "A Load of Overworld 34 RPG Sprites" (not the low-fi rerelease sprite sheets of the enemies). Every tile is changed from that except for the open doors, keystones, quad swirl tile and creatures not noted below. I added spawnableSprite versions of the enemies I selected for the atlas. For spawnableSprite version of mimic and snail, you can use open treasure chest and snail shell. The atlas should cover almost everything except hero, and has room for one! There is room for 3x4 hero frames at 32x32 pixels each, plus 4 hero attacks, and 1 spawnableSprite frame. I arranged the frames as "up" "left" "down" "right" to match that part of the LPC standard.
 
 Hero design tips (to pose the hero as if using the bow or sword, which are both already in the same place relative to the hero's hand):
 
@@ -28,7 +28,7 @@ Changes from Redshrike's version:
     fixed animation order to standard order for mushroom (up and down facing animations)
     fixed ears for grayish creature
     rearranged blocks in wall graphics to make them fit more easily with new end, corner, and intersection pieces
-    added dead versions of enemies on atlas
+    added spawnableSprite versions of enemies on atlas
     added several traps, mechanisms, and obstacles
 
 Additional changes will be uploaded: [github.com/poikilos/mgep](https://github.com/poikilos/mgep/blob/master/collections/misc/underworld_load-32x32.png). I have also fixed all of the 16x16 and 16x24 sprites and flame skull, and plan to post them on here along with the 32x32 atlas when it is finished.

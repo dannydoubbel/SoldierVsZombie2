@@ -34,7 +34,7 @@ public class Main extends ApplicationAdapter {
     private SkullManager skullManager;
     private BulletManager bulletManager;
     private ZombieManager zombieManager;
-    private DeadManager deadManager;
+    private SpawnableTypeManager spawnableTypeManager;
     private ScoreBoardManager scoreBoardManager;
     private SharedVariables sharedVariables;
 
@@ -59,7 +59,7 @@ public class Main extends ApplicationAdapter {
         bulletManager = new BulletManager();
         zombieManager = new ZombieManager();
         skullManager = new SkullManager();
-        deadManager = new DeadManager();
+        spawnableTypeManager = new SpawnableTypeManager();
 
 
         initializeSingletons();
@@ -69,6 +69,9 @@ public class Main extends ApplicationAdapter {
         setPlayerInitialPosition();
 
         addInitialEnemies();
+
+        String javaVersion = System.getProperty("java.version");
+        System.out.println("Java version: " + javaVersion);
 
     }
 
@@ -153,10 +156,11 @@ public class Main extends ApplicationAdapter {
         }
 
         drawBackground();
+        handleGifts();
         handleBullets();
         handleZombies();
         handleSkulls();
-        handleGraves();
+        handleGraves(); // todo rename grave to something better
         drawPlayerFromCenterPosition();
 
         spriteBatch.end();
@@ -237,8 +241,9 @@ public class Main extends ApplicationAdapter {
     private void handleSkullPlayerCollision() {
         ArrayList<Skull> collidingSkulls =
             skullManager.getCollidingZombiesWithPixelPos(playerState.getPlayerCenterPos());
-        if (!collidingSkulls.isEmpty())
-            System.out.println("Skull says : You're so dead");
+        if (!collidingSkulls.isEmpty()) {
+            //System.out.println("Skull says : You're so dead");
+        }
     }
 
 
@@ -303,22 +308,22 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleGravesCountDown() {
-        deadManager.handleGravesCountDown();
+        spawnableTypeManager.handleGravesCountDown();
     }
 
     private void handleGravesDrawing() {
-        for (Dead dead : deadManager.getAllTheDead()) {
-            drawGraveFromCenterPosition(dead);
+        for (SpawnableSprite spawnableSprite : spawnableTypeManager.getAllTheDead()) {
+            drawGraveFromCenterPosition(spawnableSprite);
         }
     }
 
-    private void drawGraveFromCenterPosition(Dead dead) {
+    private void drawGraveFromCenterPosition(SpawnableSprite spawnableSprite) {
         spriteBatch.draw(
-            deadManager.getDeadFrame(dead),
-            dead.getPosition().getX() - viewParameters.getLeftOffset() - ((Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            dead.getPosition().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            deadManager.DEAD_WIDTH,
-            deadManager.DEAD_HEIGHT);
+            spawnableTypeManager.getDeadFrame(spawnableSprite),
+            spawnableSprite.getPosition().getX() - viewParameters.getLeftOffset() - ((Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            spawnableSprite.getPosition().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            spawnableTypeManager.DEAD_WIDTH,
+            spawnableTypeManager.DEAD_HEIGHT);
     }
 
 
@@ -332,12 +337,16 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleZombieLifeTimeExpired() {
-       ArrayList<Zombie> zombiesLifeTimeExpired =  zombieManager.getZombiesLifeTimeExpired();
-       int counter = 0;
-       for (Zombie zombie : zombiesLifeTimeExpired) {
-           counter++;
-           System.out.println("Zombie " + counter+ " expired");
-           //addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 20, 30);
+       Iterator<Zombie> iterator = zombieManager.getZombiesLifeTimeExpired().iterator();
+       while (iterator.hasNext()) {
+           Zombie zombie = iterator.next();
+           //todo maybe add an explosion to the expired zombie position
+           //todo maybe add a soundeffect
+           spawnableTypeManager.addDead(new SpawnableSprite(SpawnableType.BLACK_GIFT, zombie.getPosition(), 5000));
+
+           zombieManager.remove(zombie);
+           iterator.remove();
+           addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(),4,3,15);
        }
     }
 
@@ -345,7 +354,7 @@ public class Main extends ApplicationAdapter {
         ArrayList<Zombie> collidingZombies =
             zombieManager.getCollidingZombiesWithPixelPos(playerState.getPlayerCenterPos());
         if (!collidingZombies.isEmpty()) {
-            System.out.println("Zombie says: You're so dead");
+            // System.out.println("Zombie says: You're so dead");
             // To Do implement player energy drain
         }
     }
@@ -486,6 +495,20 @@ public class Main extends ApplicationAdapter {
             zombieManager.ZOMBIE_HEIGHT);
     }
 
+    private void handleGifts(){
+        Iterator<SpawnableSprite> iterator = spawnableTypeManager.getAllTheDead().iterator();
+        while (iterator.hasNext()) {
+            SpawnableSprite gift = iterator.next();
+            if (gift.getDeadType().equals(SpawnableType.BLACK_GIFT)) {
+                if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), gift.getPosition())) {
+                    System.out.println("Gift collision"); // TODO do something with the gift
+                    iterator.remove();
+                }
+            }
+        }
+    }
+
+
 
     private void handleBullets() {
         handleBulletCreation();
@@ -510,7 +533,7 @@ public class Main extends ApplicationAdapter {
                 Zombie zombie = zombieIterator.next();
                 if (collisionDetector.isColliding(bullet.getPosition(), zombie.getPosition())) {
 
-                    deadManager.addDead(new Dead(DeadType.DEAD_ZOMBIE, zombie.getPosition(), 1000));
+                    spawnableTypeManager.addDead(new SpawnableSprite(SpawnableType.DEAD_ZOMBIE, zombie.getPosition(), 1000));
                     soundEffectZombieIsShot.setVolume(100);
                     soundEffectZombieIsShot.stop();
                     soundEffectZombieIsShot.play();
@@ -539,7 +562,7 @@ public class Main extends ApplicationAdapter {
             while (skullIterator.hasNext()) {
                 Skull skull = skullIterator.next();
                 if (collisionDetector.isColliding(bullet.getPosition(), skull.getPosition())) {
-                    deadManager.addDead(new Dead(DeadType.DEAD_SKULL, skull.getPosition(), 1000));
+                    spawnableTypeManager.addDead(new SpawnableSprite(SpawnableType.DEAD_SKULL, skull.getPosition(), 1000));
                     skullIterator.remove();
                     bulletIterator.remove();
                     randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);

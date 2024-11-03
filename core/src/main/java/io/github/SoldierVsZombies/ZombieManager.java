@@ -85,4 +85,8 @@ public class ZombieManager {
         }
         return zombiesToDieOfOldAge;
     }
+
+    public void remove(Zombie zombie) {
+        zombies.remove(zombie);
+    }
 }

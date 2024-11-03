@@ -2,15 +2,15 @@ package io.github.SoldierVsZombies;
 
 import com.badlogic.gdx.utils.TimeUtils;
 
-public class Dead extends BaseSprite{
+public class SpawnableSprite extends BaseSprite{
     final private int spriteLifetimeMilliSeconds;
     final private long startTime;
 
-    final private DeadType deadType;
+    final private SpawnableType spawnableType;
 
-    public Dead(DeadType deadType, IntPosition position, int spriteLifetimeMilliSeconds) {
+    public SpawnableSprite(SpawnableType spawnableType, IntPosition position, int spriteLifetimeMilliSeconds) {
         this.spriteLifetimeMilliSeconds = spriteLifetimeMilliSeconds;
-        this.deadType = deadType;
+        this.spawnableType = spawnableType;
         setPosition(position);
         startTime = TimeUtils.millis();
     }
@@ -24,7 +24,7 @@ public class Dead extends BaseSprite{
         return elapsedTime > (spriteLifetimeMilliSeconds/2);
     }
 
-    public DeadType getDeadType() {
-        return deadType;
+    public SpawnableType getDeadType() {
+        return spawnableType;
     }
 }
