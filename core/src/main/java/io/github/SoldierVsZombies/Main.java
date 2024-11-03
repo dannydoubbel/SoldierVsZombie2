@@ -86,7 +86,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void addZombieAtRandomWalkablePositionAround(IntPosition startPosition, int minStepsX,int minStepsY, int maxSteps) {
-        IntPosition startTilePosition = Tiles.getRandomWalkablePositionAround(startPosition, minStepsX,minStepsY, maxSteps);
+        IntPosition startTilePosition = tiles.getRandomWalkablePositionAround(startPosition, minStepsX,minStepsY, maxSteps);
         IntPosition startPixelPosition = getPixelPosFromTileCenterPos(startTilePosition);
         zombieManager.addZombie(startPixelPosition, startTilePosition);
     }

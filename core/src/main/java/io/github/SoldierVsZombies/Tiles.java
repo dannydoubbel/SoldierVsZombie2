@@ -53,13 +53,13 @@ public class Tiles {
     }
 
 
-    public static int getRandomInt(int minDistance, int maxDistance) {
+    public static int getRandomInt(int minimum, int maximum) {
         Random random = new Random();
-        int x = random.nextInt(minDistance,maxDistance+1);
-        return  random.nextBoolean() ? x : -x;
+        int absoluteValue = random.nextInt(minimum,maximum+1);
+        return  random.nextBoolean() ? absoluteValue : -absoluteValue;
     }
 
-    public static IntPosition getRandomWalkablePositionAround(IntPosition start, int minStepsX,int minStepsY, int maxSteps) {
+    public  IntPosition getRandomWalkablePositionAround(IntPosition start, int minStepsX,int minStepsY, int maxSteps) {
         //System.out.println("Start pos random " + start);
             IntPosition newPosition;
             int maxAttempts = 500;
@@ -71,8 +71,7 @@ public class Tiles {
                 int newY = start.getY() + y;
 
             newPosition = new IntPosition(newX,newY);
-            System.out.println("Testing position start = " + start+ " newX " + newX+ " newY " + newY);
-            if (instance.isTileWalkable(newX,newY)) {
+            if (isTileWalkable(newPosition)) {
                 return newPosition;
             }
 
@@ -103,6 +102,8 @@ public class Tiles {
         return slicedTiles;
     }
 
+
+
     public boolean isTileWalkable(int XPosTile, int YPosTile) {
         if (XPosTile < 0 || YPosTile < 0) return false;
         if (XPosTile >= TILE_MAP_COLS || YPosTile >= TILE_MAP_ROWS)
@@ -114,7 +115,7 @@ public class Tiles {
         if (tilePos.getX() < 0 || tilePos.getY() < 0) return false;
         if (tilePos.getX() >= TILE_MAP_COLS || tilePos.getY() >= TILE_MAP_ROWS)
             return false;
-        return WALKABLE_TILES.contains(getBackgroundTileMap()[tilePos.getX()][tilePos.getY()]);
+        return isTileWalkable(tilePos.getX(),tilePos.getY());
     }
 
     public int[][] getBackgroundTileMap() {
