@@ -80,6 +80,19 @@ public class Tiles {
         return start;
     }
 
+    public int getRandomColNumber(){
+        Random random = new Random();
+        return random.nextInt(Tiles.TILE_MAP_COLS + 1);
+    }
+
+    public int getRandomRowNumber(){
+        Random random = new Random();
+        return random.nextInt(Tiles.TILE_MAP_ROWS + 1);
+    }
+
+
+
+
     public static Tiles getInstance() {
         if (instance == null) {
             instance = new Tiles();

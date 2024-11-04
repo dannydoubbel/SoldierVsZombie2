@@ -39,6 +39,10 @@ public class SkullManager {
         }
     }
 
+    public long getNumberOfSkulls() {
+        return skulls.size();
+    }
+
     public void handleSkullFramesCycles() {
         for (Skull skull : getSkulls()) {
             int waitCycli = skull.getWaitCycli() - 1;

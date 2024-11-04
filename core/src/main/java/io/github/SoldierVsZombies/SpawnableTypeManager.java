@@ -13,7 +13,7 @@ public class SpawnableTypeManager {
     public final int DEAD_HEIGHT = 96;
     public final int GIFT_WIDTH = 100;
     public final int GIFT_HEIGHT = 100;
-    private final ArrayList<SpawnableSprite> allTheSpawnableSprite = new ArrayList<>();
+    private final ArrayList<SpawnableSprite> allSpawnableSprites = new ArrayList<>();
     private Sprite deadFrameZombie;
     private Sprite[] deadFrameSkull;
     private Sprite blackGift;
@@ -21,12 +21,14 @@ public class SpawnableTypeManager {
 
 
     SpawnableTypeManager() {
+        String javaVersion = System.getProperty("java.version");
+        System.out.println("inside spanwableTypeManager Java version: " + javaVersion);
         loadDeadFrames();
     }
 
     public Sprite getDeadFrame(SpawnableSprite spawnableSprite) {
-        if (spawnableSprite.getDeadType().equals(SpawnableType.DEAD_ZOMBIE)) return deadFrameZombie;
-        if (spawnableSprite.getDeadType().equals(SpawnableType.DEAD_SKULL)) {
+        if (spawnableSprite.getSpawnableType().equals(SpawnableType.DEAD_ZOMBIE)) return deadFrameZombie;
+        if (spawnableSprite.getSpawnableType().equals(SpawnableType.DEAD_SKULL)) {
             if (spawnableSprite.isBeyondHalfLifeTime()) return deadFrameSkull[1];
             return deadFrameSkull[0];
         }
@@ -34,23 +36,30 @@ public class SpawnableTypeManager {
         return blackGift;
     }
 
-    public void addDead(SpawnableSprite spawnableSpriteToAdd) {
-        allTheSpawnableSprite.add(spawnableSpriteToAdd);
+    public void addSpawnable(SpawnableSprite spawnableSpriteToAdd) {
+        allSpawnableSprites.add(spawnableSpriteToAdd);
     }
 
-    public ArrayList<SpawnableSprite> getAllTheDead() {
-        return allTheSpawnableSprite;
+    public ArrayList<SpawnableSprite> getAllSpawnables() {
+        return allSpawnableSprites;
     }
 
 
-    public void handleGravesCountDown() {
-        Iterator<SpawnableSprite> deadsIterator = getAllTheDead().iterator();
+    public void handleSpawnablesCountDown() {
+        Iterator<SpawnableSprite> deadsIterator = getAllSpawnables().iterator();
         while (deadsIterator.hasNext()) {
             SpawnableSprite spawnableSprite = deadsIterator.next();
             if (spawnableSprite.isBeyondLifeTime()) {
                 deadsIterator.remove();
             }
         }
+    }
+
+    public long getNumberOfGifts() {
+        long blackGiftCount = getAllSpawnables().stream()
+            .filter(spawnableSprite -> spawnableSprite.getSpawnableType().equals(SpawnableType.BLACK_GIFT))
+            .count();
+        return blackGiftCount;
     }
 
 

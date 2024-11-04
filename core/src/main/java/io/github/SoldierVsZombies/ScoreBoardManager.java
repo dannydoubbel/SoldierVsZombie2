@@ -26,7 +26,7 @@ public class ScoreBoardManager  {
     private Float timer = 0f; // Time in seconds
     private Integer lives = 3;
     private Integer kills = 10;
-    private Integer ammoLeft = 50;
+    private Integer ammo = 50;
 
     private Integer ammoFired = 0;
     private Label livesLabel;
@@ -63,7 +63,7 @@ public class ScoreBoardManager  {
 
     private void setDefaultValues() {
         kills = 0;
-        ammoLeft = 200;
+        ammo = 200;
         ammoFired = 0;
         lives = 3;
         startTimer();
@@ -111,7 +111,7 @@ public class ScoreBoardManager  {
         livesNumber = createLabel(lives.toString(), fontBig, Color.PURPLE);
 
         ammoLabel = createLabel("Ammo:", fontSmall, Color.WHITE);
-        ammoNumber = createLabel(ammoLeft.toString(), fontBig, Color.PURPLE);
+        ammoNumber = createLabel(ammo.toString(), fontBig, Color.PURPLE);
 
         killsLabel = createLabel("Kills:", fontSmall, Color.WHITE);
         killsNumber = createLabel(kills.toString(), fontBig, Color.PURPLE);
@@ -139,27 +139,6 @@ public class ScoreBoardManager  {
     }
 
 
-/*
-    public void startTimer() {
-        timer = 300f; // Set timer to 300 seconds
-        timerRunning = true; // Start the timer
-        scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(() -> {
-            if (timerRunning) {
-                timer -= 1; // Decrease timer by 1 second
-                if (timer <= 0) {
-                    timer = 0f;
-                    timerRunning = false;
-                    System.out.println("Timer finished!");
-                    // todo implement this more
-                    scheduler.shutdown(); // Stop the timer
-                }
-                // Update the timer label on the main thread
-                Gdx.app.postRunnable(() -> timerNumber.setText(String.format("%.1f", timer)));
-            }
-        }, 0, 1,  TimeUnit.SECONDS); // Execute every second  ignore the error warning, it's a IntelliJ bug
-    }
-*/
 public void startTimer() {
     timer = 300f; // Set timer to 300 seconds
     timerRunning = true; // Start the timer
@@ -185,20 +164,16 @@ public void startTimer() {
 }
 
 
-
-
-
-
-
-
-
-    public Integer getAmmoLeft() {
-        return ammoLeft;
+    public Integer getAmmo() {
+        return ammo;
     }
 
-    public void setAmmoLeft(Integer ammoLeft) {
-        ammoNumber.setText(ammoLeft.toString());
-        this.ammoLeft = ammoLeft;
+    public void setAmmo(Integer ammo) {
+        ammoNumber.setText(ammo.toString());
+        this.ammo = ammo;
+    }
+    public void addAmmo(Integer deltaAmmo) {
+        setAmmo(ammo +deltaAmmo);
     }
 
     public Integer getAmmoFired() {
@@ -210,9 +185,6 @@ public void startTimer() {
     }
 
 
-
-
-
     public Integer getKills() {
         return kills;
     }
@@ -221,6 +193,11 @@ public void startTimer() {
         killsNumber.setText(kills.toString());
         this.kills = kills;
     }
+    public void addKills(Integer deltaKills) {
+        setKills(kills+deltaKills);
+    }
+
+
 
     public static ScoreBoardManager getInstance(SpriteBatch spriteBatch) {
         if (instance == null) {

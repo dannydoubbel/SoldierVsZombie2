@@ -11,7 +11,6 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Random;
 
@@ -22,13 +21,16 @@ public class Main extends ApplicationAdapter {
     static boolean justOnce = false;
     static boolean justOnce2 = false;
     private SpriteBatch spriteBatch;
-    //private Sprite[] sourceBackgroundTiles;
+
     private OrthographicCamera camera;
     private Viewport viewport;
-    //private ShapeRenderer shapeRenderer;
+
     private Music backgroundMusic;
     private Music soundEffectShot;
     private Music soundEffectZombieIsShot;
+    private Music soundEffectAuwScream;
+    private Music soundEffectHowo;
+    private Music soundEffectTeleport;
 
     private CollisionDetector collisionDetector;
     private SkullManager skullManager;
@@ -38,9 +40,8 @@ public class Main extends ApplicationAdapter {
     private ScoreBoardManager scoreBoardManager;
     private SharedVariables sharedVariables;
 
-    //private MazeSolver mazeSolver;
     private PressedKeys pressedKeys;
-    private PlayerFrames playerFrames; // To Do implement this
+    private PlayerFrames playerFrames;
     private PlayerState playerState;
     private ViewParameters viewParameters;
     private Tiles tiles;
@@ -53,26 +54,25 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void create() {
+        String javaVersion = System.getProperty("java.version");
+        System.out.println("inside main Java version: " + javaVersion);
 
         spriteBatch = new SpriteBatch();
 
-        bulletManager = new BulletManager();
-        zombieManager = new ZombieManager();
-        skullManager = new SkullManager();
-        spawnableTypeManager = new SpawnableTypeManager();
-
-
+        initializeManagerClasses();
         initializeSingletons();
         initializeGameComponents();
         initializePortals();
 
         setPlayerInitialPosition();
-
         addInitialEnemies();
+    }
 
-        String javaVersion = System.getProperty("java.version");
-        System.out.println("Java version: " + javaVersion);
-
+    private void initializeManagerClasses() {
+        bulletManager = new BulletManager();
+        zombieManager = new ZombieManager();
+        skullManager = new SkullManager();
+        spawnableTypeManager = new SpawnableTypeManager();
     }
 
     private void setPlayerInitialPosition() {
@@ -84,7 +84,9 @@ public class Main extends ApplicationAdapter {
         for (int lus = 0; lus < 10; lus++) {
             addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 10,3, 15);
         }
-        skullManager.addSkull(new IntPosition(350, 350),
+        skullManager.addSkull(new IntPosition(1350, 350),
+            Directions.lt, 1, skullManager.SKULL_COLS_IN_FILE);
+        skullManager.addSkull(new IntPosition(150, 250),
             Directions.lt, 1, skullManager.SKULL_COLS_IN_FILE);
     }
 
@@ -176,6 +178,9 @@ public class Main extends ApplicationAdapter {
         backgroundMusic.dispose();
         soundEffectShot.dispose();
         soundEffectZombieIsShot.dispose();
+        soundEffectAuwScream.dispose();
+        soundEffectHowo.dispose();
+        soundEffectTeleport.dispose();
     }
 
     private void updateWindowTitle() {
@@ -203,6 +208,9 @@ public class Main extends ApplicationAdapter {
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("sound/music.mp3"));
         soundEffectShot = Gdx.audio.newMusic(Gdx.files.internal("sound/gun-single.mp3"));
         soundEffectZombieIsShot = Gdx.audio.newMusic(Gdx.files.internal("sound/strange_laugh.mp3"));
+        soundEffectAuwScream = Gdx.audio.newMusic(Gdx.files.internal("sound/auw_scream.mp3"));
+        soundEffectHowo =  Gdx.audio.newMusic(Gdx.files.internal("sound/howo.mp3"));
+        soundEffectTeleport = Gdx.audio.newMusic(Gdx.files.internal("sound/teleport.mp3"));
         backgroundMusic.play();
         backgroundMusic.setLooping(true); // Loop the background music
     }
@@ -243,6 +251,7 @@ public class Main extends ApplicationAdapter {
             skullManager.getCollidingZombiesWithPixelPos(playerState.getPlayerCenterPos());
         if (!collidingSkulls.isEmpty()) {
             //System.out.println("Skull says : You're so dead");
+            soundEffectAuwScream.play();
         }
     }
 
@@ -280,7 +289,6 @@ public class Main extends ApplicationAdapter {
                     yPos += skull.getStepSize();
                 }
             } else {
-
                 yPos -= skull.getStepSize();
             }
             skull.setPosition(new IntPosition(xPos, yPos));
@@ -303,21 +311,21 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleGraves() {
-        handleGravesCountDown();
-        handleGravesDrawing();
+        handleSpawnablesCountDown();
+        handleSpawnablesDrawing();
     }
 
-    private void handleGravesCountDown() {
-        spawnableTypeManager.handleGravesCountDown();
+    private void handleSpawnablesCountDown() {
+        spawnableTypeManager.handleSpawnablesCountDown();
     }
 
-    private void handleGravesDrawing() {
-        for (SpawnableSprite spawnableSprite : spawnableTypeManager.getAllTheDead()) {
-            drawGraveFromCenterPosition(spawnableSprite);
+    private void handleSpawnablesDrawing() {
+        for (SpawnableSprite spawnableSprite : spawnableTypeManager.getAllSpawnables()) {
+            drawSpawnableFromCenterPosition(spawnableSprite);
         }
     }
 
-    private void drawGraveFromCenterPosition(SpawnableSprite spawnableSprite) {
+    private void drawSpawnableFromCenterPosition(SpawnableSprite spawnableSprite) {
         spriteBatch.draw(
             spawnableTypeManager.getDeadFrame(spawnableSprite),
             spawnableSprite.getPosition().getX() - viewParameters.getLeftOffset() - ((Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
@@ -340,10 +348,10 @@ public class Main extends ApplicationAdapter {
        Iterator<Zombie> iterator = zombieManager.getZombiesLifeTimeExpired().iterator();
        while (iterator.hasNext()) {
            Zombie zombie = iterator.next();
-           //todo maybe add an explosion to the expired zombie position
            //todo maybe add a soundeffect
-           spawnableTypeManager.addDead(new SpawnableSprite(SpawnableType.BLACK_GIFT, zombie.getPosition(), 5000));
-
+           if (spawnableTypeManager.getNumberOfGifts() < 3) {
+               spawnableTypeManager.addSpawnable(new SpawnableSprite(SpawnableType.BLACK_GIFT, zombie.getPosition(), 5000));
+           }
            zombieManager.remove(zombie);
            iterator.remove();
            addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(),4,3,15);
@@ -356,6 +364,7 @@ public class Main extends ApplicationAdapter {
         if (!collidingZombies.isEmpty()) {
             // System.out.println("Zombie says: You're so dead");
             // To Do implement player energy drain
+            soundEffectAuwScream.play();
         }
     }
 
@@ -380,7 +389,6 @@ public class Main extends ApplicationAdapter {
         for (Zombie zombie : zombieManager.getZombies()) {
             if (random.nextInt(10) != 8 && random.nextInt(6) != 4) {
                 if (!zombie.isWalking()) {
-                    //IntPosition tilePosZombie = getTilePositionFromPixelPosition(new IntPosition(zombie.getPosition()));
                     IntPosition tilePosZombie = getTilePositionFromPixelPosition(zombie.getPosition().clone());
                     IntPosition tilePosPlayer = playerState.getPlayerTilePosition();
 
@@ -392,16 +400,20 @@ public class Main extends ApplicationAdapter {
                     }
                     Directions newDirection = getDirectionToGoTo(tilePosZombie, newTargetTilePos);
 
-                    if (!newTargetTilePos.equals(tilePosZombie)) {
-                        if (!newDirection.equals(Directions.no)) {
-                            if (tiles.isTileWalkable(newTargetTilePos)) {
-                                if (!zombieManager.isTargetTileOccupiedByOtherZombie(zombie, newTargetTilePos)) {
-                                    zombie.startWalking(newTargetTilePos, newDirection);
-                                }
+                    attemptZombieMove(zombie, newTargetTilePos, tilePosZombie, newDirection);
+                }
+            }
+        }
+    }
 
-                            }
-                        }
+    private void attemptZombieMove(Zombie zombie, IntPosition newTargetTilePos, IntPosition tilePosZombie, Directions newDirection) {
+        if (!newTargetTilePos.equals(tilePosZombie)) {
+            if (!newDirection.equals(Directions.no)) {
+                if (tiles.isTileWalkable(newTargetTilePos)) {
+                    if (!zombieManager.isTargetTileOccupiedByOtherZombie(zombie, newTargetTilePos)) {
+                        zombie.startWalking(newTargetTilePos, newDirection);
                     }
+
                 }
             }
         }
@@ -496,12 +508,13 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleGifts(){
-        Iterator<SpawnableSprite> iterator = spawnableTypeManager.getAllTheDead().iterator();
+        Iterator<SpawnableSprite> iterator = spawnableTypeManager.getAllSpawnables().iterator();
         while (iterator.hasNext()) {
             SpawnableSprite gift = iterator.next();
-            if (gift.getDeadType().equals(SpawnableType.BLACK_GIFT)) {
+            if (gift.getSpawnableType().equals(SpawnableType.BLACK_GIFT)) {
                 if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), gift.getPosition())) {
                     System.out.println("Gift collision"); // TODO do something with the gift
+                    soundEffectHowo.play();
                     iterator.remove();
                 }
             }
@@ -515,7 +528,7 @@ public class Main extends ApplicationAdapter {
         handleBulletsMovement();
         handleBulletsDrawing();
         handleBulletsOutOfPlayField();
-        handleBulletsTileCollisions(); // to do implement this more
+        handleBulletsTileCollisions();
         handleBulletsEnemyCollisions();
     }
 
@@ -533,15 +546,15 @@ public class Main extends ApplicationAdapter {
                 Zombie zombie = zombieIterator.next();
                 if (collisionDetector.isColliding(bullet.getPosition(), zombie.getPosition())) {
 
-                    spawnableTypeManager.addDead(new SpawnableSprite(SpawnableType.DEAD_ZOMBIE, zombie.getPosition(), 1000));
+                    spawnableTypeManager.addSpawnable(new SpawnableSprite(SpawnableType.DEAD_ZOMBIE, zombie.getPosition(), 1000));
                     soundEffectZombieIsShot.setVolume(100);
                     soundEffectZombieIsShot.stop();
                     soundEffectZombieIsShot.play();
                     zombieIterator.remove();
                     bulletIterator.remove();
                     addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 5,3, 20);
-                    scoreBoardManager.setKills(scoreBoardManager.getKills() + 1);
-                    scoreBoardManager.setAmmoLeft(scoreBoardManager.getAmmoLeft() + 100);
+                    scoreBoardManager.addKills(+1);
+                    scoreBoardManager.addAmmo(+100);
                     break;
                 }
                 // to do implement this more
@@ -550,11 +563,6 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleBulletSkullCollisions() {
-        Collection<Skull> newSkulls = new ArrayList<>(); // Store new skulls to be added later
-        Random random = new Random();
-        int randomCol;// =random.nextInt(351); // 351 is exclusive, so this generates numbers between 0 and 350 inclusive
-        int randomRow;
-        int randomSpeed;
         Iterator<Bullet> bulletIterator = bulletManager.getBullets().iterator();
         while (bulletIterator.hasNext()) {
             Bullet bullet = bulletIterator.next();
@@ -562,27 +570,27 @@ public class Main extends ApplicationAdapter {
             while (skullIterator.hasNext()) {
                 Skull skull = skullIterator.next();
                 if (collisionDetector.isColliding(bullet.getPosition(), skull.getPosition())) {
-                    spawnableTypeManager.addDead(new SpawnableSprite(SpawnableType.DEAD_SKULL, skull.getPosition(), 1000));
+                    spawnableTypeManager.addSpawnable(new SpawnableSprite(SpawnableType.DEAD_SKULL, skull.getPosition(), 1000));
                     skullIterator.remove();
                     bulletIterator.remove();
-                    randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
-                    randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
-                    randomSpeed = random.nextInt(3) + 1;
-                    IntPosition positionForNewSkull = getPixelPosFromTileCenterPos(new IntPosition(randomCol, randomRow));
-                    newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.lt, randomSpeed, skullManager.SKULL_COLS_IN_FILE));
-                    randomCol = random.nextInt(Tiles.TILE_MAP_COLS + 1);
-                    randomRow = random.nextInt(Tiles.TILE_MAP_ROWS + 1);
-                    randomSpeed = random.nextInt(3) + 1;
-                    positionForNewSkull = getPixelPosFromTileCenterPos(new IntPosition(randomCol, randomRow));
-                    newSkulls.add(new Skull(positionForNewSkull.clone(), Directions.rt, randomSpeed, skullManager.SKULL_COLS_IN_FILE));
-                    scoreBoardManager.setKills(scoreBoardManager.getKills() + 1);
-                    scoreBoardManager.setAmmoLeft(scoreBoardManager.getAmmoLeft() + 100);
+                    scoreBoardManager.addKills( + 1);
+                    scoreBoardManager.addAmmo( + 100);
+                    if (skullManager.getNumberOfSkulls() < 30)
+                        skullManager.addSkull(generateRandomSkull());
+                    if (skullManager.getNumberOfSkulls() < 30)
+                            skullManager.addSkull(generateRandomSkull());
                     break;
                 }
-                // to do implement this more
             }
         }
-        skullManager.addSkulls(newSkulls);
+    }
+
+    private Skull generateRandomSkull() {
+        Random random = new Random();
+        IntPosition randomTilePosition = new IntPosition(tiles.getRandomColNumber(), tiles.getRandomRowNumber());
+        int randomSpeed = random.nextInt(3) + 1;
+        IntPosition positionForNewSkull = getPixelPosFromTileCenterPos(randomTilePosition.clone());
+        return new Skull(positionForNewSkull.clone(), Directions.lt, randomSpeed, skullManager.SKULL_COLS_IN_FILE);
     }
 
     private void handleBulletsTileCollisions() {
@@ -636,6 +644,11 @@ public class Main extends ApplicationAdapter {
         bulletManager.handleBulletMovement();
     }
 
+    // SEE https://www.deviantart.com/chi171812/art/Surprise-Sprite-RPG-Maker-Princess-Merida-477413073
+    // https://www.deviantart.com/chi171812/art/2p-Hetalia-RPG-Maker-2p-Italy-sprites-461806087
+    // https://www.deviantart.com/merowynn/art/Princess-Mercury-Sprites-399524525
+
+
     private void handleBulletCreation() {
         if (pressedKeys.fire) {
             IntPosition startPositionBullet = playerState.getPlayerCenterPos().clone();
@@ -654,9 +667,9 @@ public class Main extends ApplicationAdapter {
                     break;
             }
 
-            int ammo = scoreBoardManager.getAmmoLeft() - 1;
+            int ammo = scoreBoardManager.getAmmo() - 1;
             ammo = Math.max(ammo, 0);
-            scoreBoardManager.setAmmoLeft(ammo);
+            scoreBoardManager.setAmmo(ammo);
             if (ammo > 0) {
                 soundEffectShot.stop();
                 soundEffectShot.play();
@@ -804,6 +817,7 @@ public class Main extends ApplicationAdapter {
                     IntPosition newPlayerPos = getPixelPosFromTileCenterPos(portalMapSteppedOn.getOutComePosition());
                     playerState.setPlayerCenterPos(newPlayerPos);
                     playerState.setPlayerTargetCenterPos(newPlayerPos);
+                    soundEffectTeleport.play();
                 }
             }
         }
