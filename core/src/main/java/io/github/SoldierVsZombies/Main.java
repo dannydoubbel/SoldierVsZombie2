@@ -1,8 +1,23 @@
 package io.github.SoldierVsZombies;
 
+
+//
+//  ToDo    Clean up images resources folder
+//
+//
+//
+//   ToDo   Move entire project to the NAS
+//
+//
+//
+//
+//
+//
+//
+
+
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -25,13 +40,7 @@ public class Main extends ApplicationAdapter {
     private OrthographicCamera camera;
     private Viewport viewport;
 
-    private Music backgroundMusic;
-    private Music soundEffectShot;
-    private Music soundEffectZombieIsShot;
-    private Music soundEffectAuwScream;
-    private Music soundEffectHowo;
-    private Music soundEffectTeleport;
-
+    private SoundManager soundManager;
     private CollisionDetector collisionDetector;
     private SkullManager skullManager;
     private BulletManager bulletManager;
@@ -66,9 +75,11 @@ public class Main extends ApplicationAdapter {
 
         setPlayerInitialPosition();
         addInitialEnemies();
+        soundManager.playSoundEffect(SoundEffects.background);
     }
 
     private void initializeManagerClasses() {
+        soundManager = new SoundManager();
         bulletManager = new BulletManager();
         zombieManager = new ZombieManager();
         skullManager = new SkullManager();
@@ -103,7 +114,7 @@ public class Main extends ApplicationAdapter {
 
     private void initializeGameComponents() {
         setupScreenRelatedStuff();
-        setupSoundRelatedStuff();
+      //  setupSoundRelatedStuff();
         setUpInputRelatedStuff();
     }
 
@@ -175,12 +186,7 @@ public class Main extends ApplicationAdapter {
     @Override
     public void dispose() {
         spriteBatch.dispose();
-        backgroundMusic.dispose();
-        soundEffectShot.dispose();
-        soundEffectZombieIsShot.dispose();
-        soundEffectAuwScream.dispose();
-        soundEffectHowo.dispose();
-        soundEffectTeleport.dispose();
+        soundManager.dispose();
     }
 
     private void updateWindowTitle() {
@@ -204,6 +210,7 @@ public class Main extends ApplicationAdapter {
         Gdx.graphics.setResizable(true);
     }
 
+    /*
     void setupSoundRelatedStuff() {
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("sound/music.mp3"));
         soundEffectShot = Gdx.audio.newMusic(Gdx.files.internal("sound/gun-single.mp3"));
@@ -214,6 +221,8 @@ public class Main extends ApplicationAdapter {
         backgroundMusic.play();
         backgroundMusic.setLooping(true); // Loop the background music
     }
+    */
+
 
     private void drawBackground() {
         int rightStopDrawing = (Gdx.graphics.getWidth() + viewParameters.getLeftOffset()) / Tiles.TILE_WIDTH + 200;
@@ -251,7 +260,7 @@ public class Main extends ApplicationAdapter {
             skullManager.getCollidingZombiesWithPixelPos(playerState.getPlayerCenterPos());
         if (!collidingSkulls.isEmpty()) {
             //System.out.println("Skull says : You're so dead");
-            soundEffectAuwScream.play();
+            soundManager.playSoundEffect(SoundEffects.auwScream);
         }
     }
 
@@ -364,7 +373,7 @@ public class Main extends ApplicationAdapter {
         if (!collidingZombies.isEmpty()) {
             // System.out.println("Zombie says: You're so dead");
             // To Do implement player energy drain
-            soundEffectAuwScream.play();
+            soundManager.playSoundEffect(SoundEffects.auwScream);
         }
     }
 
@@ -514,7 +523,7 @@ public class Main extends ApplicationAdapter {
             if (gift.getSpawnableType().equals(SpawnableType.BLACK_GIFT)) {
                 if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), gift.getPosition())) {
                     System.out.println("Gift collision"); // TODO do something with the gift
-                    soundEffectHowo.play();
+                    soundManager.playSoundEffect(SoundEffects.howo);
                     iterator.remove();
                 }
             }
@@ -547,9 +556,9 @@ public class Main extends ApplicationAdapter {
                 if (collisionDetector.isColliding(bullet.getPosition(), zombie.getPosition())) {
 
                     spawnableTypeManager.addSpawnable(new SpawnableSprite(SpawnableType.DEAD_ZOMBIE, zombie.getPosition(), 1000));
-                    soundEffectZombieIsShot.setVolume(100);
-                    soundEffectZombieIsShot.stop();
-                    soundEffectZombieIsShot.play();
+                    //soundEffectZombieIsShot.setVolume(100);
+                    soundManager.stopSoundEffect(SoundEffects.zombieIsHit);
+                    soundManager.playSoundEffect(SoundEffects.zombieIsHit);
                     zombieIterator.remove();
                     bulletIterator.remove();
                     addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 5,3, 20);
@@ -671,8 +680,8 @@ public class Main extends ApplicationAdapter {
             ammo = Math.max(ammo, 0);
             scoreBoardManager.setAmmo(ammo);
             if (ammo > 0) {
-                soundEffectShot.stop();
-                soundEffectShot.play();
+                soundManager.stopSoundEffect(SoundEffects.singleShot);
+                soundManager.playSoundEffect(SoundEffects.singleShot);
                 scoreBoardManager.setAmmoFired(scoreBoardManager.getAmmoFired() + 1);
                 bulletManager.addBullet(
                     startPositionBullet,
@@ -817,7 +826,7 @@ public class Main extends ApplicationAdapter {
                     IntPosition newPlayerPos = getPixelPosFromTileCenterPos(portalMapSteppedOn.getOutComePosition());
                     playerState.setPlayerCenterPos(newPlayerPos);
                     playerState.setPlayerTargetCenterPos(newPlayerPos);
-                    soundEffectTeleport.play();
+                    soundManager.playSoundEffect(SoundEffects.teleport);
                 }
             }
         }
@@ -879,10 +888,10 @@ public class Main extends ApplicationAdapter {
 
     private void handleMusicKeyPress() {
         if (sharedVariables.musicAllowed) {
-            if (backgroundMusic.isPlaying()) {
-                backgroundMusic.pause();
+            if (soundManager.isPlayingSoundEffect(SoundEffects.background)) {
+                soundManager.pauseSoundEffect(SoundEffects.background);
             } else {
-                backgroundMusic.play();
+                soundManager.playSoundEffect(SoundEffects.background);
             }
             sharedVariables.musicAllowed = false;
         }
