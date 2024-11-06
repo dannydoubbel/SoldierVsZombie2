@@ -210,20 +210,6 @@ public class Main extends ApplicationAdapter {
         Gdx.graphics.setResizable(true);
     }
 
-    /*
-    void setupSoundRelatedStuff() {
-        backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("sound/music.mp3"));
-        soundEffectShot = Gdx.audio.newMusic(Gdx.files.internal("sound/gun-single.mp3"));
-        soundEffectZombieIsShot = Gdx.audio.newMusic(Gdx.files.internal("sound/strange_laugh.mp3"));
-        soundEffectAuwScream = Gdx.audio.newMusic(Gdx.files.internal("sound/auw_scream.mp3"));
-        soundEffectHowo =  Gdx.audio.newMusic(Gdx.files.internal("sound/howo.mp3"));
-        soundEffectTeleport = Gdx.audio.newMusic(Gdx.files.internal("sound/teleport.mp3"));
-        backgroundMusic.play();
-        backgroundMusic.setLooping(true); // Loop the background music
-    }
-    */
-
-
     private void drawBackground() {
         int rightStopDrawing = (Gdx.graphics.getWidth() + viewParameters.getLeftOffset()) / Tiles.TILE_WIDTH + 200;
 
@@ -331,12 +317,19 @@ public class Main extends ApplicationAdapter {
     private void handleSpawnablesDrawing() {
         for (SpawnableSprite spawnableSprite : spawnableTypeManager.getAllSpawnables()) {
             drawSpawnableFromCenterPosition(spawnableSprite);
+            /*
+            if (spawnableSprite.getSpawnableType().equals(SpawnableType.PORTAL_SHINE)) {
+                //System.out.println("Yes a portal");
+            }
+
+             */
         }
     }
 
     private void drawSpawnableFromCenterPosition(SpawnableSprite spawnableSprite) {
+        if (spawnableSprite == null) return;
         spriteBatch.draw(
-            spawnableTypeManager.getDeadFrame(spawnableSprite),
+            spawnableTypeManager.getSpawnableFrame(spawnableSprite),
             spawnableSprite.getPosition().getX() - viewParameters.getLeftOffset() - ((Tiles.TILE_WIDTH * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             spawnableSprite.getPosition().getY() - ((Tiles.TILE_HEIGHT * Tiles.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             spawnableTypeManager.DEAD_WIDTH,
@@ -584,9 +577,9 @@ public class Main extends ApplicationAdapter {
                     bulletIterator.remove();
                     scoreBoardManager.addKills( + 1);
                     scoreBoardManager.addAmmo( + 100);
-                    if (skullManager.getNumberOfSkulls() < 30)
+                    if (skullManager.getNumberOfSkulls() < 15)
                         skullManager.addSkull(generateRandomSkull());
-                    if (skullManager.getNumberOfSkulls() < 30)
+                    if (skullManager.getNumberOfSkulls() < 15)
                             skullManager.addSkull(generateRandomSkull());
                     break;
                 }
@@ -827,6 +820,8 @@ public class Main extends ApplicationAdapter {
                     playerState.setPlayerCenterPos(newPlayerPos);
                     playerState.setPlayerTargetCenterPos(newPlayerPos);
                     soundManager.playSoundEffect(SoundEffects.teleport);
+                    spawnableTypeManager.addSpawnable(new SpawnableSprite(SpawnableType.PORTAL_SHINE,getPixelPosFromTileCenterPos(portalMapSteppedOn.getOutComePosition()),2500));
+                    spawnableTypeManager.addSpawnable(new SpawnableSprite(SpawnableType.PORTAL_SHINE,getPixelPosFromTileCenterPos(portalMapSteppedOn.getEntryPosition()),500));
                 }
             }
         }

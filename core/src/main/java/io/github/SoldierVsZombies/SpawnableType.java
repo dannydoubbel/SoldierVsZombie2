@@ -4,7 +4,8 @@ public enum SpawnableType {
     DEAD_ZOMBIE(1, "dead zombie"),
     DEAD_SKULL(2, "dead skull"),
     BLACK_GIFT(3,"black gift box"),
-    PRINCESS(4,"princess");
+    PRINCESS(4,"princess"),
+    PORTAL_SHINE(5,"portal shine");
     private final int value;
     private final String name;
 

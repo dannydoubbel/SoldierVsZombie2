@@ -33,6 +33,12 @@ public class SpawnableSprite extends BaseSprite{
         return elapsedTime > (spriteLifetimeMilliSeconds * (percent / 100.0));
     }
 
+    public boolean isLifeTimeBetween(double lowPercent,double highPercent ) {
+        return  (isBeyondLifeTime(lowPercent) && !(isBeyondLifeTime(highPercent)) );
+    }
+
+
+
 
 
     public SpawnableType getSpawnableType() {
