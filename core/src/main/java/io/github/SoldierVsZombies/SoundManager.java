@@ -15,7 +15,8 @@ public class SoundManager {
             sounds[soundEffect.getValue()] = Gdx.audio.newMusic(Gdx.files.internal(soundEffect.getFileName()));
         }
     }
-    public void playSoundEffect(SoundEffects soundEffect) {
+    public void playSoundEffect(SoundEffects soundEffect,float volume) {
+        sounds[soundEffect.getValue()].setVolume(volume);
         sounds[soundEffect.getValue()].play();
     }
     public  void pauseSoundEffect(SoundEffects soundEffect) {

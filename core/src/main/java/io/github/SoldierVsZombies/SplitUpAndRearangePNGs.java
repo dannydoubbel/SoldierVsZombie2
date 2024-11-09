@@ -21,6 +21,58 @@ public class SplitUpAndRearangePNGs {
     //
     public void splitUpAndReArrangeHelper() {
         // Load the image file as a texture
+        FileHandle fileHandle = Gdx.files.internal("images/woodFire100x100.png"); // Your PNG file path here
+        Texture texture = new Texture(fileHandle);
+
+        // Get the texture data
+        TextureData textureData = texture.getTextureData();
+
+        // Make sure the texture data is prepared
+        if (!textureData.isPrepared()) {
+            textureData.prepare();
+        }
+
+        // Get the texture data and create a Pixmap
+        Pixmap sourcePixmap = texture.getTextureData().consumePixmap();
+
+
+        // Make sure the texture data is prepared
+        if (!textureData.isPrepared()) {
+            textureData.prepare();
+        }
+
+        // Dimensions of each part
+        int width = 100;
+        int height = 100;
+        Pixmap[] part = new Pixmap[12];
+        Pixmap resultPixmap = new Pixmap(width, 100 * 12, sourcePixmap.getFormat());
+        for (int y = 0; y < 3; y++) {
+            for (int x = 0; x < 4; x++) {
+                int position = ((x * width)/100)+((y * height * 4)/100);
+                part[position]  = new Pixmap(width, height, sourcePixmap.getFormat());
+                part[position].drawPixmap(sourcePixmap, 0,0,x*width, y*width,  width, height);
+                FileHandle outputFile = Gdx.files.local("images/woodFire100x100long"+position+".png"); // Output file path
+                PixmapIO.writePNG(outputFile, part[position]);
+                System.out.println("Teller " + position);
+            }
+        }
+        for (int lus = 0; lus < 12; lus++) {
+            resultPixmap.drawPixmap(part[lus],lus*width,0,0,0,width,height);
+        }
+
+
+        // Save the new image to a file
+        FileHandle outputFile = Gdx.files.local("images/woodFire100x100long.png"); // Output file path
+        PixmapIO.writePNG(outputFile, resultPixmap);
+
+        sourcePixmap.dispose();
+
+        resultPixmap.dispose();
+        texture.dispose();
+    }
+
+    public void splitUpAndReArrangeHelperOriginal() {
+        // Load the image file as a texture
         FileHandle fileHandle = Gdx.files.internal("images/zombie.png"); // Your PNG file path here
         Texture texture = new Texture(fileHandle);
 
@@ -70,10 +122,7 @@ public class SplitUpAndRearangePNGs {
         // Save the new image to a file
         FileHandle outputFile = Gdx.files.local("images/zombie128x192DnUpLtRt.png"); // Output file path
         PixmapIO.writePNG(outputFile, resultPixmap);
-        //System.out.println("Saved file");
-// Print the local storage path for verification
-        //System.out.println("Saved file at: " + Gdx.files.getLocalStoragePath() + "images/zombie128x192DnUpLtRt.png");
-        // Dispose resources
+
         pixmap.dispose();
         part1.dispose();
         part2.dispose();

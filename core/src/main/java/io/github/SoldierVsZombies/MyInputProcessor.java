@@ -4,8 +4,8 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 
 public class MyInputProcessor implements InputProcessor {
-    PressedKeys pressedKeys = PressedKeys.getInstance();
-    SharedVariables sharedVariables = SharedVariables.getInstance();
+    final PressedKeys pressedKeys = PressedKeys.getInstance();
+    final SharedVariables sharedVariables = SharedVariables.getInstance();
     ViewParameters viewParameters = ViewParameters.getInstance();
 
     @Override
@@ -31,8 +31,9 @@ public class MyInputProcessor implements InputProcessor {
                 resetAllGoDirections();
                 pressedKeys.goDown = true;
                 break;
-            case Input.Keys.ENTER:
-                handleAction("enterAction");
+            case Input.Keys.ALT_LEFT:
+            case Input.Keys.ALT_RIGHT:
+                pressedKeys.fireALT = true;
                 break;
             case Input.Keys.ESCAPE:
                 handleAction("escapeAction");
@@ -49,7 +50,7 @@ public class MyInputProcessor implements InputProcessor {
             case Input.Keys.INSERT:
                 break;
             case Input.Keys.SPACE:
-                pressedKeys.fire = true;
+                pressedKeys.fireSpace = true;
                 break;
             default:
                 break;
@@ -73,7 +74,11 @@ public class MyInputProcessor implements InputProcessor {
                 pressedKeys.goDown = false;
                 break;
             case Input.Keys.SPACE:
-                pressedKeys.fire = false;
+                pressedKeys.fireSpace = false;
+                break;
+            case Input.Keys.ALT_LEFT:
+            case Input.Keys.ALT_RIGHT:
+                pressedKeys.fireALT = false;
                 break;
         }
         return false;
@@ -84,7 +89,7 @@ public class MyInputProcessor implements InputProcessor {
         pressedKeys.goLeft = false;
         pressedKeys.goUp = false;
         pressedKeys.goDown = false;
-        pressedKeys.fire = false;
+        pressedKeys.fireSpace = false;
     }
 
     @Override

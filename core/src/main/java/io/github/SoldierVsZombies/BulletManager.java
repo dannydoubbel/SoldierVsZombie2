@@ -15,7 +15,7 @@ public class BulletManager {
     public final int HALF_BULLET_HEIGHT = 64 / 2;
 
 
-    private final int WAIT_CYCLES = 10;
+    private final int WAIT_CYCLI = 10;
     private final ArrayList<Bullet> bullets = new ArrayList<>();
     private int waitCylesToAddBullets = 0;
     private Sprite[] bulletFrames;
@@ -30,7 +30,7 @@ public class BulletManager {
         if (waitCylesToAddBullets == 0) {
             Bullet bulletToAdd = new Bullet(position.clone(), direction, stepSize);
             bullets.add(bulletToAdd);
-            waitCylesToAddBullets = WAIT_CYCLES;
+            waitCylesToAddBullets = WAIT_CYCLI;
         }
     }
 

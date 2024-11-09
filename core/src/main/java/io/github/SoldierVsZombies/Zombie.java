@@ -10,7 +10,7 @@ public class Zombie extends BaseSprite {
     public final int MAX_FRAMES;
 
     final private long startTime;
-    private long lifeTimeSpan;
+    private final long lifeTimeSpan;
 
 
     Zombie(IntPosition position,int MAX_FRAMES,long lifeTimeSpan){

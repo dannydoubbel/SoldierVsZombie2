@@ -9,7 +9,8 @@ public class PressedKeys {
     boolean zoomIn = false;
     boolean zoomOut = false;
 
-    boolean fire = false;
+    boolean fireSpace = false;
+    boolean fireALT = false;
 
 
     public static PressedKeys getInstance() {

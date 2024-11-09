@@ -1,14 +1,16 @@
 package io.github.SoldierVsZombies;
 
-public class PlayerState {
-    private static PlayerState instance;
-    public final int STEP_SIZE = 5;
-    private Directions playerCurrentDirection = Directions.no;
-    private Directions playerPreviousDirection = Directions.dn; // Make sure it's not Directions.no !!
-    private int playerFrameIndex = 0;
-    private final IntPosition playerCenterPos = new IntPosition();
-    private final IntPosition playerTargetCenterPos = new IntPosition();
+import com.badlogic.gdx.graphics.g2d.Sprite;
 
+public class PlayerState {
+    public final int STEP_SIZE = 5;
+    private static PlayerState instance;
+    private static PlayerFrames playerFrames;
+    private Directions playerCurrentDirection;
+    private Directions playerPreviousDirection;
+    private IntPosition playerCenterPos;
+    private IntPosition playerTargetCenterPos;
+    private int playerFrameIndex;
     private int xPosTilePlayer;
     private int yPosTilePlayer;
 
@@ -48,6 +50,7 @@ public class PlayerState {
     public void setPlayerFrameIndex(int playerFrameIndex) {
         this.playerFrameIndex = playerFrameIndex;
     }
+
     public void addPlayerFrameIndex(int delta) {
         playerFrameIndex += delta;
     }
@@ -69,19 +72,35 @@ public class PlayerState {
     }
 
     public IntPosition getPlayerTilePosition() {
-        return new IntPosition(xPosTilePlayer,yPosTilePlayer);
+        return new IntPosition(xPosTilePlayer, yPosTilePlayer);
     }
-    public void setPlayerCenterPos(IntPosition newPlayerCenterPos){
+
+    public void setPlayerCenterPos(IntPosition newPlayerCenterPos) {
         playerCenterPos.setPosition(newPlayerCenterPos);
     }
-    public void setPlayerTargetCenterPos(IntPosition newPlayerTargetCenterPos){
+
+    public void setPlayerTargetCenterPos(IntPosition newPlayerTargetCenterPos) {
         playerTargetCenterPos.setPosition(newPlayerTargetCenterPos);
     }
 
     public static PlayerState getInstance() {
         if (instance == null) {
             instance = new PlayerState();
+            initializeVariables();
         }
         return instance;
+    }
+
+    private static void initializeVariables() {
+        playerFrames = PlayerFrames.getInstance();
+        instance.playerPreviousDirection = Directions.dn;// Make sure it's not Directions.no !!
+        instance.playerCurrentDirection = Directions.no;
+        instance.playerFrameIndex = 0;
+        instance.playerCenterPos = new IntPosition();
+        instance.playerTargetCenterPos = new IntPosition();
+    }
+
+    public static Sprite getPlayerFrames(int direction) {
+        return playerFrames.getPlayerFramesSprites()[direction][instance.getPlayerFrameIndex()];
     }
 }

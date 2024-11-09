@@ -3,7 +3,7 @@ package io.github.SoldierVsZombies;
 public class MazeSolver {
 
     private static MazeSolver instance;
-    private static Tiles tiles =  Tiles.getInstance();
+    private static TileManager tiles =  TileManager.getInstance();
 
     private MazeSolver() {
     }
@@ -37,7 +37,7 @@ public class MazeSolver {
             // Reset and calculate positive bound (right)
             testX = startTilePos.getX();
             moved = false;
-            while (testX < Tiles.TILE_MAP_COLS - 1 && tiles.isTileWalkable(new IntPosition(testX, testY))) {
+            while (testX < TileManager.TILE_MAP_COLS - 1 && tiles.isTileWalkable(new IntPosition(testX, testY))) {
                 moved = true;
                 testX++;
             }
@@ -53,7 +53,7 @@ public class MazeSolver {
             // Reset and calculate positive bound (up)
             testY = startTilePos.getY();
             moved = false;
-            while (testY < Tiles.TILE_MAP_ROWS - 1 && tiles.isTileWalkable(new IntPosition(testX, testY))) {
+            while (testY < TileManager.TILE_MAP_ROWS - 1 && tiles.isTileWalkable(new IntPosition(testX, testY))) {
                 moved = true;
                 testY++;
             }
