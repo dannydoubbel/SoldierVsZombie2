@@ -132,7 +132,8 @@ public class ScoreBoardManager  {
         fontBig.getData().setScale(0.4f);
     }
 
-    public void draw(){ // must be called in render() from main after spritebatch.end() !!
+    public void render(SpriteBatch spriteBatch){ // must be called in render() from main after spritebatch.end() !!
+        if (spriteBatch.isDrawing())        spriteBatch.end();
         stage.act();
         stage.draw();
         timerNumber.setText(String.format("%.1f", timer));

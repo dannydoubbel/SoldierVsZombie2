@@ -2,10 +2,7 @@ package io.github.SoldierVsZombies;
 
 
 //  // https://sanderfrenken.github.io/Universal-LPC-Spritesheet-Character-Generator/#?body=Body_color_light&head=Human_female_light&sex=female&ears=Elven_ears_light&eyes=Eyes_blue&dress=Sash_dress_leather&clothes=TShirt_VNeck_blue&vest=Corset_blue&shoes_plate=Boots_Metal_Plating_steel&shoes=Boots_black&hair=Ponytail_ginger&earring_left=Simple_Earring_Left_gold
-//  ToDo    Clean up images resources folder
-//
-//
-//
+
 //   ToDo   Move entire project to the NAS
 //
 //
@@ -54,6 +51,13 @@ public class Main extends ApplicationAdapter {
     private TileManager tileManager;
     private PortalMapManager portalMapManager;
 
+    private IndicatorBar energyIndicator;
+    private IndicatorBar livesIndicator;
+    private IndicatorBar amunitionIndicator;
+    private IndicatorBar killsIndicator;
+    private IndicatorBar timerIndicator;
+
+
     private static void setUpInputRelatedStuff() {
         Gdx.input.setInputProcessor(new MyInputProcessor());
     }
@@ -73,6 +77,12 @@ public class Main extends ApplicationAdapter {
 
         setPlayerInitialPosition();
         addInitialEnemies();
+        energyIndicator = new IndicatorBar("Energy",10,10,250,15);
+        livesIndicator = new IndicatorBar("Lives",10,10+15+5,250,15);
+        amunitionIndicator = new IndicatorBar("Amunition",10,10+20+20,250,15);
+        killsIndicator = new IndicatorBar("Kills",10,10+20+20+20,250,15);
+        timerIndicator = new IndicatorBar("Time left",10,10+20+20+20+20,250,15);
+
         soundManager.playSoundEffect(SoundEffects.background, 0.5f);
     }
 
@@ -150,10 +160,8 @@ public class Main extends ApplicationAdapter {
         playerState = PlayerState.getInstance();
         pressedKeys = PressedKeys.getInstance();
         sharedVariables = SharedVariables.getInstance();
-        //playerFrames = PlayerFrames.getInstance();
         collisionDetector = CollisionDetector.getInstance();
         scoreBoardManager = ScoreBoardManager.getInstance(spriteBatch);
-        //mazeSolver =  MazeSolver.getInstance();
     }
 
     @Override
@@ -176,9 +184,7 @@ public class Main extends ApplicationAdapter {
         spriteBatch.setProjectionMatrix(camera.combined);
 
         handlePlayerMovement();
-
         handlePortals();
-
         handleZoomKeyPress();
         handleMusicKeyPress();
 
@@ -190,20 +196,21 @@ public class Main extends ApplicationAdapter {
             justOnce = false;
         }
 
-
         drawBackground();
         handleGifts();
         handleFireWoodCollision();
         handleBullets();
         handleZombies();
         handleSkulls();
-        handleAllShortLifeTimeSprites(); // todo rename grave to something better
+        handleAllShortLifeTimeSprites();
         drawPlayerFromCenterPosition();
-
-        spriteBatch.end();
+        energyIndicator.render(spriteBatch,15,true);
+        livesIndicator.render(spriteBatch,5,false);
+        amunitionIndicator.render(spriteBatch,1000,false);
+        killsIndicator.render(spriteBatch,500,false);
+        timerIndicator.render(spriteBatch,100,false);
+        scoreBoardManager.render(spriteBatch);//must be called after batch.end() !
         updateWindowTitle();
-
-        scoreBoardManager.draw();//must be called after batch.end() !
     }
 
 
@@ -211,12 +218,17 @@ public class Main extends ApplicationAdapter {
     public void dispose() {
         spriteBatch.dispose();
         soundManager.dispose();
+        energyIndicator.dispose();
+        livesIndicator.dispose();
+        amunitionIndicator.dispose();
+        killsIndicator.dispose();
+        timerIndicator.dispose();
     }
 
     private void updateWindowTitle() {
         String title = "";
         title += "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " ";
-        title += "XPOS = " + playerState.getXPosTilePlayer() + " YPOS = " + playerState.getYPosTilePlayer() + " ";
+        title += "X pos = " + playerState.getXPosTilePlayer() + " Y pos = " + playerState.getYPosTilePlayer() + " ";
 
         int tileValueUnderMainCharacter = tileManager.getBackgroundTileMap()[playerState.getXPosTilePlayer()][playerState.getYPosTilePlayer()];
         title += "Value under = " + tileValueUnderMainCharacter + " ";
@@ -349,8 +361,8 @@ public class Main extends ApplicationAdapter {
             shortLifeTimeSpriteTypeManager.getShortLifeTimeFrame(shortLifeTimeSprite),
             shortLifeTimeSprite.getPosition().getX() - viewParameters.getLeftOffset() - ((TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             shortLifeTimeSprite.getPosition().getY() - ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            shortLifeTimeSprite.getShortLifeTimeSpriteType().WIDTH(),
-            shortLifeTimeSprite.getShortLifeTimeSpriteType().HEIGHT());
+            shortLifeTimeSprite.getShortLifeTimeSpriteType().DRAW_WIDTH,
+            shortLifeTimeSprite.getShortLifeTimeSpriteType().DRAW_HEIGHT);
     }
 
 
@@ -361,6 +373,14 @@ public class Main extends ApplicationAdapter {
         handleZombiesDrawing();
         handleZombiePlayerCollision();
         handleZombieLifeTimeExpired();
+        handleZombieRebirth();
+    }
+
+    private void handleZombieRebirth(){
+        Random random = new Random();
+        if (zombieManager.getZombies().size() < 10 && random.nextInt(80) == 3 && random.nextBoolean() ) {
+            addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 4, 3, 15);
+        }
     }
 
     private void handleZombieLifeTimeExpired() {
@@ -373,7 +393,7 @@ public class Main extends ApplicationAdapter {
             }
             zombieManager.remove(zombie);
             iterator.remove();
-            addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 4, 3, 15);
+
         }
     }
 
@@ -533,7 +553,7 @@ public class Main extends ApplicationAdapter {
             ShortLifeTimeSprite gift = iterator.next();
             if (gift.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.BLACK_GIFT)) {
                 if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), gift.getPosition())) {
-                    shortLifeTimeSpritesToAdd.add(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOW, gift.getPosition().clone(), 2000));
+                    shortLifeTimeSpritesToAdd.add(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOW_YELL, gift.getPosition().clone(), 2000));
                     System.out.println("Gift collision"); // TODO do something with the gift
                     soundManager.playSoundEffect(SoundEffects.howo, 100f);
                     iterator.remove();
@@ -576,7 +596,7 @@ public class Main extends ApplicationAdapter {
                     soundManager.playSoundEffect(SoundEffects.zombieIsHit, 100f);
                     zombieIterator.remove();
                     bulletIterator.remove();
-                    addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 5, 3, 20);
+                    // is now handled in handleZombieRebirth(); :   addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 5, 3, 20);
                     scoreBoardManager.addKills(+1);
                     scoreBoardManager.addAmmo(+100);
                     break;

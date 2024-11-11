@@ -31,7 +31,7 @@ public class ShortLifeTimeSpriteTypeManager {
         Random random = new Random();
         if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.DEAD_ZOMBIE))
             return deadFrameZombie;
-        if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(WOW)) return wow;
+        if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(WOW_YELL)) return wow;
         if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.DEAD_SKULL))
             return shortLifetimeSprite.isBeyondHalfLifeTime() ? deadFrameSkull[1] : deadFrameSkull[0];
         if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.PORTAL_SHINE))
@@ -80,42 +80,42 @@ public class ShortLifeTimeSpriteTypeManager {
     private void loadWowFrames() {
         wow = new Sprite();
         Texture wowFile = new Texture(Gdx.files.internal("images/wow100x100.png"));
-        wow = new Sprite(wowFile, 0, 0, WOW.WIDTH(), WOW.HEIGHT());
+        wow = new Sprite(wowFile, 0, 0, WOW_YELL.WIDTH, WOW_YELL.HEIGHT);
     }
 
     private void loadBlackGiftFrames() {
         blackGift = new Sprite();
         Texture blackGiftFile = new Texture(Gdx.files.internal("images/blackGiftBox100x100.png"));
-        blackGift = new Sprite(blackGiftFile, 0, 0, BLACK_GIFT.WIDTH(), BLACK_GIFT.HEIGHT());
+        blackGift = new Sprite(blackGiftFile, 0, 0, BLACK_GIFT.WIDTH, BLACK_GIFT.HEIGHT);
     }
 
     private void loadPortalShineFrames() {
         portalShine = new Sprite[2];
         Texture portalShineFile1 = new Texture(Gdx.files.internal("images/portalshine_1_100x100.png"));
         Texture portalShineFile2 = new Texture(Gdx.files.internal("images/portalshine_2_100x100.png"));
-        portalShine[0] = new Sprite(portalShineFile1, 0, 0, PORTAL_SHINE.WIDTH(), PORTAL_SHINE.HEIGHT());
-        portalShine[1] = new Sprite(portalShineFile2, 0, 0, PRINCESS.WIDTH(), PORTAL_SHINE.HEIGHT());
+        portalShine[0] = new Sprite(portalShineFile1, 0, 0, PORTAL_SHINE.WIDTH, PORTAL_SHINE.HEIGHT);
+        portalShine[1] = new Sprite(portalShineFile2, 0, 0, PRINCESS.WIDTH, PORTAL_SHINE.HEIGHT);
     }
 
     private void loadSkullDeadFrames() {
         deadFrameSkull = new Sprite[2];
         Texture deadSkullFile1 = new Texture(Gdx.files.internal("images/skull100x100-ex1.png"));
         Texture deadSkullFile2 = new Texture(Gdx.files.internal("images/skull100x100-ex2.png"));
-        deadFrameSkull[0] = new Sprite(deadSkullFile1, 0, 0, DEAD_SKULL.WIDTH(), DEAD_SKULL.HEIGHT());
-        deadFrameSkull[1] = new Sprite(deadSkullFile2, 0, 0, DEAD_SKULL.WIDTH(), DEAD_SKULL.HEIGHT());
+        deadFrameSkull[0] = new Sprite(deadSkullFile1, 0, 0, DEAD_SKULL.WIDTH, DEAD_SKULL.HEIGHT);
+        deadFrameSkull[1] = new Sprite(deadSkullFile2, 0, 0, DEAD_SKULL.WIDTH, DEAD_SKULL.HEIGHT);
     }
 
     private void loadZombieDeadFrames() {
         deadFrameZombie = new Sprite();
         Texture deadZombieFile = new Texture(Gdx.files.internal("images/grave64x96.png"));
-        deadFrameZombie = new Sprite(deadZombieFile, 0, 0, DEAD_ZOMBIE.WIDTH(), DEAD_ZOMBIE.HEIGHT());
+        deadFrameZombie = new Sprite(deadZombieFile, 0, 0, DEAD_ZOMBIE.WIDTH, DEAD_ZOMBIE.HEIGHT);
     }
 
     private void loadWoodFireFrames() {
         woodFire = new Sprite[12];
         Texture woodFireFile = new Texture(Gdx.files.internal("images/woodFire_12_100x100.png"));
         for (int lus = 0; lus < 12; lus++) {
-            woodFire[lus] = new Sprite(woodFireFile, lus * 100, 0, WOOD_FIRE.WIDTH(), WOOD_FIRE.HEIGHT());
+            woodFire[lus] = new Sprite(woodFireFile, lus * 100, 0, WOOD_FIRE.WIDTH, WOOD_FIRE.HEIGHT);
         }
     }
 
@@ -124,7 +124,7 @@ public class ShortLifeTimeSpriteTypeManager {
         flamingTorch = new Sprite[11];
         Texture flamingTorchFile = new Texture(Gdx.files.internal("images/flamingTorch_11_352x64.png"));
         for (int lus = 0; lus < 11; lus++) {
-            flamingTorch[lus] = new Sprite(flamingTorchFile, lus * FLAMING_TORCH.WIDTH(), 0, FLAMING_TORCH.WIDTH(), FLAMING_TORCH.HEIGHT());
+            flamingTorch[lus] = new Sprite(flamingTorchFile, lus * FLAMING_TORCH.WIDTH, 0, FLAMING_TORCH.WIDTH, FLAMING_TORCH.HEIGHT);
         }
     }
 
