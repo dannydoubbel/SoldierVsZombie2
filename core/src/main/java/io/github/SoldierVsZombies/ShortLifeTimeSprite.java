@@ -16,16 +16,19 @@ public class ShortLifeTimeSprite extends BaseSprite {
     }
 
     public boolean isBeyondLifeTime() {
+        if (spriteLifetimeMilliSeconds <0) return false;
         long elapsedTime = TimeUtils.millis() - startTime;  // Calculate elapsed time in milliseconds
         return elapsedTime > spriteLifetimeMilliSeconds;
     }
 
     public boolean isBeyondHalfLifeTime() {
+        if (spriteLifetimeMilliSeconds <0) return false;
         long elapsedTime = TimeUtils.millis() - startTime;  // Calculate elapsed time in milliseconds
         return elapsedTime > (spriteLifetimeMilliSeconds / 2);
     }
 
     public boolean isBeyondLifeTime(double percent) {
+        if (spriteLifetimeMilliSeconds <0) return false;
         if (percent < 0 || percent > 100) {
             throw new IllegalArgumentException("Percentage must be between 0 and 100.");
         }

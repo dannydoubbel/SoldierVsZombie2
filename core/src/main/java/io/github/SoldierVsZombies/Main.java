@@ -118,6 +118,24 @@ public class Main extends ApplicationAdapter {
     private void initializePortals() {
 
         portalMapManager = new PortalMapManager();
+        handleFlamingTorchCreation();
+    }
+
+    private void handleFlamingTorchCreation() {
+        for (PortalMap portalMap : portalMapManager.getPortalMaps()) {
+            int x1 = portalMap.getEntryPosition().getX()-1;
+            int y1 = portalMap.getEntryPosition().getY();
+            IntPosition leftTorchPosition = getPixelPosFromTileCenterPos(new IntPosition(x1, y1));
+            leftTorchPosition.addX(15);
+            int x2 = portalMap.getEntryPosition().getX()+1;
+            int y2 = portalMap.getEntryPosition().getY();
+            IntPosition rightTorchPosition = getPixelPosFromTileCenterPos(new IntPosition(x2, y2));
+            rightTorchPosition.addX(15);
+            ShortLifeTimeSprite leftTorchToAdd = new ShortLifeTimeSprite(ShortLifeTimeSpriteType.FLAMING_TORCH, leftTorchPosition,-1);
+            ShortLifeTimeSprite rightTorchToAdd = new ShortLifeTimeSprite(ShortLifeTimeSpriteType.FLAMING_TORCH, rightTorchPosition,-1);
+            shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(leftTorchToAdd);
+            shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(rightTorchToAdd);
+        }
     }
 
     private void initializeGameComponents() {
@@ -320,7 +338,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleShortLifeTimeSpritesDrawing() {
-        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShotyLifeTimeSprites()) {
+        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites()) {
             drawShortLifeTimeSpritesFromCenterPosition(shortLifeTimeSprite);
         }
     }
@@ -331,8 +349,8 @@ public class Main extends ApplicationAdapter {
             shortLifeTimeSpriteTypeManager.getShortLifeTimeFrame(shortLifeTimeSprite),
             shortLifeTimeSprite.getPosition().getX() - viewParameters.getLeftOffset() - ((TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             shortLifeTimeSprite.getPosition().getY() - ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            shortLifeTimeSpriteTypeManager.DEAD_WIDTH,
-            shortLifeTimeSpriteTypeManager.DEAD_HEIGHT);
+            shortLifeTimeSprite.getShortLifeTimeSpriteType().WIDTH(),
+            shortLifeTimeSprite.getShortLifeTimeSpriteType().HEIGHT());
     }
 
 
@@ -509,7 +527,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleGifts() {
-        Iterator<ShortLifeTimeSprite> iterator = shortLifeTimeSpriteTypeManager.getAllShotyLifeTimeSprites().iterator();
+        Iterator<ShortLifeTimeSprite> iterator = shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites().iterator();
         ArrayList<ShortLifeTimeSprite> shortLifeTimeSpritesToAdd = new ArrayList<>();
         while (iterator.hasNext()) {
             ShortLifeTimeSprite gift = iterator.next();
@@ -574,7 +592,7 @@ public class Main extends ApplicationAdapter {
     }
 
     void handleFireWoodSkullCollision() {
-        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShotyLifeTimeSprites()) {
+        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites()) {
             Iterator<Skull> skullIterator = skullManager.getSkulls().iterator();
             while (skullIterator.hasNext()) {
                 Skull skull = skullIterator.next();
@@ -591,7 +609,7 @@ public class Main extends ApplicationAdapter {
         }
     }
     void handleFireWoodZombieCollision() {
-        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShotyLifeTimeSprites()) {
+        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites()) {
             Iterator<Zombie> zombieIterator = zombieManager.getZombies().iterator();
             while (zombieIterator.hasNext()) {
                 Zombie zombie = zombieIterator.next();
