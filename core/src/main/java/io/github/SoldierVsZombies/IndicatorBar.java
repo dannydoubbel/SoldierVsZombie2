@@ -34,12 +34,12 @@ public class IndicatorBar {
 
     }
 
-    public void render(SpriteBatch spriteBatch, float valueToIndicate, boolean valueIsPercentage) {
+    public void render(SpriteBatch spriteBatch, float valueToIndicate, boolean valueIsPercentage,IntPosition offsetPixelPos) {
         if (spriteBatch.isDrawing()) spriteBatch.end();
         spriteBatch.begin();
         // Draw the background bar with semi-transparency
         spriteBatch.setColor(0, 0, 0, 0.5f); // Black with 50% transparency
-        spriteBatch.draw(barTexture, x, y, width, height);
+        spriteBatch.draw(barTexture, x+offsetPixelPos.getX(), y+offsetPixelPos.getY(), width, height);/////////////////////////////////////////////////////////////////
 
         Color fontColor;
         if (valueIsPercentage) {
@@ -51,10 +51,10 @@ public class IndicatorBar {
                 fontColor = Color.WHITE;
             }
             // Draw the filled portion of the energy bar
-            spriteBatch.draw(barTexture, x, y, (width * valueToIndicate) / 100, height);
+            spriteBatch.draw(barTexture, x+offsetPixelPos.getX(), y+offsetPixelPos.getY(), (width * valueToIndicate) / 100, height);/////////////////////////////////////////////////////////////////
         } else {
             spriteBatch.setColor(0, 0, 1, 0.3f);
-            spriteBatch.draw(barTexture, x, y, width, height);
+            spriteBatch.draw(barTexture, x+offsetPixelPos.getX(), y+offsetPixelPos.getY(), width, height);/////////////////////////////////////////////////////////////////
             fontColor = Color.WHITE;
         }
 
@@ -74,13 +74,13 @@ public class IndicatorBar {
         // Calculate the centered position for the text
         float textX = x + (width - textWidth) / 2;
         float textY = y + (height + textHeight) / 2;
-        font.draw(spriteBatch, layout, textX, textY);
+        font.draw(spriteBatch, layout, textX+offsetPixelPos.getX(), textY+offsetPixelPos.getY());/////////////////////////////////////////////////////////////////
 
 
         layout.setText(font, title);
         float textX2 = x + 5;
         float textY2 = y + (height + textHeight) / 2;
-        font.draw(spriteBatch, layout, textX2, textY2);
+        font.draw(spriteBatch, layout, textX2+ offsetPixelPos.getX(), textY2+offsetPixelPos.getY());/////////////////////////////////////////////////////////////////
 
 
         spriteBatch.end();

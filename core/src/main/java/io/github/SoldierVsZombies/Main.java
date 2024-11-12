@@ -5,11 +5,11 @@ package io.github.SoldierVsZombies;
 
 //   ToDo   Move entire project to the NAS
 //
+//          Add at random wood to collect
 //
+//          Player may not make fire when he has not collect wood left.
 //
-//
-//
-//
+//          Each time player makes fire, decrease the collected wood.
 //
 
 
@@ -51,13 +51,6 @@ public class Main extends ApplicationAdapter {
     private TileManager tileManager;
     private PortalMapManager portalMapManager;
 
-    private IndicatorBar energyIndicator;
-    private IndicatorBar livesIndicator;
-    private IndicatorBar amunitionIndicator;
-    private IndicatorBar killsIndicator;
-    private IndicatorBar timerIndicator;
-
-
     private static void setUpInputRelatedStuff() {
         Gdx.input.setInputProcessor(new MyInputProcessor());
     }
@@ -77,16 +70,12 @@ public class Main extends ApplicationAdapter {
 
         setPlayerInitialPosition();
         addInitialEnemies();
-        energyIndicator = new IndicatorBar("Energy",10,10,250,15);
-        livesIndicator = new IndicatorBar("Lives",10,10+15+5,250,15);
-        amunitionIndicator = new IndicatorBar("Amunition",10,10+20+20,250,15);
-        killsIndicator = new IndicatorBar("Kills",10,10+20+20+20,250,15);
-        timerIndicator = new IndicatorBar("Time left",10,10+20+20+20+20,250,15);
 
         soundManager.playSoundEffect(SoundEffects.background, 0.5f);
     }
 
     private void initializeManagerClasses() {
+        scoreBoardManager = new ScoreBoardManager(spriteBatch);
         soundManager = new SoundManager();
         bulletManager = new BulletManager();
         zombieManager = new ZombieManager();
@@ -103,7 +92,7 @@ public class Main extends ApplicationAdapter {
         addInitialZombies();
         addInitialSkulls();
 
-        shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_FIRE,new IntPosition(200,200),10000));
+        shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_TO_COLLECT,new IntPosition(200,200),10000));
     }
 
     private void addInitialSkulls() {
@@ -161,7 +150,6 @@ public class Main extends ApplicationAdapter {
         pressedKeys = PressedKeys.getInstance();
         sharedVariables = SharedVariables.getInstance();
         collisionDetector = CollisionDetector.getInstance();
-        scoreBoardManager = ScoreBoardManager.getInstance(spriteBatch);
     }
 
     @Override
@@ -199,17 +187,14 @@ public class Main extends ApplicationAdapter {
         drawBackground();
         handleGifts();
         handleFireWoodCollision();
+        handleWoodToCollectCollision();
         handleBullets();
         handleZombies();
         handleSkulls();
         handleAllShortLifeTimeSprites();
         drawPlayerFromCenterPosition();
-        energyIndicator.render(spriteBatch,15,true);
-        livesIndicator.render(spriteBatch,5,false);
-        amunitionIndicator.render(spriteBatch,1000,false);
-        killsIndicator.render(spriteBatch,500,false);
-        timerIndicator.render(spriteBatch,100,false);
-        scoreBoardManager.render(spriteBatch);//must be called after batch.end() !
+
+        scoreBoardManager.render(new IntPosition(10,Gdx.graphics.getHeight()-200));//must be called after batch.end() !
         updateWindowTitle();
     }
 
@@ -218,11 +203,7 @@ public class Main extends ApplicationAdapter {
     public void dispose() {
         spriteBatch.dispose();
         soundManager.dispose();
-        energyIndicator.dispose();
-        livesIndicator.dispose();
-        amunitionIndicator.dispose();
-        killsIndicator.dispose();
-        timerIndicator.dispose();
+        scoreBoardManager.dispose();
     }
 
     private void updateWindowTitle() {
@@ -282,6 +263,7 @@ public class Main extends ApplicationAdapter {
         if (!collidingSkulls.isEmpty()) {
             //System.out.println("Skull says : You're so dead");
             soundManager.playSoundEffect(SoundEffects.auwScream, 100f);
+            scoreBoardManager.addHealth(-0.1f);
         }
     }
 
@@ -404,6 +386,7 @@ public class Main extends ApplicationAdapter {
             // System.out.println("Zombie says: You're so dead");
             // To Do implement player energy drain
             soundManager.playSoundEffect(SoundEffects.auwScream, 100f);
+            scoreBoardManager.addHealth(-0.1f);
         }
     }
 
@@ -602,6 +585,20 @@ public class Main extends ApplicationAdapter {
                     break;
                 }
                 // to do implement this more
+            }
+        }
+    }
+
+    void handleWoodToCollectCollision() {
+        Iterator<ShortLifeTimeSprite> iterator = shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites().iterator();
+        while (iterator.hasNext()) {
+            ShortLifeTimeSprite shortLifeTimeSprite = iterator.next();
+            if (shortLifeTimeSprite.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.WOOD_TO_COLLECT)) {
+                if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), shortLifeTimeSprite.getPosition())) {
+                    iterator.remove();
+                    scoreBoardManager.addWoodToCollect(+1);
+                    System.out.println("wood collected");
+                }
             }
         }
     }

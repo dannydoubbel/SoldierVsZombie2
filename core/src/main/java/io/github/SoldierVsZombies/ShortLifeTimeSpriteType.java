@@ -8,7 +8,9 @@ public enum ShortLifeTimeSpriteType {
     PORTAL_SHINE(5, "portal shine",100,100,100,100),
     WOW_YELL(6, "wow",100,100,100,100),
     WOOD_FIRE(7, "wood fire",100,100,64,64),
-    FLAMING_TORCH(8, "flaming torch",32,64,32,64);
+    FLAMING_TORCH(8, "flaming torch",32,64,32,64),
+    WOOD_TO_COLLECT(9,"wood to collect",100,100,64,64);
+
 
     private final int VALUE;
     public final int WIDTH;

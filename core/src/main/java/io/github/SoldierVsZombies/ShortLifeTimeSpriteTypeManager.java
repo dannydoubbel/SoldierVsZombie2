@@ -18,6 +18,7 @@ public class ShortLifeTimeSpriteTypeManager {
     private Sprite[] portalShine;
     private Sprite wow;
     private Sprite[] woodFire;
+    private Sprite woodToCollect;
     private Sprite[] flamingTorch;
 
 
@@ -42,6 +43,9 @@ public class ShortLifeTimeSpriteTypeManager {
         }
         if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.FLAMING_TORCH)) {
             return flamingTorch[random.nextInt(flamingTorch.length)];
+        }
+        if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(WOOD_TO_COLLECT)) {
+            return woodToCollect;
         }
 
         return blackGift;
@@ -74,17 +78,24 @@ public class ShortLifeTimeSpriteTypeManager {
         loadPortalShineFrames();
         loadWowFrames();
         loadWoodFireFrames();
+        loadWoodToCollectFrames();
         loadFlamingTorchFrames();
     }
 
+    private void loadWoodToCollectFrames(){
+        //woodToCollect = new Sprite();
+        Texture woodToCollectFile = new Texture(Gdx.files.internal("images/woodToCollect100x100.png"));
+        woodToCollect = new Sprite(woodToCollectFile, 0, 0, WOOD_TO_COLLECT.WIDTH, WOOD_TO_COLLECT.HEIGHT);
+    }
+
     private void loadWowFrames() {
-        wow = new Sprite();
+        //wow = new Sprite();
         Texture wowFile = new Texture(Gdx.files.internal("images/wow100x100.png"));
         wow = new Sprite(wowFile, 0, 0, WOW_YELL.WIDTH, WOW_YELL.HEIGHT);
     }
 
     private void loadBlackGiftFrames() {
-        blackGift = new Sprite();
+        //blackGift = new Sprite();
         Texture blackGiftFile = new Texture(Gdx.files.internal("images/blackGiftBox100x100.png"));
         blackGift = new Sprite(blackGiftFile, 0, 0, BLACK_GIFT.WIDTH, BLACK_GIFT.HEIGHT);
     }
@@ -106,7 +117,7 @@ public class ShortLifeTimeSpriteTypeManager {
     }
 
     private void loadZombieDeadFrames() {
-        deadFrameZombie = new Sprite();
+        //deadFrameZombie = new Sprite();
         Texture deadZombieFile = new Texture(Gdx.files.internal("images/grave64x96.png"));
         deadFrameZombie = new Sprite(deadZombieFile, 0, 0, DEAD_ZOMBIE.WIDTH, DEAD_ZOMBIE.HEIGHT);
     }
