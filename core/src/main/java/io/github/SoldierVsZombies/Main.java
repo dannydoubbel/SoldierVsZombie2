@@ -192,7 +192,9 @@ public class Main extends ApplicationAdapter {
         }
 
         drawBackground();
+        handleMedicalKit();
         handleGifts();
+        handleBulletMagazine();
         handleFireWoodCollision();
         handleWoodToCollectCollision();
         handleBullets();
@@ -200,7 +202,7 @@ public class Main extends ApplicationAdapter {
         handleSkulls();
         handleAllShortLifeTimeSprites();
 
-        scoreBoardManager.render(new IntPosition(10, Gdx.graphics.getHeight() - 200));//must be called after batch.end() !
+        scoreBoardManager.render(new IntPosition(10, Gdx.graphics.getHeight() - 200));
 
         handlePlayerMovement();
 
@@ -219,11 +221,9 @@ public class Main extends ApplicationAdapter {
 
     private void updateWindowTitle() {
         String title = "";
-        title += "Graphics Size " + Gdx.graphics.getWidth() + "x" + Gdx.graphics.getHeight() + "y" + " ";
-        title += "X pos = " + playerState.getXPosTilePlayer() + " Y pos = " + playerState.getYPosTilePlayer() + " ";
-
+        title += "Player pos = " + playerState.getPlayerTilePosition().toString();
         int tileValueUnderMainCharacter = tileManager.getBackgroundTileMap()[playerState.getXPosTilePlayer()][playerState.getYPosTilePlayer()];
-        title += "Value under = " + tileValueUnderMainCharacter + " ";
+        title += " Value player = " + tileValueUnderMainCharacter + " ";
 
         Gdx.graphics.setTitle(title);
     }
@@ -234,7 +234,6 @@ public class Main extends ApplicationAdapter {
         camera.update();
         viewport = new ScreenViewport(camera); // Use ScreenViewport to adapt to window size without scaling
         viewport.apply();
-        //shapeRenderer = new ShapeRenderer();
         Gdx.graphics.setResizable(true);
     }
 
@@ -272,7 +271,6 @@ public class Main extends ApplicationAdapter {
         ArrayList<Skull> collidingSkulls =
             skullManager.getCollidingZombiesWithPixelPos(playerState.getPlayerCenterPos());
         if (!collidingSkulls.isEmpty()) {
-            //System.out.println("Skull says : You're so dead");
             soundManager.playSoundEffect(SoundEffects.auwScream, 100f);
             scoreBoardManager.addHealth(-0.1f);
             playerState.setPlayerHurts(true);
@@ -381,7 +379,6 @@ public class Main extends ApplicationAdapter {
         Iterator<Zombie> iterator = zombieManager.getZombiesLifeTimeExpired().iterator();
         while (iterator.hasNext()) {
             Zombie zombie = iterator.next();
-            //todo maybe add a soundEffect
             if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.BLACK_GIFT) < 3) {
                 shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.BLACK_GIFT, zombie.getPosition(), 5000));
             }
@@ -395,9 +392,7 @@ public class Main extends ApplicationAdapter {
         ArrayList<Zombie> collidingZombies =
             zombieManager.getCollidingZombiesWithPixelPos(playerState.getPlayerCenterPos());
         if (!collidingZombies.isEmpty()) {
-            // System.out.println("Zombie says: You're so dead");
-            // To Do implement player energy drain
-            soundManager.playSoundEffect(SoundEffects.auwScream, 100f);
+            soundManager.playSoundEffect(SoundEffects.ahahaugh, 100f);
             scoreBoardManager.addHealth(-0.1f);
             playerState.setPlayerHurts(true);
         }
@@ -542,6 +537,73 @@ public class Main extends ApplicationAdapter {
             zombieManager.ZOMBIE_HEIGHT);
     }
 
+    private void handleBulletMagazine() {
+        handleBulletMagazineCollision();
+        handleBulletMagazineCreation();
+    }
+
+    private void handleBulletMagazineCreation() {
+        Random random = new Random();
+        if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.BULLET_MAGAZINE) < 8) {
+            if (random.nextInt(100)==15) {
+                IntPosition tilePos = tileManager.getRandomWalkablePosition();
+                if (tileManager.isTileWalkable(tilePos)) {
+                    IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
+                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.BULLET_MAGAZINE,pixelPos,15000));
+                }
+            }
+        }
+    }
+    private void handleBulletMagazineCollision() {
+        Iterator<ShortLifeTimeSprite> iterator = shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites().iterator();
+        while (iterator.hasNext()) {
+            ShortLifeTimeSprite bulletMagazine = iterator.next();
+            if (bulletMagazine.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.BULLET_MAGAZINE)) {
+                if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), bulletMagazine.getPosition())) {
+                    System.out.println("Bullet Magazine collected");
+                    soundManager.playSoundEffect(SoundEffects.bulletMagazineCollect, 100f);
+                    iterator.remove();
+                    scoreBoardManager.addAmmo(100);
+                }
+            }
+        }
+    }
+
+
+    private void handleMedicalKit() {
+        handleMedicalKitCollision();
+        handleMedicalKitCreation();
+    }
+
+    private void handleMedicalKitCreation() {
+        Random random = new Random();
+        if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.MEDICAL_KIT) < 5) {
+            if (random.nextInt(100)==15) {
+                IntPosition tilePos = tileManager.getRandomWalkablePosition();
+                if (tileManager.isTileWalkable(tilePos)) {
+                    IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
+                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.MEDICAL_KIT,pixelPos,20000));
+                }
+            }
+        }
+    }
+
+    private void handleMedicalKitCollision() {
+        Iterator<ShortLifeTimeSprite> iterator = shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites().iterator();
+        while (iterator.hasNext()) {
+            ShortLifeTimeSprite medicalKit = iterator.next();
+            if (medicalKit.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.MEDICAL_KIT)) {
+                if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), medicalKit.getPosition())) {
+                    System.out.println("Medical kit collected"); // TODO do something with the gift
+                    soundManager.playSoundEffect(SoundEffects.feelingBetter, 100f);
+                    iterator.remove();
+                    scoreBoardManager.addHealth(15);
+                }
+            }
+        }
+    }
+
+
     private void handleGifts() {
         Iterator<ShortLifeTimeSprite> iterator = shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites().iterator();
         ArrayList<ShortLifeTimeSprite> shortLifeTimeSpritesToAdd = new ArrayList<>();
@@ -592,9 +654,7 @@ public class Main extends ApplicationAdapter {
                     soundManager.playSoundEffect(SoundEffects.zombieIsHit, 100f);
                     zombieIterator.remove();
                     bulletIterator.remove();
-                    // is now handled in handleZombieRebirth(); :   addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 5, 3, 20);
                     scoreBoardManager.addKills(+1);
-                    scoreBoardManager.addAmmo(+100);
                     break;
                 }
                 // to do implement this more
@@ -610,7 +670,6 @@ public class Main extends ApplicationAdapter {
                 if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), shortLifeTimeSprite.getPosition())) {
                     iterator.remove();
                     scoreBoardManager.addWoodToCollect(+1);
-                    System.out.println("wood collected");
                 }
             }
         }
@@ -647,6 +706,7 @@ public class Main extends ApplicationAdapter {
                 if (collisionDetector.isColliding(shortLifeTimeSprite.getPosition(), zombie.getPosition())) {
                     zombieIterator.remove();
                     scoreBoardManager.addKills(+1);
+                    soundManager.playSoundEffect(SoundEffects.zombieScream,100);
                     break;
                 }
             }

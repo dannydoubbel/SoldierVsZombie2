@@ -6,7 +6,11 @@ public enum SoundEffects {
     zombieIsHit(2,"effectZombieIsShot","sound/strange_laugh.mp3"),
     auwScream(3,"effectAuwScream","sound/auw_scream.mp3"),
     howo(4,"soundEffectHowo","sound/howo.mp3"),
-    teleport(5,"effectTeleport","sound/teleport.mp3");
+    teleport(5,"effectTeleport","sound/teleport.mp3"),
+    feelingBetter(6,"feeling better","sound/forTheBetter.mp3"),
+    ahahaugh(7,"ahahaugh","sound/ahahaugh.mp3"),
+    zombieScream(8,"zombie scream","sound/zombieScream.mp3"),
+    bulletMagazineCollect(9,"bulletMagazineCollect","sound/bulletMagazineCollect.mp3");
 
     private final int value;
     private final String name;

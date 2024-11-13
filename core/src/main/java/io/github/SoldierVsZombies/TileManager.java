@@ -60,10 +60,8 @@ public class TileManager {
     }
 
     public  IntPosition getRandomWalkablePositionAround(IntPosition start, int minStepsX,int minStepsY, int maxSteps) {
-        //System.out.println("Start pos random " + start);
             IntPosition newPosition;
             int maxAttempts = 500;
-
             for (int attempt = 0; attempt < maxAttempts; attempt++) {
                 int x = getRandomInt(minStepsX,maxSteps);
                 int y = getRandomInt(minStepsY,maxSteps);
@@ -76,9 +74,29 @@ public class TileManager {
             }
 
         }
-        System.out.println("No walkable spot found within attempts");
         return start;
     }
+    public  IntPosition getRandomWalkablePosition() {
+        IntPosition newPosition;
+        int maxAttempts = 500;
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            int x = getRandomInt(0,TILE_MAP_COLS-1);
+            int y = getRandomInt(0,TILE_MAP_ROWS-1);
+            newPosition = new IntPosition(x,y);
+            if (isTileWalkable(newPosition)) {
+                return newPosition;
+            }
+
+        }
+        return new IntPosition(-1,-1);
+    }
+
+
+
+
+
+
+
 
     public int getRandomColNumber(){
         Random random = new Random();

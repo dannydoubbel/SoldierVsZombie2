@@ -135,7 +135,8 @@ public class ScoreBoardManager {
     }
 
     public void setAmmo(Integer ammo) {
-        this.ammo = ammo;
+
+        this.ammo = ammo > 0 ? ammo : 0;
     }
 
     public Integer getAmmoFired() {
@@ -151,7 +152,8 @@ public class ScoreBoardManager {
     }
 
     public void setHealth(float health) {
-        this.health = health;
+        this.health = health <= 100 ? health : 100;
+        this.health = this.health >= 0 ? this.health : 0;
     }
 
     public int getScore() {
@@ -176,9 +178,12 @@ public class ScoreBoardManager {
 
     public void addAmmo(int deltaAmmo) {
         ammo+=deltaAmmo;
+        ammo = ammo >= 0 ? ammo : 0;
     }
     public void addHealth(float deltaHealth) {
         health+=deltaHealth;
+        health = health <= 100 ? health : 100;
+        health = this.health >= 0 ? this.health : 0;
     }
 
     public void addWoodToCollect(int deltaWoodToCollect) {
