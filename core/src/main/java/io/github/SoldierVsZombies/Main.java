@@ -5,11 +5,16 @@ package io.github.SoldierVsZombies;
 
 //   ToDo   Move entire project to the NAS
 //
-//          Add at random wood to collect
+//    ToDo       Add at random wood to collect
+//   ToDo        Add at random medicalKit to collect
+//    ToDo       Add at random bulletMagazine to collect
 //
-//          Player may not make fire when he has not collect wood left.
+//    ToDo          Player may not make fire when he has not collect wood left.
+//      ToDo     Each time player makes fire, decrease the collected wood.
 //
-//          Each time player makes fire, decrease the collected wood.
+//  ToDo         Player health should increase by collecting medicalKit
+//
+//  ToDo         Player ammo should decrease while firing and collecting bulletMagazine increase ammo Left
 //
 
 
@@ -92,7 +97,7 @@ public class Main extends ApplicationAdapter {
         addInitialZombies();
         addInitialSkulls();
 
-        shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_TO_COLLECT,new IntPosition(200,200),10000));
+        shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.MEDICAL_KIT, new IntPosition(100, 100), 10000));
     }
 
     private void addInitialSkulls() {
@@ -122,16 +127,16 @@ public class Main extends ApplicationAdapter {
 
     private void handleFlamingTorchCreation() {
         for (PortalMap portalMap : portalMapManager.getPortalMaps()) {
-            int x1 = portalMap.getEntryPosition().getX()-1;
+            int x1 = portalMap.getEntryPosition().getX() - 1;
             int y1 = portalMap.getEntryPosition().getY();
             IntPosition leftTorchPosition = getPixelPosFromTileCenterPos(new IntPosition(x1, y1));
             leftTorchPosition.addX(15);
-            int x2 = portalMap.getEntryPosition().getX()+1;
+            int x2 = portalMap.getEntryPosition().getX() + 1;
             int y2 = portalMap.getEntryPosition().getY();
             IntPosition rightTorchPosition = getPixelPosFromTileCenterPos(new IntPosition(x2, y2));
             rightTorchPosition.addX(15);
-            ShortLifeTimeSprite leftTorchToAdd = new ShortLifeTimeSprite(ShortLifeTimeSpriteType.FLAMING_TORCH, leftTorchPosition,-1);
-            ShortLifeTimeSprite rightTorchToAdd = new ShortLifeTimeSprite(ShortLifeTimeSpriteType.FLAMING_TORCH, rightTorchPosition,-1);
+            ShortLifeTimeSprite leftTorchToAdd = new ShortLifeTimeSprite(ShortLifeTimeSpriteType.FLAMING_TORCH, leftTorchPosition, -1);
+            ShortLifeTimeSprite rightTorchToAdd = new ShortLifeTimeSprite(ShortLifeTimeSpriteType.FLAMING_TORCH, rightTorchPosition, -1);
             shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(leftTorchToAdd);
             shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(rightTorchToAdd);
         }
@@ -139,7 +144,6 @@ public class Main extends ApplicationAdapter {
 
     private void initializeGameComponents() {
         setupScreenRelatedStuff();
-        //  setupSoundRelatedStuff();
         setUpInputRelatedStuff();
     }
 
@@ -166,12 +170,15 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void render() {
+        updateWindowTitle();
+
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.zoom = viewParameters.getZoomValue();
         camera.update();
         spriteBatch.setProjectionMatrix(camera.combined);
 
-        handlePlayerMovement();
+        playerState.setPlayerHurts(false);
+
         handlePortals();
         handleZoomKeyPress();
         handleMusicKeyPress();
@@ -192,10 +199,14 @@ public class Main extends ApplicationAdapter {
         handleZombies();
         handleSkulls();
         handleAllShortLifeTimeSprites();
-        drawPlayerFromCenterPosition();
 
-        scoreBoardManager.render(new IntPosition(10,Gdx.graphics.getHeight()-200));//must be called after batch.end() !
-        updateWindowTitle();
+        scoreBoardManager.render(new IntPosition(10, Gdx.graphics.getHeight() - 200));//must be called after batch.end() !
+
+        handlePlayerMovement();
+
+        spriteBatch.begin();
+        drawPlayerFromCenterPosition(); // should be the last in the render()
+        spriteBatch.end();
     }
 
 
@@ -264,6 +275,7 @@ public class Main extends ApplicationAdapter {
             //System.out.println("Skull says : You're so dead");
             soundManager.playSoundEffect(SoundEffects.auwScream, 100f);
             scoreBoardManager.addHealth(-0.1f);
+            playerState.setPlayerHurts(true);
         }
     }
 
@@ -358,9 +370,9 @@ public class Main extends ApplicationAdapter {
         handleZombieRebirth();
     }
 
-    private void handleZombieRebirth(){
+    private void handleZombieRebirth() {
         Random random = new Random();
-        if (zombieManager.getZombies().size() < 10 && random.nextInt(80) == 3 && random.nextBoolean() ) {
+        if (zombieManager.getZombies().size() < 10 && random.nextInt(80) == 3 && random.nextBoolean()) {
             addZombieAtRandomWalkablePositionAround(playerState.getPlayerTilePosition(), 4, 3, 15);
         }
     }
@@ -370,7 +382,7 @@ public class Main extends ApplicationAdapter {
         while (iterator.hasNext()) {
             Zombie zombie = iterator.next();
             //todo maybe add a soundEffect
-            if (shortLifeTimeSpriteTypeManager.getNumberOfGifts() < 3) {
+            if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.BLACK_GIFT) < 3) {
                 shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.BLACK_GIFT, zombie.getPosition(), 5000));
             }
             zombieManager.remove(zombie);
@@ -387,6 +399,7 @@ public class Main extends ApplicationAdapter {
             // To Do implement player energy drain
             soundManager.playSoundEffect(SoundEffects.auwScream, 100f);
             scoreBoardManager.addHealth(-0.1f);
+            playerState.setPlayerHurts(true);
         }
     }
 
@@ -603,13 +616,13 @@ public class Main extends ApplicationAdapter {
         }
     }
 
-    void handleFireWoodCollision(){
+    void handleFireWoodCollision() {
         handleFireWoodSkullCollision();
         handleFireWoodZombieCollision();
     }
 
     void handleFireWoodSkullCollision() {
-        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites()) {
+        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSpritesOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.WOOD_FIRE)) {
             Iterator<Skull> skullIterator = skullManager.getSkulls().iterator();
             while (skullIterator.hasNext()) {
                 Skull skull = skullIterator.next();
@@ -625,8 +638,9 @@ public class Main extends ApplicationAdapter {
             }
         }
     }
+
     void handleFireWoodZombieCollision() {
-        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites()) {
+        for (ShortLifeTimeSprite shortLifeTimeSprite : shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSpritesOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.WOOD_FIRE)) {
             Iterator<Zombie> zombieIterator = zombieManager.getZombies().iterator();
             while (zombieIterator.hasNext()) {
                 Zombie zombie = zombieIterator.next();
@@ -729,11 +743,12 @@ public class Main extends ApplicationAdapter {
     private void handleFireCreation() {
         if (pressedKeys.fireALT) {
             IntPosition position = getPixelPosFromTileCenterPos(getTilePositionFromPixelPosition(playerState.getPlayerCenterPos().clone()));
-            if (!shortLifeTimeSpriteTypeManager.isOnPositionATypeOf(position,ShortLifeTimeSpriteType.WOOD_FIRE)) {
+            if (!shortLifeTimeSpriteTypeManager.isOnPositionATypeOf(position, ShortLifeTimeSpriteType.WOOD_FIRE)) {
                 shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_FIRE, position, 10000));
             }
         }
     }
+
     private void handleBulletCreation() {
         if (pressedKeys.fireSpace) {
             IntPosition startPositionBullet = playerState.getPlayerCenterPos().clone();
@@ -791,7 +806,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handlePlayerFrameIndex() {
-        if (isPlayerWalking()) {
+        if (isPlayerWalking() || playerState.isPlayerHurts()) {  // to do check if this works with the ishurt !!!!!
             playerState.addPlayerFrameIndex(1);
         }
         setPlayerFrame(playerState.getPlayerFrameIndex());

@@ -9,7 +9,9 @@ public enum ShortLifeTimeSpriteType {
     WOW_YELL(6, "wow",100,100,100,100),
     WOOD_FIRE(7, "wood fire",100,100,64,64),
     FLAMING_TORCH(8, "flaming torch",32,64,32,64),
-    WOOD_TO_COLLECT(9,"wood to collect",100,100,64,64);
+    WOOD_TO_COLLECT(9,"wood to collect",100,100,64,64),
+    BULLET_MAGAZINE(10,"bullet magazine",100,100,64,64),
+    MEDICAL_KIT(11,"medical kit",100,100,64,64);
 
 
     private final int VALUE;

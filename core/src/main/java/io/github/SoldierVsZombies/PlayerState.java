@@ -2,6 +2,8 @@ package io.github.SoldierVsZombies;
 
 import com.badlogic.gdx.graphics.g2d.Sprite;
 
+import java.util.Random;
+
 public class PlayerState {
     public final int STEP_SIZE = 5;
     private static PlayerState instance;
@@ -13,6 +15,7 @@ public class PlayerState {
     private int playerFrameIndex;
     private int xPosTilePlayer;
     private int yPosTilePlayer;
+    private boolean playerHurts;
 
     public int getXPosTilePlayer() {
         return xPosTilePlayer;
@@ -55,6 +58,7 @@ public class PlayerState {
         playerFrameIndex += delta;
     }
 
+
     public Directions getPlayerCurrentDirection() {
         return playerCurrentDirection;
     }
@@ -91,6 +95,14 @@ public class PlayerState {
         return instance;
     }
 
+    public boolean isPlayerHurts() {
+        return playerHurts;
+    }
+
+    public void setPlayerHurts(boolean playerHurts) {
+        this.playerHurts = playerHurts;
+    }
+
     private static void initializeVariables() {
         playerFrames = PlayerFrames.getInstance();
         instance.playerPreviousDirection = Directions.dn;// Make sure it's not Directions.no !!
@@ -98,9 +110,14 @@ public class PlayerState {
         instance.playerFrameIndex = 0;
         instance.playerCenterPos = new IntPosition();
         instance.playerTargetCenterPos = new IntPosition();
+        instance.playerHurts = false;
     }
 
     public static Sprite getPlayerFrames(int direction) {
-        return playerFrames.getPlayerFramesSprites()[direction][instance.getPlayerFrameIndex()];
+        return
+            playerFrames.getPlayerFramesSprites()[direction]
+                [instance.isPlayerHurts()
+                ? new Random().nextInt(7, 11)
+                : instance.playerFrameIndex];
     }
 }

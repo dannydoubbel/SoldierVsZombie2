@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.Sprite;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import static io.github.SoldierVsZombies.ShortLifeTimeSpriteType.*;
 
@@ -20,6 +21,8 @@ public class ShortLifeTimeSpriteTypeManager {
     private Sprite[] woodFire;
     private Sprite woodToCollect;
     private Sprite[] flamingTorch;
+    private Sprite bulletMagazine;
+    private Sprite medicalKit;
 
 
     ShortLifeTimeSpriteTypeManager() {
@@ -47,6 +50,12 @@ public class ShortLifeTimeSpriteTypeManager {
         if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(WOOD_TO_COLLECT)) {
             return woodToCollect;
         }
+        if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(BULLET_MAGAZINE)) {
+            return bulletMagazine;
+        }
+        if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(MEDICAL_KIT)) {
+            return medicalKit;
+        }
 
         return blackGift;
     }
@@ -58,15 +67,19 @@ public class ShortLifeTimeSpriteTypeManager {
     public ArrayList<ShortLifeTimeSprite> getAllShortLifeTimeSprites() {
         return allShortLifeTimeSprites;
     }
+    public ArrayList<ShortLifeTimeSprite> getAllShortLifeTimeSpritesOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType typeToReturn) {
+        return  getAllShortLifeTimeSprites().stream()
+            .filter(shortLifeTimeSprite -> shortLifeTimeSprite.getShortLifeTimeSpriteType().equals(typeToReturn)).collect(Collectors.toCollection(ArrayList::new));
+    }
 
 
     public void handleShortLifeTimeSpritesCountDown() {
         getAllShortLifeTimeSprites().removeIf(ShortLifeTimeSprite::isBeyondLifeTime);
     }
 
-    public long getNumberOfGifts() {
+    public long getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType typeToCount) {
         return getAllShortLifeTimeSprites().stream()
-            .filter(shortLifeTimeSprite -> shortLifeTimeSprite.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.BLACK_GIFT))
+            .filter(shortLifeTimeSprite -> shortLifeTimeSprite.getShortLifeTimeSpriteType().equals(typeToCount))
             .count();
     }
 
@@ -80,22 +93,31 @@ public class ShortLifeTimeSpriteTypeManager {
         loadWoodFireFrames();
         loadWoodToCollectFrames();
         loadFlamingTorchFrames();
+        loadBulletMagazineFrames();
+        loadMedicalKitFrames();
+    }
+
+    private void loadMedicalKitFrames(){
+        Texture medicalKitFile = new Texture(Gdx.files.internal("images/medicalKit100x100.png"));
+        medicalKit = new Sprite(medicalKitFile, MEDICAL_KIT.WIDTH, MEDICAL_KIT.HEIGHT);
+    }
+
+    private void loadBulletMagazineFrames() {
+        Texture bulletMagazineFile = new Texture(Gdx.files.internal("images/bulletMagazine100x100.png"));
+        bulletMagazine = new Sprite(bulletMagazineFile, BULLET_MAGAZINE.WIDTH, BULLET_MAGAZINE.HEIGHT);
     }
 
     private void loadWoodToCollectFrames(){
-        //woodToCollect = new Sprite();
         Texture woodToCollectFile = new Texture(Gdx.files.internal("images/woodToCollect100x100.png"));
         woodToCollect = new Sprite(woodToCollectFile, 0, 0, WOOD_TO_COLLECT.WIDTH, WOOD_TO_COLLECT.HEIGHT);
     }
 
     private void loadWowFrames() {
-        //wow = new Sprite();
         Texture wowFile = new Texture(Gdx.files.internal("images/wow100x100.png"));
         wow = new Sprite(wowFile, 0, 0, WOW_YELL.WIDTH, WOW_YELL.HEIGHT);
     }
 
     private void loadBlackGiftFrames() {
-        //blackGift = new Sprite();
         Texture blackGiftFile = new Texture(Gdx.files.internal("images/blackGiftBox100x100.png"));
         blackGift = new Sprite(blackGiftFile, 0, 0, BLACK_GIFT.WIDTH, BLACK_GIFT.HEIGHT);
     }
