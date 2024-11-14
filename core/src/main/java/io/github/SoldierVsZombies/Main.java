@@ -4,18 +4,7 @@ package io.github.SoldierVsZombies;
 //  // https://sanderfrenken.github.io/Universal-LPC-Spritesheet-Character-Generator/#?body=Body_color_light&head=Human_female_light&sex=female&ears=Elven_ears_light&eyes=Eyes_blue&dress=Sash_dress_leather&clothes=TShirt_VNeck_blue&vest=Corset_blue&shoes_plate=Boots_Metal_Plating_steel&shoes=Boots_black&hair=Ponytail_ginger&earring_left=Simple_Earring_Left_gold
 
 //   ToDo   Move entire project to the NAS
-//
-//    ToDo       Add at random wood to collect
-//   ToDo        Add at random medicalKit to collect
-//    ToDo       Add at random bulletMagazine to collect
-//
-//    ToDo          Player may not make fire when he has not collect wood left.
-//      ToDo     Each time player makes fire, decrease the collected wood.
-//
-//  ToDo         Player health should increase by collecting medicalKit
-//
-//  ToDo         Player ammo should decrease while firing and collecting bulletMagazine increase ammo Left
-//
+
 
 
 import com.badlogic.gdx.ApplicationAdapter;
@@ -545,15 +534,16 @@ public class Main extends ApplicationAdapter {
     private void handleBulletMagazineCreation() {
         Random random = new Random();
         if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.BULLET_MAGAZINE) < 8) {
-            if (random.nextInt(100)==15) {
+            if (random.nextInt(100) == 15) {
                 IntPosition tilePos = tileManager.getRandomWalkablePosition();
                 if (tileManager.isTileWalkable(tilePos)) {
                     IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
-                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.BULLET_MAGAZINE,pixelPos,15000));
+                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.BULLET_MAGAZINE, pixelPos, 15000));
                 }
             }
         }
     }
+
     private void handleBulletMagazineCollision() {
         Iterator<ShortLifeTimeSprite> iterator = shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites().iterator();
         while (iterator.hasNext()) {
@@ -578,11 +568,11 @@ public class Main extends ApplicationAdapter {
     private void handleMedicalKitCreation() {
         Random random = new Random();
         if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.MEDICAL_KIT) < 5) {
-            if (random.nextInt(100)==15) {
+            if (random.nextInt(100) == 15) {
                 IntPosition tilePos = tileManager.getRandomWalkablePosition();
                 if (tileManager.isTileWalkable(tilePos)) {
                     IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
-                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.MEDICAL_KIT,pixelPos,20000));
+                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.MEDICAL_KIT, pixelPos, 20000));
                 }
             }
         }
@@ -706,7 +696,7 @@ public class Main extends ApplicationAdapter {
                 if (collisionDetector.isColliding(shortLifeTimeSprite.getPosition(), zombie.getPosition())) {
                     zombieIterator.remove();
                     scoreBoardManager.addKills(+1);
-                    soundManager.playSoundEffect(SoundEffects.zombieScream,100);
+                    soundManager.playSoundEffect(SoundEffects.zombieScream, 100);
                     break;
                 }
             }
@@ -802,9 +792,14 @@ public class Main extends ApplicationAdapter {
 
     private void handleFireCreation() {
         if (pressedKeys.fireALT) {
-            IntPosition position = getPixelPosFromTileCenterPos(getTilePositionFromPixelPosition(playerState.getPlayerCenterPos().clone()));
-            if (!shortLifeTimeSpriteTypeManager.isOnPositionATypeOf(position, ShortLifeTimeSpriteType.WOOD_FIRE)) {
-                shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_FIRE, position, 10000));
+            if (scoreBoardManager.getWoodToCollect() > 0) {
+                IntPosition position = getPixelPosFromTileCenterPos(getTilePositionFromPixelPosition(playerState.getPlayerCenterPos().clone()));
+                if (!shortLifeTimeSpriteTypeManager.isOnPositionATypeOf(position, ShortLifeTimeSpriteType.WOOD_FIRE)) {
+                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_FIRE, position, 10000));
+                    scoreBoardManager.addWoodToCollect(-1);
+                }
+            } else {
+                soundManager.playSoundEffect(SoundEffects.collectWoodFirst,100);
             }
         }
     }
@@ -838,6 +833,8 @@ public class Main extends ApplicationAdapter {
                     startPositionBullet,
                     playerState.getPlayerPreviousDirection(),
                     7);
+            } else {
+                soundManager.playSoundEffect(SoundEffects.collectAmmunitionFirst,100);
             }
         }
     }
@@ -866,7 +863,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handlePlayerFrameIndex() {
-        if (isPlayerWalking() || playerState.isPlayerHurts()) {  // to do check if this works with the ishurt !!!!!
+        if (isPlayerWalking() || playerState.isPlayerHurts()) {
             playerState.addPlayerFrameIndex(1);
         }
         setPlayerFrame(playerState.getPlayerFrameIndex());

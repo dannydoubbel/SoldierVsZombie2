@@ -10,7 +10,10 @@ public enum SoundEffects {
     feelingBetter(6,"feeling better","sound/forTheBetter.mp3"),
     ahahaugh(7,"ahahaugh","sound/ahahaugh.mp3"),
     zombieScream(8,"zombie scream","sound/zombieScream.mp3"),
-    bulletMagazineCollect(9,"bulletMagazineCollect","sound/bulletMagazineCollect.mp3");
+    bulletMagazineCollect(9,"bulletMagazineCollect","sound/bulletMagazineCollect.mp3"),
+    youLose(10,"youLose","sound/youLose.mp3"),
+    collectWoodFirst(11,"collectWoodFirst","sound/collectWoodFirst.mp3"),
+    collectAmmunitionFirst(12,"collectAmmoFirst","sound/collectAmmunitionFirst.mp3"),;
 
     private final int value;
     private final String name;
@@ -25,11 +28,6 @@ public enum SoundEffects {
     public int getValue() {
 
         return value;
-    }
-
-    public String getName() {
-        return name;
-
     }
 
     public String getFileName() {

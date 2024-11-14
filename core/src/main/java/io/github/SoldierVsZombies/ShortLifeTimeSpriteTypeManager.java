@@ -73,6 +73,8 @@ public class ShortLifeTimeSpriteTypeManager {
     }
 
 
+
+
     public void handleShortLifeTimeSpritesCountDown() {
         getAllShortLifeTimeSprites().removeIf(ShortLifeTimeSprite::isBeyondLifeTime);
     }

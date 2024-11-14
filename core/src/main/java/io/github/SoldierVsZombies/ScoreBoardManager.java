@@ -95,16 +95,8 @@ public class ScoreBoardManager {
         ammunitionIndicator.dispose();
         killsIndicator.dispose();
         timerIndicator.dispose();
+        woodToCollectIndicator.dispose();
     }
-
-    /*
-    public static ScoreBoardManager getInstance(SpriteBatch spriteBatch) {
-        if (instance == null) {
-            instance = new ScoreBoardManager(spriteBatch);
-        }
-        return instance;
-    }
-    */
 
     public Float getTimer() {
         return timer;
