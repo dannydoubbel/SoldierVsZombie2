@@ -26,9 +26,9 @@ public class ScoreBoardManager {
     private final IndicatorBar timerIndicator;
     private final IndicatorBar woodToCollectIndicator;
 
+    private final SpriteBatch spriteBatch;
 
-    final SpriteBatch spriteBatch;
-
+    private GameState gameState;
 
 
 
@@ -40,6 +40,7 @@ public class ScoreBoardManager {
         killsIndicator = new IndicatorBar("Kills",10,10+20+20+20,250,15);
         timerIndicator = new IndicatorBar("Time left",10,10+20+20+20+20,250,15);
         woodToCollectIndicator = new IndicatorBar("Wood",10,10+20+20+20+20+20,250,15);
+        gameState = GameState.PAUSED;
         setDefaultValues();
     }
 
@@ -98,6 +99,14 @@ public class ScoreBoardManager {
         woodToCollectIndicator.dispose();
     }
 
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
+    }
+
     public Float getTimer() {
         return timer;
     }
@@ -106,12 +115,16 @@ public class ScoreBoardManager {
         this.timer = timer;
     }
 
-    public Integer getLives() {
+    public int getLives() {
         return lives;
     }
 
     public void setLives(Integer lives) {
         this.lives = lives;
+    }
+
+    public void addLives(int deltaLives) {
+        lives+=deltaLives;
     }
 
     public Integer getKills() {

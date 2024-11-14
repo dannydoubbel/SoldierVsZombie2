@@ -24,7 +24,7 @@ public class PortalMapManager {
         portalMaps.add(new PortalMap(new IntPosition(90, 0), new IntPosition(84, 18)));
         portalMaps.add(new PortalMap(new IntPosition(84, 19), new IntPosition(60, 1)));
 
-        illegalPosition = new IntPosition(-1, -1);
+        illegalPosition = new IntPosition(Legal.NOT_LEGAL);
         illegalPortalMap = new PortalMap(illegalPosition,illegalPosition);
     }
 

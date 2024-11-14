@@ -11,6 +11,10 @@ public class MyInputProcessor implements InputProcessor {
     @Override
     public boolean keyDown(int keycode) {
         switch (keycode) {
+            case Input.Keys.ENTER: {
+                pressedKeys.enter = true;
+                break;
+            }
             case Input.Keys.M: {
                 sharedVariables.musicAllowed = true;
                 break;
@@ -61,6 +65,9 @@ public class MyInputProcessor implements InputProcessor {
     @Override
     public boolean keyUp(int keycode) {
         switch (keycode) {
+            case Input.Keys.ENTER: {
+                pressedKeys.enter = false;
+            }
             case Input.Keys.LEFT:
                 pressedKeys.goLeft = false;
                 break;

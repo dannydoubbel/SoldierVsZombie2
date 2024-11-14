@@ -1,3 +1,26 @@
+# Soldier vs Zombie 2
+
+Guide the brave soldier through a bizarre develisch maze.
+
+But be aware, there are zombies, deathly creatures that will haunt you.
+
+Be courages, fight them, shoot them, burn them down.
+
+Once you collected 4 special keys it's your duty to open the prison and free the princess.
+
+We all count on YOU.
+
+Are you up to it ?
+
+
+
+
+
+
+
+
+
+
 # MyGDX
 
 A [libGDX](https://libgdx.com/) project generated with [gdx-liftoff](https://github.com/libgdx/gdx-liftoff).

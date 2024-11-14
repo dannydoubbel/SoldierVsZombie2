@@ -88,7 +88,7 @@ public class TileManager {
             }
 
         }
-        return new IntPosition(-1,-1);
+        return new IntPosition(Legal.NOT_LEGAL);
     }
 
 
@@ -136,14 +136,17 @@ public class TileManager {
 
 
     public boolean isTileWalkable(int XPosTile, int YPosTile) {
-        if (XPosTile < 0 || YPosTile < 0) return false;
+        //if (XPosTile < 0 || YPosTile < 0) return false;
+        if (new IntPosition(XPosTile, YPosTile).equals(new IntPosition(Legal.NOT_LEGAL))) return false;
+
         if (XPosTile >= TILE_MAP_COLS || YPosTile >= TILE_MAP_ROWS)
             return false;
         return WALKABLE_TILES.contains(getBackgroundTileMap()[XPosTile][YPosTile]);
     }
 
     public boolean isTileWalkable(IntPosition tilePos) {
-        if (tilePos.getX() < 0 || tilePos.getY() < 0) return false;
+        //if (tilePos.getX() < 0 || tilePos.getY() < 0) return false;
+        if (tilePos.isLegalIntPosition().equals(Legal.NOT_LEGAL)) return false;
         if (tilePos.getX() >= TILE_MAP_COLS || tilePos.getY() >= TILE_MAP_ROWS)
             return false;
         return isTileWalkable(tilePos.getX(),tilePos.getY());
@@ -181,6 +184,7 @@ public class TileManager {
     }
 
     public void setTile(IntPosition tilePos, int tileSetNumber) {
+        if (tilePos.isLegalIntPosition().equals(Legal.NOT_LEGAL) ) return;
         backgroundTileMap[tilePos.getX()][tilePos.getY()] = tileSetNumber;
     }
 }

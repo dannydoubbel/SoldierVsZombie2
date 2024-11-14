@@ -3,9 +3,6 @@ package io.github.SoldierVsZombies;
 
 //  // https://sanderfrenken.github.io/Universal-LPC-Spritesheet-Character-Generator/#?body=Body_color_light&head=Human_female_light&sex=female&ears=Elven_ears_light&eyes=Eyes_blue&dress=Sash_dress_leather&clothes=TShirt_VNeck_blue&vest=Corset_blue&shoes_plate=Boots_Metal_Plating_steel&shoes=Boots_black&hair=Ponytail_ginger&earring_left=Simple_Earring_Left_gold
 
-//   ToDo   Move entire project to the NAS
-
-
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -45,6 +42,9 @@ public class Main extends ApplicationAdapter {
     private TileManager tileManager;
     private PortalMapManager portalMapManager;
 
+    private ShortLifeTimeSprite gameStatePausedSprite;
+    private ShortLifeTimeSprite gameStateStoppedSprite;
+
     private static void setUpInputRelatedStuff() {
         Gdx.input.setInputProcessor(new MyInputProcessor());
     }
@@ -52,6 +52,7 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void create() {
+        addListenerToReallyQuitTheApplication();
         String javaVersion = System.getProperty("java.version");
         System.out.println("inside main Java version: " + javaVersion);
 
@@ -66,6 +67,35 @@ public class Main extends ApplicationAdapter {
         addInitialEnemies();
 
         soundManager.playSoundEffect(SoundEffects.background, 0.5f);
+
+        gameStatePausedSprite =
+            new ShortLifeTimeSprite(ShortLifeTimeSpriteType.GAME_PLAY, new IntPosition(100, 100), -1);
+        gameStateStoppedSprite =
+            new ShortLifeTimeSprite(ShortLifeTimeSpriteType.GAME_OVER, new IntPosition(100, 100), -1);
+    }
+
+    private static void addListenerToReallyQuitTheApplication() {
+        // Check if running in desktop mode to add listener
+        if (Gdx.app.getType() == com.badlogic.gdx.Application.ApplicationType.Desktop) {
+            // Attach a listener to detect the close event
+            System.out.println("Desktop");
+            Gdx.app.addLifecycleListener(new com.badlogic.gdx.LifecycleListener() {
+                @Override
+                public void resume() {
+                }
+
+                @Override
+                public void pause() {
+                }
+
+                @Override
+                public void dispose() {
+                    // Ensure the app exits when the window is closed
+                    Gdx.app.exit();
+                    System.exit(0); // Forces JVM exit for IntelliJ if Gdx.app.exit() doesn't fully stop the app
+                }
+            });
+        }
     }
 
     private void initializeManagerClasses() {
@@ -181,21 +211,52 @@ public class Main extends ApplicationAdapter {
         }
 
         drawBackground();
-        handleMedicalKit();
-        handleGifts();
-        handleBulletMagazine();
-        handleFireWoodCollision();
-        handleWoodToCollectCollision();
-        handleBullets();
+        if (scoreBoardManager.getGameState().equals(GameState.RUNNING)) {
+            handleMedicalKit();
+            handleGifts();
+            handleBulletMagazine();
+            handleFireWoodCollision();
+            handleWoodToCollect();
+            handleBullets();
+        }
         handleZombies();
         handleSkulls();
         handleAllShortLifeTimeSprites();
 
         scoreBoardManager.render(new IntPosition(10, Gdx.graphics.getHeight() - 200));
 
-        handlePlayerMovement();
+        if (scoreBoardManager.getGameState().equals(GameState.RUNNING)) {
+            handlePlayerMovement();
+        }
 
         spriteBatch.begin();
+
+        if (!scoreBoardManager.getGameState().equals(GameState.RUNNING)) {
+            drawShortLifeTimeSpritesFromCenterPosition(gameStatePausedSprite);
+            if (pressedKeys.fireSpace || pressedKeys.enter) {
+                scoreBoardManager.setGameState(GameState.RUNNING);
+            }
+        }
+
+        if (scoreBoardManager.getHealth() <= 0 && !scoreBoardManager.getGameState().equals(GameState.STOPPED)) {
+            drawShortLifeTimeSpritesFromCenterPosition(gameStatePausedSprite);
+            scoreBoardManager.setGameState(GameState.PAUSED);
+            scoreBoardManager.setHealth(100f);
+            scoreBoardManager.addLives(-1);
+        }
+
+        if (scoreBoardManager.getLives() < 1) {
+            drawShortLifeTimeSpritesFromCenterPosition(gameStateStoppedSprite);
+            scoreBoardManager.setGameState(GameState.STOPPED);
+            // we must somehow can reset the game
+            if (pressedKeys.fireSpace || pressedKeys.enter) {
+                scoreBoardManager.setGameState(GameState.PAUSED);
+                scoreBoardManager.setHealth(100f);
+                scoreBoardManager.setLives(3);
+            }
+        }
+
+
         drawPlayerFromCenterPosition(); // should be the last in the render()
         spriteBatch.end();
     }
@@ -250,10 +311,12 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleSkulls() {
-        handleSkullsMovement();
+        if (scoreBoardManager.getGameState().equals(GameState.RUNNING)) {
+            handleSkullsMovement();
+            handleSkullPlayerCollision();
+        }
         handleSkullFramesCycles();
         handleSkullDrawing();
-        handleSkullPlayerCollision();
     }
 
     private void handleSkullPlayerCollision() {
@@ -348,13 +411,15 @@ public class Main extends ApplicationAdapter {
 
 
     private void handleZombies() {
-        handleZombieStartMovement();
-        handleZombiesMovement();
-        handleZombiesFrames();
+        if (scoreBoardManager.getGameState().equals(GameState.RUNNING)) {
+            handleZombieStartMovement();
+            handleZombiesMovement();
+            handleZombiesFrames();
+            handleZombiePlayerCollision();
+            handleZombieLifeTimeExpired();
+            handleZombieRebirth();
+        }
         handleZombiesDrawing();
-        handleZombiePlayerCollision();
-        handleZombieLifeTimeExpired();
-        handleZombieRebirth();
     }
 
     private void handleZombieRebirth() {
@@ -432,7 +497,6 @@ public class Main extends ApplicationAdapter {
                     if (!zombieManager.isTargetTileOccupiedByOtherZombie(zombie, newTargetTilePos)) {
                         zombie.startWalking(newTargetTilePos, newDirection);
                     }
-
                 }
             }
         }
@@ -525,6 +589,40 @@ public class Main extends ApplicationAdapter {
             zombieManager.ZOMBIE_WIDTH,
             zombieManager.ZOMBIE_HEIGHT);
     }
+
+
+    void handleWoodToCollect() {
+        handleWoodToCollectCollision();
+        handleWoodToCollectCreation();
+    }
+
+    void handleWoodToCollectCollision() {
+        Iterator<ShortLifeTimeSprite> iterator = shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites().iterator();
+        while (iterator.hasNext()) {
+            ShortLifeTimeSprite shortLifeTimeSprite = iterator.next();
+            if (shortLifeTimeSprite.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.WOOD_TO_COLLECT)) {
+                if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), shortLifeTimeSprite.getPosition())) {
+                    iterator.remove();
+                    scoreBoardManager.addWoodToCollect(+1);
+                    soundManager.playSoundEffect(SoundEffects.fireWood, 100);
+                }
+            }
+        }
+    }
+
+    private void handleWoodToCollectCreation() {
+        Random random = new Random();
+        if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.WOOD_TO_COLLECT) < 8) {
+            if (random.nextInt(100) == 15) {
+                IntPosition tilePos = tileManager.getRandomWalkablePosition();
+                if (tileManager.isTileWalkable(tilePos)) {
+                    IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
+                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_TO_COLLECT, pixelPos, 15000));
+                }
+            }
+        }
+    }
+
 
     private void handleBulletMagazine() {
         handleBulletMagazineCollision();
@@ -652,18 +750,6 @@ public class Main extends ApplicationAdapter {
         }
     }
 
-    void handleWoodToCollectCollision() {
-        Iterator<ShortLifeTimeSprite> iterator = shortLifeTimeSpriteTypeManager.getAllShortLifeTimeSprites().iterator();
-        while (iterator.hasNext()) {
-            ShortLifeTimeSprite shortLifeTimeSprite = iterator.next();
-            if (shortLifeTimeSprite.getShortLifeTimeSpriteType().equals(ShortLifeTimeSpriteType.WOOD_TO_COLLECT)) {
-                if (collisionDetector.isColliding(playerState.getPlayerCenterPos(), shortLifeTimeSprite.getPosition())) {
-                    iterator.remove();
-                    scoreBoardManager.addWoodToCollect(+1);
-                }
-            }
-        }
-    }
 
     void handleFireWoodCollision() {
         handleFireWoodSkullCollision();
@@ -799,7 +885,7 @@ public class Main extends ApplicationAdapter {
                     scoreBoardManager.addWoodToCollect(-1);
                 }
             } else {
-                soundManager.playSoundEffect(SoundEffects.collectWoodFirst,100);
+                soundManager.playSoundEffect(SoundEffects.collectWoodFirst, 100);
             }
         }
     }
@@ -834,7 +920,7 @@ public class Main extends ApplicationAdapter {
                     playerState.getPlayerPreviousDirection(),
                     7);
             } else {
-                soundManager.playSoundEffect(SoundEffects.collectAmmunitionFirst,100);
+                soundManager.playSoundEffect(SoundEffects.collectAmmunitionFirst, 100);
             }
         }
     }

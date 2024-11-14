@@ -11,7 +11,10 @@ public enum ShortLifeTimeSpriteType {
     FLAMING_TORCH(8, "flaming torch",32,64,32,64),
     WOOD_TO_COLLECT(9,"wood to collect",100,100,64,64),
     BULLET_MAGAZINE(10,"bullet magazine",100,100,64,64),
-    MEDICAL_KIT(11,"medical kit",100,100,64,64);
+    MEDICAL_KIT(11,"medical kit",100,100,64,64),
+    GAME_OVER(12,"game over",1500,1500,500,500),
+    GAME_PLAY(13,"game play",1200,1200,500,500);
+
 
 
     private final int VALUE;

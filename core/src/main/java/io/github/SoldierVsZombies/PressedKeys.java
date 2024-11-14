@@ -8,6 +8,7 @@ public class PressedKeys {
     boolean goDown = false;
     boolean zoomIn = false;
     boolean zoomOut = false;
+    boolean enter = false;
 
     boolean fireSpace = false;
     boolean fireALT = false;

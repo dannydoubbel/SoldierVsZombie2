@@ -64,8 +64,8 @@ public class MazeSolver {
 
     public static IntPosition findPath(IntPosition tileStartPos, IntPosition tileDestinationPos) {
         IntPosition earlyDetectionPath = findEarlyPaths(tileStartPos, tileDestinationPos);
-        if (!earlyDetectionPath.equals(new IntPosition(-1, -1))) {
-            //System.out.println("Early");
+        if (!earlyDetectionPath.equals(new IntPosition(Legal.NOT_LEGAL))) {
+
             return earlyDetectionPath;
         }
         return tileStartPos;
@@ -98,7 +98,7 @@ public class MazeSolver {
             }
             deepnessLevel++;
         } while (deepnessLevel <= 9);
-        return new IntPosition(-1, -1);
+        return new IntPosition(Legal.NOT_LEGAL);
     }
 
     private static IntPosition pathDirectHorizontalLine(IntPosition tilePosStart, IntPosition tilePosDestination) {

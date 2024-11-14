@@ -23,6 +23,8 @@ public class ShortLifeTimeSpriteTypeManager {
     private Sprite[] flamingTorch;
     private Sprite bulletMagazine;
     private Sprite medicalKit;
+    private Sprite gameOver;
+    private Sprite gamePlay;
 
 
     ShortLifeTimeSpriteTypeManager() {
@@ -55,6 +57,12 @@ public class ShortLifeTimeSpriteTypeManager {
         }
         if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(MEDICAL_KIT)) {
             return medicalKit;
+        }
+        if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(GAME_OVER)) {
+            return gameOver;
+        }
+        if (shortLifetimeSprite.getShortLifeTimeSpriteType().equals(GAME_PLAY)) {
+            return gamePlay;
         }
 
         return blackGift;
@@ -97,6 +105,17 @@ public class ShortLifeTimeSpriteTypeManager {
         loadFlamingTorchFrames();
         loadBulletMagazineFrames();
         loadMedicalKitFrames();
+        loadGameOverFrames();
+        loadGamePlayFrames();
+    }
+
+    private void loadGameOverFrames(){
+        Texture gameOverFile = new Texture(Gdx.files.internal("images/gameOver.png"));
+        gameOver = new Sprite(gameOverFile, GAME_OVER.WIDTH,  GAME_OVER.HEIGHT);
+    }
+    private void loadGamePlayFrames() {
+        Texture  gamePlayFile = new Texture(Gdx.files.internal("images/gamePlay.png"));
+        gamePlay = new Sprite(gamePlayFile, GAME_PLAY.WIDTH, GAME_PLAY.HEIGHT);
     }
 
     private void loadMedicalKitFrames(){

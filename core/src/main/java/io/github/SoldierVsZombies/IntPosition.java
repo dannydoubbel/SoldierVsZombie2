@@ -3,9 +3,12 @@ package io.github.SoldierVsZombies;
 
 import java.util.Objects;
 
+
+
 public class IntPosition {
     private int x;
     private int y;
+
 
     public IntPosition() {
         x = 0;
@@ -15,6 +18,25 @@ public class IntPosition {
     public IntPosition(int x, int y) {
         this.x = x;
         this.y = y;
+    }
+
+    public IntPosition(Legal legal) {
+        if (legal.equals(Legal.NOT_LEGAL)) {
+            this.x = -1;
+            this.y = -1;
+        } else {
+            throw new IllegalArgumentException("This call must always be with argument NOT LEGAL");
+        }
+    }
+
+    public boolean isIllegalIntPosition(IntPosition position) {
+        return (position == null) || (position.getX() < 0) || (position.getY() < 0);
+    }
+    public Legal isLegalIntPosition() {
+        if ((getX() < 0) || (getY() < 0)) {
+            return Legal.NOT_LEGAL;
+        }
+        return Legal.LEGAL;
     }
 
 
@@ -34,7 +56,6 @@ public class IntPosition {
         this.y = y;
     }
 
-    
 
     public void setPosition(IntPosition newPosition) {
         this.x = newPosition.getX();
@@ -68,7 +89,7 @@ public class IntPosition {
 
     @Override
     public String toString() {
-        return "X = " + getX()+ " Y = " + getY();
+        return "X = " + getX() + " Y = " + getY();
     }
 }
 
