@@ -19,7 +19,7 @@ import java.util.Random;
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
  */
 public class Main extends ApplicationAdapter {
-    static boolean justOnce = false;
+    static boolean justOnce = true;
     private SpriteBatch spriteBatch;
 
     private OrthographicCamera camera;
@@ -174,11 +174,18 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void resize(int width, int height) {
+
+
         int viewportHeight = TileManager.TILE_HEIGHT * TileManager.TILE_MAP_ROWS * TileManager.TILE_MAP_SCALE_FACTOR; // Example: Fixed viewport height (in pixels)
         int viewportWidth = TileManager.TILE_WIDTH * TileManager.TILE_MAP_COLS * TileManager.TILE_MAP_SCALE_FACTOR;
+
+        viewportHeight = 1200; // AVOID FULL SCREEN WINDOW !
+
+
         float aspectRatio = (float) width / height;
         int windowWidth = (int) (viewportHeight * aspectRatio);
         Gdx.graphics.setWindowedMode(windowWidth, viewportHeight);
+
         viewport.update(viewportWidth, viewportHeight, false);
         camera.position.set(camera.viewportWidth / 2, camera.viewportHeight / 2, 0); // Adjust if needed
         camera.update();
@@ -202,9 +209,14 @@ public class Main extends ApplicationAdapter {
         spriteBatch.begin();
 
         if (justOnce) {
+            /*
             SplitUpAndRearangePNGs splitUpAndRearangePNGs = new SplitUpAndRearangePNGs();
             splitUpAndRearangePNGs.splitUpAndReArrangeHelper();
+             */
             justOnce = false;
+            //TileMapJSONReader tileMapJSONReader = new TileMapJSONReader();
+            //int[][]test = tileMapJSONReader.TileMapJSONReader("X:/SoldierVsZombie2/core/src/main/resources/versie2saveas.json");
+
         }
 
         drawBackground();
@@ -220,7 +232,7 @@ public class Main extends ApplicationAdapter {
         handleSkulls();
         handleAllShortLifeTimeSprites();
 
-        scoreBoardManager.render(new IntPosition(10, Gdx.graphics.getHeight() - 200));
+        scoreBoardManager.render(new IntPosition(10, 800));// Gdx.graphics.getHeight() - 200));
 
         if (scoreBoardManager.getGameState().equals(GameState.RUNNING)) {
             handlePlayerMovement();
@@ -281,19 +293,23 @@ public class Main extends ApplicationAdapter {
         camera.update();
         viewport = new ScreenViewport(camera); // Use ScreenViewport to adapt to window size without scaling
         viewport.apply();
-        Gdx.graphics.setResizable(true);
+        viewport.setScreenX(1000);
+        viewport.setScreenY(400);
+        Gdx.graphics.setWindowedMode(1000,400); /////////////////
+        Gdx.graphics.setResizable(false);                       //////////////////
     }
 
     private void drawBackground() {
         int rightStopDrawing = (Gdx.graphics.getWidth() + viewParameters.getLeftOffset()) / TileManager.TILE_WIDTH + 200;
+        int bottomStopDrawing = (Gdx.graphics.getHeight() + viewParameters.getTopOffset()) / TileManager.TILE_HEIGHT + 200;
 
-        for (int row = 0; row < TileManager.TILE_MAP_ROWS; row++) {
+        for (int row = 0; row < TileManager.TILE_MAP_ROWS && row < bottomStopDrawing; row++) {
             for (int col = 0; col < TileManager.TILE_MAP_COLS && col < rightStopDrawing; col++) {
                 int tileNr = tileManager.getBackgroundTileMap()[col][row];
                 tileNr = tileNr > 0 ? tileNr - 1 : tileNr;
                 spriteBatch.draw(tileManager.getSourceBackgroundTiles()[tileNr],
                     col * TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR - viewParameters.getLeftOffset(),
-                    row * TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR,
+                    row * TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR - viewParameters.getTopOffset(),
                     TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR,
                     TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR);
             }
@@ -303,7 +319,7 @@ public class Main extends ApplicationAdapter {
     private void drawPlayerFromCenterPosition() {
         spriteBatch.draw(PlayerState.getPlayerFrames(calculatePlayerFrameIndex()),
             playerState.getPlayerCenterPos().getX() - viewParameters.getLeftOffset() - ((TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            playerState.getPlayerCenterPos().getY() - ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            playerState.getPlayerCenterPos().getY() - viewParameters.getTopOffset() -  ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             PlayerFrames.PLAYER_WIDTH, PlayerFrames.PLAYER_HEIGHT);
     }
 
@@ -375,7 +391,7 @@ public class Main extends ApplicationAdapter {
             spriteBatch.draw(
                 skullManager.getSkullFrame(skull.getFrameIndex()),
                 skull.getPosition().getX() - viewParameters.getLeftOffset() - skullManager.HALF_SKULL_WIDTH,
-                skull.getPosition().getY() - skullManager.HALF_SKULL_HEIGHT,
+                skull.getPosition().getY() - viewParameters.getTopOffset() -  skullManager.HALF_SKULL_HEIGHT,
                 skullManager.SKULL_WIDTH,
                 skullManager.SKULL_HEIGHT);
         }
@@ -401,7 +417,7 @@ public class Main extends ApplicationAdapter {
         spriteBatch.draw(
             shortLifeTimeSpriteTypeManager.getShortLifeTimeFrame(shortLifeTimeSprite),
             shortLifeTimeSprite.getPosition().getX() - viewParameters.getLeftOffset() - ((TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            shortLifeTimeSprite.getPosition().getY() - ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            shortLifeTimeSprite.getPosition().getY() - viewParameters.getTopOffset() -  ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             shortLifeTimeSprite.getShortLifeTimeSpriteType().DRAW_WIDTH,
             shortLifeTimeSprite.getShortLifeTimeSpriteType().DRAW_HEIGHT);
     }
@@ -477,7 +493,8 @@ public class Main extends ApplicationAdapter {
                     if (random.nextInt(10) == 6) { // do stupid
                         newTargetTilePos = getRandomlyPath(tilePosZombie);
                     } else {
-                        newTargetTilePos = MazeSolver.findPath(tilePosZombie, tilePosPlayer);
+                        int maxLevel = playerState.getPlayerTilePosition().getY() < 25 ? 9 : 4;
+                        newTargetTilePos = MazeSolver.findPath(tilePosZombie, tilePosPlayer,maxLevel);
                     }
                     Directions newDirection = getDirectionToGoTo(tilePosZombie, newTargetTilePos);
 
@@ -582,7 +599,7 @@ public class Main extends ApplicationAdapter {
         spriteBatch.draw(
             zombieManager.getZombieFrame(zombie.getPreviousDirection(), zombie.getFrameIndex()),
             zombie.getPosition().getX() - viewParameters.getLeftOffset() - ((TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            zombie.getPosition().getY() - ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            zombie.getPosition().getY() - viewParameters.getTopOffset() - ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             zombieManager.ZOMBIE_WIDTH,
             zombieManager.ZOMBIE_HEIGHT);
     }
@@ -843,11 +860,11 @@ public class Main extends ApplicationAdapter {
                 continue;
             }
 
-            if (positionToTest.getY() < -bulletManager.BULLET_HEIGHT) {
+            if (positionToTest.getY() < viewParameters.getTopOffset()  -bulletManager.BULLET_HEIGHT) {
                 iterator.remove();
                 continue;
             }
-            if (positionToTest.getY() > Gdx.graphics.getHeight()) {
+            if (positionToTest.getY() > viewParameters.getTopOffset() + Gdx.graphics.getHeight()) {
                 iterator.remove();
             }
         }
@@ -858,7 +875,7 @@ public class Main extends ApplicationAdapter {
             spriteBatch.draw(
                 bulletManager.getBulletFrame(bullet.getDirection().getValue() - 1),
                 bullet.getPosition().getX() - viewParameters.getLeftOffset() - bulletManager.HALF_BULLET_WIDTH,
-                bullet.getPosition().getY() - bulletManager.HALF_BULLET_HEIGHT,
+                bullet.getPosition().getY() - viewParameters.getTopOffset() - bulletManager.HALF_BULLET_HEIGHT,
                 bulletManager.BULLET_WIDTH,
                 bulletManager.BULLET_HEIGHT);
         }
@@ -940,7 +957,7 @@ public class Main extends ApplicationAdapter {
         handleGoLeft();
         handleGoRight();
         handlePlayerFrameIndex();
-        handleAdjustLeftOffsetToFitMargins();
+        handleAdjustOffsetsToFitMargins();
 
         calculatePlayerTilePosition();
     }
@@ -1016,6 +1033,28 @@ public class Main extends ApplicationAdapter {
             }
         }
     }
+
+    private void handleAdjustOffsetsToFitMargins() {
+        handleAdjustLeftOffsetToFitMargins();
+        handleAdjustTopOffsetToFitMargins();
+    }
+    private void handleAdjustTopOffsetToFitMargins() {
+        int bottomLimitInWindow = Gdx.graphics.getHeight() - viewParameters.getBottomMargin();
+        int topLimitInWindow = viewParameters.getTopMargin();
+        int playerYPosInWindow = playerState.getPlayerCenterPos().getY() - viewParameters.getTopOffset();
+        int adjustment = 0;
+
+        if (playerYPosInWindow > bottomLimitInWindow) {
+            // Compute adjustment for the right margin
+            adjustment = playerYPosInWindow - bottomLimitInWindow;
+        } else if (playerYPosInWindow < topLimitInWindow) {
+            // Compute adjustment for the left margin
+            adjustment = playerYPosInWindow - topLimitInWindow;
+        }
+        viewParameters.setTopOffset(Math.max(0, viewParameters.getTopOffset() + adjustment));
+    }
+
+
 
     private void handleAdjustLeftOffsetToFitMargins() {
         int rightLimitInWindow = Gdx.graphics.getWidth() - viewParameters.getRightMargin();

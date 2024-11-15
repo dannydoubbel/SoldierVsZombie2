@@ -11,6 +11,12 @@ dependencies {
   implementation 'junit:junit:4.13.1'
   implementation 'org.junit.jupiter:junit-jupiter:5.8.1'
 
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+
+
+
+
+
   if(enableGraalNative == 'true') {
     implementation "io.github.berstanio:gdx-svmhelper-annotations:$graalHelperVersion"
   }

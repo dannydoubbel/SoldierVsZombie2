@@ -62,8 +62,8 @@ public class MazeSolver {
         return resultDuoNumbers;
     }
 
-    public static IntPosition findPath(IntPosition tileStartPos, IntPosition tileDestinationPos) {
-        IntPosition earlyDetectionPath = findEarlyPaths(tileStartPos, tileDestinationPos);
+    public static IntPosition findPath(IntPosition tileStartPos, IntPosition tileDestinationPos,int maxLevel) {
+        IntPosition earlyDetectionPath = findEarlyPaths(tileStartPos, tileDestinationPos, maxLevel);
         if (!earlyDetectionPath.equals(new IntPosition(Legal.NOT_LEGAL))) {
 
             return earlyDetectionPath;
@@ -71,7 +71,7 @@ public class MazeSolver {
         return tileStartPos;
     }
 
-    private static IntPosition findEarlyPaths(IntPosition tilePositionStart, IntPosition tilePositionDestination) {
+    private static IntPosition findEarlyPaths(IntPosition tilePositionStart, IntPosition tilePositionDestination,int maxLevel) {
         if (tilePositionStart.equals(tilePositionDestination)) {
             return tilePositionDestination;
         }
@@ -97,7 +97,7 @@ public class MazeSolver {
                 return directOrthogonal;
             }
             deepnessLevel++;
-        } while (deepnessLevel <= 9);
+        } while (deepnessLevel <= 9 && deepnessLevel <= maxLevel);
         return new IntPosition(Legal.NOT_LEGAL);
     }
 
