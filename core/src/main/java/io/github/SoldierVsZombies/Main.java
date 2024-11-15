@@ -1,8 +1,6 @@
 package io.github.SoldierVsZombies;
 
-
 //  // https://sanderfrenken.github.io/Universal-LPC-Spritesheet-Character-Generator/#?body=Body_color_light&head=Human_female_light&sex=female&ears=Elven_ears_light&eyes=Eyes_blue&dress=Sash_dress_leather&clothes=TShirt_VNeck_blue&vest=Corset_blue&shoes_plate=Boots_Metal_Plating_steel&shoes=Boots_black&hair=Ponytail_ginger&earring_left=Simple_Earring_Left_gold
-
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
@@ -48,7 +46,6 @@ public class Main extends ApplicationAdapter {
     private static void setUpInputRelatedStuff() {
         Gdx.input.setInputProcessor(new MyInputProcessor());
     }
-
 
     @Override
     public void create() {
@@ -891,7 +888,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleBulletCreation() {
-        if (pressedKeys.fireSpace) {
+        if (pressedKeys.fireSpace && bulletManager.getElapsedTimeSinceLastBulletFired() > 150 ) {
             IntPosition startPositionBullet = playerState.getPlayerCenterPos().clone();
             switch (playerState.getPlayerPreviousDirection()) {
                 case rt:

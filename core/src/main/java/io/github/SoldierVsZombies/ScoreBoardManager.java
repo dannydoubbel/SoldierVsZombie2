@@ -16,7 +16,6 @@ public class ScoreBoardManager {
     private float health;
     private int score;
 
-
     private boolean timerRunning;
 
     private final IndicatorBar healthIndicator;
@@ -75,7 +74,7 @@ public class ScoreBoardManager {
         timerScheduler.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                if (timerRunning) {
+                if (timerRunning && getGameState().equals(GameState.RUNNING)) {
                     timer -= 1; // Decrease timer by 1 second
                     if (timer <= 0) {
                         timer = 0f;
