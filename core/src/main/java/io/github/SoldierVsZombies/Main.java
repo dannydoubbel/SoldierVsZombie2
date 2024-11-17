@@ -14,6 +14,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms.
@@ -130,7 +131,14 @@ public class Main extends ApplicationAdapter {
     }
 
     private void addZombieAtRandomWalkablePositionAround(IntPosition startPosition, int minStepsX, int minStepsY, int maxSteps) {
-        IntPosition startTilePosition = tileManager.getRandomWalkablePositionAround(startPosition, minStepsX, minStepsY, maxSteps);
+        IntPosition startTilePosition;
+        int watchdog = 20;
+        do {
+            startTilePosition = tileManager.getRandomWalkablePositionAround(startPosition, minStepsX, minStepsY, maxSteps, tileManager.WALKABLE_TILES_ENEMY);
+            watchdog--;
+            if (watchdog <= 0) return;
+        } while (!tileManager.isTileWalkable(startTilePosition, tileManager.WALKABLE_TILES_ENEMY));
+
         IntPosition startPixelPosition = getPixelPosFromTileCenterPos(startTilePosition);
         zombieManager.addZombie(startPixelPosition, startTilePosition);
     }
@@ -227,6 +235,7 @@ public class Main extends ApplicationAdapter {
             handleFireWoodCollision();
             handleWoodToCollect();
             handleBullets();
+            handleBackgroundHurtingPlayer();
         }
         handleZombies();
         handleSkulls();
@@ -281,7 +290,8 @@ public class Main extends ApplicationAdapter {
     private void updateWindowTitle() {
         String title = "";
         title += "Player pos = " + playerState.getPlayerTilePosition().toString();
-        int tileValueUnderMainCharacter = tileManager.getBackgroundTileMap()[playerState.getXPosTilePlayer()][playerState.getYPosTilePlayer()];
+        //int tileValueUnderMainCharacter = tileManager.getBackgroundTileMap()[playerState.getXPosTilePlayer()][playerState.getYPosTilePlayer()];
+        int tileValueUnderMainCharacter = tileManager.getBackGroundTileNumber(playerState.getXPosTilePlayer(), playerState.getYPosTilePlayer());
         title += " Value player = " + tileValueUnderMainCharacter + " ";
 
         Gdx.graphics.setTitle(title);
@@ -295,7 +305,7 @@ public class Main extends ApplicationAdapter {
         viewport.apply();
         viewport.setScreenX(1000);
         viewport.setScreenY(400);
-        Gdx.graphics.setWindowedMode(1000,400); /////////////////
+        Gdx.graphics.setWindowedMode(1000, 400); /////////////////
         Gdx.graphics.setResizable(false);                       //////////////////
     }
 
@@ -305,8 +315,8 @@ public class Main extends ApplicationAdapter {
 
         for (int row = 0; row < TileManager.TILE_MAP_ROWS && row < bottomStopDrawing; row++) {
             for (int col = 0; col < TileManager.TILE_MAP_COLS && col < rightStopDrawing; col++) {
-                int tileNr = tileManager.getBackgroundTileMap()[col][row];
-                tileNr = tileNr > 0 ? tileNr - 1 : tileNr;
+                int tileNr = tileManager.getBackGroundTileNumber(col, row);
+                if (tileNr != tileManager.TILE_NOTHING) tileNr--;
                 spriteBatch.draw(tileManager.getSourceBackgroundTiles()[tileNr],
                     col * TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR - viewParameters.getLeftOffset(),
                     row * TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR - viewParameters.getTopOffset(),
@@ -319,7 +329,7 @@ public class Main extends ApplicationAdapter {
     private void drawPlayerFromCenterPosition() {
         spriteBatch.draw(PlayerState.getPlayerFrames(calculatePlayerFrameIndex()),
             playerState.getPlayerCenterPos().getX() - viewParameters.getLeftOffset() - ((TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            playerState.getPlayerCenterPos().getY() - viewParameters.getTopOffset() -  ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            playerState.getPlayerCenterPos().getY() - viewParameters.getTopOffset() - ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             PlayerFrames.PLAYER_WIDTH, PlayerFrames.PLAYER_HEIGHT);
     }
 
@@ -391,7 +401,7 @@ public class Main extends ApplicationAdapter {
             spriteBatch.draw(
                 skullManager.getSkullFrame(skull.getFrameIndex()),
                 skull.getPosition().getX() - viewParameters.getLeftOffset() - skullManager.HALF_SKULL_WIDTH,
-                skull.getPosition().getY() - viewParameters.getTopOffset() -  skullManager.HALF_SKULL_HEIGHT,
+                skull.getPosition().getY() - viewParameters.getTopOffset() - skullManager.HALF_SKULL_HEIGHT,
                 skullManager.SKULL_WIDTH,
                 skullManager.SKULL_HEIGHT);
         }
@@ -417,7 +427,7 @@ public class Main extends ApplicationAdapter {
         spriteBatch.draw(
             shortLifeTimeSpriteTypeManager.getShortLifeTimeFrame(shortLifeTimeSprite),
             shortLifeTimeSprite.getPosition().getX() - viewParameters.getLeftOffset() - ((TileManager.TILE_WIDTH * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
-            shortLifeTimeSprite.getPosition().getY() - viewParameters.getTopOffset() -  ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
+            shortLifeTimeSprite.getPosition().getY() - viewParameters.getTopOffset() - ((TileManager.TILE_HEIGHT * TileManager.TILE_MAP_SCALE_FACTOR) / 2) + (15),
             shortLifeTimeSprite.getShortLifeTimeSpriteType().DRAW_WIDTH,
             shortLifeTimeSprite.getShortLifeTimeSpriteType().DRAW_HEIGHT);
     }
@@ -491,10 +501,10 @@ public class Main extends ApplicationAdapter {
 
                     IntPosition newTargetTilePos;
                     if (random.nextInt(10) == 6) { // do stupid
-                        newTargetTilePos = getRandomlyPath(tilePosZombie);
+                        newTargetTilePos = getRandomlyPath(tilePosZombie, tileManager.WALKABLE_TILES_ENEMY);
                     } else {
                         int maxLevel = playerState.getPlayerTilePosition().getY() < 25 ? 9 : 4;
-                        newTargetTilePos = MazeSolver.findPath(tilePosZombie, tilePosPlayer,maxLevel);
+                        newTargetTilePos = MazeSolver.findPath(tilePosZombie, tilePosPlayer, maxLevel, tileManager.WALKABLE_TILES_ENEMY);
                     }
                     Directions newDirection = getDirectionToGoTo(tilePosZombie, newTargetTilePos);
 
@@ -507,7 +517,7 @@ public class Main extends ApplicationAdapter {
     private void attemptZombieMove(Zombie zombie, IntPosition newTargetTilePos, IntPosition tilePosZombie, Directions newDirection) {
         if (!newTargetTilePos.equals(tilePosZombie)) {
             if (!newDirection.equals(Directions.no)) {
-                if (tileManager.isTileWalkable(newTargetTilePos)) {
+                if (tileManager.isTileWalkable(newTargetTilePos, tileManager.WALKABLE_TILES_ENEMY)) {
                     if (!zombieManager.isTargetTileOccupiedByOtherZombie(zombie, newTargetTilePos)) {
                         zombie.startWalking(newTargetTilePos, newDirection);
                     }
@@ -516,7 +526,7 @@ public class Main extends ApplicationAdapter {
         }
     }
 
-    private IntPosition getRandomlyPath(IntPosition tilePos) {
+    private IntPosition getRandomlyPath(IntPosition tilePos, Set<Integer> walkableTiles) {
         Random random = new Random();
         IntPosition resultPosition = tilePos.clone();
 
@@ -534,7 +544,7 @@ public class Main extends ApplicationAdapter {
                 resultPosition.addY(-1);
         }
 
-        if (tileManager.isTileWalkable(resultPosition)) {
+        if (tileManager.isTileWalkable(resultPosition, walkableTiles)) {
             return resultPosition;
         }
         return tilePos;
@@ -628,11 +638,18 @@ public class Main extends ApplicationAdapter {
         Random random = new Random();
         if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.WOOD_TO_COLLECT) < 8) {
             if (random.nextInt(100) == 15) {
-                IntPosition tilePos = tileManager.getRandomWalkablePosition();
-                if (tileManager.isTileWalkable(tilePos)) {
+                IntPosition tilePos;
+                int watchdog = 20;
+                do {
+                    tilePos = tileManager.getRandomWalkablePosition(tileManager.WALKABLE_TILES_PLAYER);
+                    watchdog--;
+                    if (watchdog <= 0) return;
+                } while (tileManager.isPlayerHurtingTile(tilePos));
+
+                //if (tileManager.isTileWalkable(tilePos, tileManager.WALKABLE_TILES_PLAYER)) {
                     IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
                     shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_TO_COLLECT, pixelPos, 15000));
-                }
+                //}
             }
         }
     }
@@ -647,11 +664,17 @@ public class Main extends ApplicationAdapter {
         Random random = new Random();
         if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.BULLET_MAGAZINE) < 8) {
             if (random.nextInt(100) == 15) {
-                IntPosition tilePos = tileManager.getRandomWalkablePosition();
-                if (tileManager.isTileWalkable(tilePos)) {
+                IntPosition tilePos;
+                int watchdog = 20;
+                do {
+                    tilePos = tileManager.getRandomWalkablePosition(tileManager.WALKABLE_TILES_PLAYER);
+                    watchdog--;
+                    if (watchdog <= 0) return;
+                } while (tileManager.isPlayerHurtingTile(tilePos));
+                //if (tileManager.isTileWalkable(tilePos, tileManager.WALKABLE_TILES_PLAYER)) {
                     IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
                     shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.BULLET_MAGAZINE, pixelPos, 15000));
-                }
+                //}
             }
         }
     }
@@ -671,6 +694,13 @@ public class Main extends ApplicationAdapter {
         }
     }
 
+    private void handleBackgroundHurtingPlayer() {
+        if (tileManager.isPlayerHurtingTile(playerState.getPlayerTilePosition())) {
+            playerState.setPlayerHurts(true);
+            scoreBoardManager.addHealth(-0.5f);
+        }
+    }
+
 
     private void handleMedicalKit() {
         handleMedicalKitCollision();
@@ -681,11 +711,18 @@ public class Main extends ApplicationAdapter {
         Random random = new Random();
         if (shortLifeTimeSpriteTypeManager.getCountOfShortLifeTimeSpriteType(ShortLifeTimeSpriteType.MEDICAL_KIT) < 5) {
             if (random.nextInt(100) == 15) {
-                IntPosition tilePos = tileManager.getRandomWalkablePosition();
-                if (tileManager.isTileWalkable(tilePos)) {
+                IntPosition tilePos;
+                int watchdog = 20;
+                do {
+                    tilePos = tileManager.getRandomWalkablePosition(tileManager.WALKABLE_TILES_PLAYER);
+                    tileManager.getRandomWalkablePosition(tileManager.WALKABLE_TILES_PLAYER);
+                    watchdog--;
+                    if (watchdog <= 0) return;
+                } while (tileManager.isPlayerHurtingTile(tilePos));
+                //if (tileManager.isTileWalkable(tilePos, tileManager.WALKABLE_TILES_PLAYER)) {
                     IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
                     shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.MEDICAL_KIT, pixelPos, 20000));
-                }
+                //}
             }
         }
     }
@@ -839,7 +876,7 @@ public class Main extends ApplicationAdapter {
         while (iterator.hasNext()) {
             Bullet bullet = iterator.next();
             IntPosition positionToTest = getTilePositionFromPixelPosition(bullet.getPosition());
-            if (!tileManager.isTileWalkable(positionToTest)) {
+            if (!tileManager.isTileWalkable(positionToTest, tileManager.WALKABLE_TILES_PLAYER)) {
                 iterator.remove();
             }
             // to do implement this more
@@ -860,7 +897,7 @@ public class Main extends ApplicationAdapter {
                 continue;
             }
 
-            if (positionToTest.getY() < viewParameters.getTopOffset()  -bulletManager.BULLET_HEIGHT) {
+            if (positionToTest.getY() < viewParameters.getTopOffset() - bulletManager.BULLET_HEIGHT) {
                 iterator.remove();
                 continue;
             }
@@ -905,7 +942,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void handleBulletCreation() {
-        if (pressedKeys.fireSpace && bulletManager.getElapsedTimeSinceLastBulletFired() > 150 ) {
+        if (pressedKeys.fireSpace && bulletManager.getElapsedTimeSinceLastBulletFired() > 150) {
             IntPosition startPositionBullet = playerState.getPlayerCenterPos().clone();
             switch (playerState.getPlayerPreviousDirection()) {
                 case rt:
@@ -973,7 +1010,7 @@ public class Main extends ApplicationAdapter {
         int targetTileX = playerState.getXPosTilePlayer() + 1;
         int targetTileY = playerState.getYPosTilePlayer();
         boolean isValidStartCondition = !isPlayerWalking();
-        if (pressedKeys.goRight && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY)) {
+        if (pressedKeys.goRight && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY, tileManager.WALKABLE_TILES_PLAYER)) {
             playerState.setPlayerCurrentDirection(Directions.rt);
             playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
 
@@ -990,7 +1027,7 @@ public class Main extends ApplicationAdapter {
         int targetTileX = playerState.getXPosTilePlayer() - 1;
         int targetTileY = playerState.getYPosTilePlayer();
         boolean isValidStartCondition = !isPlayerWalking();
-        if (pressedKeys.goLeft && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY)) {
+        if (pressedKeys.goLeft && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY, tileManager.WALKABLE_TILES_PLAYER)) {
             playerState.setPlayerCurrentDirection(Directions.lt);
             playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
         } else if (playerState.getPlayerCurrentDirection().equals(Directions.lt)) {
@@ -1006,7 +1043,7 @@ public class Main extends ApplicationAdapter {
         int targetTileX = playerState.getXPosTilePlayer();
         int targetTileY = playerState.getYPosTilePlayer() + 1;
         boolean isValidStartCondition = !isPlayerWalking();
-        if (pressedKeys.goUp && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY)) {
+        if (pressedKeys.goUp && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY, tileManager.WALKABLE_TILES_PLAYER)) {
             playerState.setPlayerCurrentDirection(Directions.up);
             playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
         } else if (playerState.getPlayerCurrentDirection().equals(Directions.up)) {
@@ -1022,7 +1059,7 @@ public class Main extends ApplicationAdapter {
         int targetTileX = playerState.getXPosTilePlayer();
         int targetTileY = playerState.getYPosTilePlayer() - 1;
         boolean isValidStartCondition = !isPlayerWalking();
-        if (pressedKeys.goDown && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY)) {
+        if (pressedKeys.goDown && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY, tileManager.WALKABLE_TILES_PLAYER)) {
             playerState.setPlayerCurrentDirection(Directions.dn);
             playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
         } else if (playerState.getPlayerCurrentDirection().equals(Directions.dn)) {
@@ -1038,6 +1075,7 @@ public class Main extends ApplicationAdapter {
         handleAdjustLeftOffsetToFitMargins();
         handleAdjustTopOffsetToFitMargins();
     }
+
     private void handleAdjustTopOffsetToFitMargins() {
         int bottomLimitInWindow = Gdx.graphics.getHeight() - viewParameters.getBottomMargin();
         int topLimitInWindow = viewParameters.getTopMargin();
@@ -1053,7 +1091,6 @@ public class Main extends ApplicationAdapter {
         }
         viewParameters.setTopOffset(Math.max(0, viewParameters.getTopOffset() + adjustment));
     }
-
 
 
     private void handleAdjustLeftOffsetToFitMargins() {

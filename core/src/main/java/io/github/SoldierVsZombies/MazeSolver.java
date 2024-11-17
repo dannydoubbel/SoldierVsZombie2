@@ -1,5 +1,7 @@
 package io.github.SoldierVsZombies;
 
+import java.util.Set;
+
 public class MazeSolver {
 
     private static MazeSolver instance;
@@ -10,15 +12,15 @@ public class MazeSolver {
 
 
     // Wrapper methods for horizontal and vertical range detection
-    public static IntDuoNumbers getHorizontalWalkableRange(IntPosition startTilePos) {
-        return getWalkableRange(startTilePos, Orthogonal.HORIZONTAL);
+    public static IntDuoNumbers getHorizontalWalkableRange(IntPosition startTilePos,Set<Integer> walkableTiles) {
+        return getWalkableRange(startTilePos, Orthogonal.HORIZONTAL,walkableTiles);
     }
 
-    public static IntDuoNumbers getVerticalWalkableRange(IntPosition startTilePos) {
-        return getWalkableRange(startTilePos, Orthogonal.VERTICAL);
+    public static IntDuoNumbers getVerticalWalkableRange(IntPosition startTilePos,Set<Integer> walkableTiles) {
+        return getWalkableRange(startTilePos, Orthogonal.VERTICAL,walkableTiles);
     }
 
-    private static IntDuoNumbers getWalkableRange(IntPosition startTilePos, Orthogonal orthogonal) {
+    private static IntDuoNumbers getWalkableRange(IntPosition startTilePos, Orthogonal orthogonal, Set<Integer> walkableTiles) {
         IntDuoNumbers resultDuoNumbers = new IntDuoNumbers();
         int testX = startTilePos.getX();
         int testY = startTilePos.getY();
@@ -28,7 +30,7 @@ public class MazeSolver {
         }
         // Calculate negative bound (left or down)
         if (orthogonal == Orthogonal.HORIZONTAL) {
-            while (testX > 0 && tiles.isTileWalkable(new IntPosition(testX, testY))) {
+            while (testX > 0 && tiles.isTileWalkable(new IntPosition(testX, testY),walkableTiles)) {
                 moved = true;
                 testX--;
             }
@@ -37,14 +39,14 @@ public class MazeSolver {
             // Reset and calculate positive bound (right)
             testX = startTilePos.getX();
             moved = false;
-            while (testX < TileManager.TILE_MAP_COLS - 1 && tiles.isTileWalkable(new IntPosition(testX, testY))) {
+            while (testX < TileManager.TILE_MAP_COLS - 1 && tiles.isTileWalkable(new IntPosition(testX, testY),walkableTiles)) {
                 moved = true;
                 testX++;
             }
             resultDuoNumbers.setInt2(moved ? testX - 1 : testX);
 
         } else { // VERTICAL direction
-            while (testY > 0 && tiles.isTileWalkable(new IntPosition(testX, testY))) {
+            while (testY > 0 && tiles.isTileWalkable(new IntPosition(testX, testY),walkableTiles)) {
                 moved = true;
                 testY--;
             }
@@ -53,7 +55,7 @@ public class MazeSolver {
             // Reset and calculate positive bound (up)
             testY = startTilePos.getY();
             moved = false;
-            while (testY < TileManager.TILE_MAP_ROWS - 1 && tiles.isTileWalkable(new IntPosition(testX, testY))) {
+            while (testY < TileManager.TILE_MAP_ROWS - 1 && tiles.isTileWalkable(new IntPosition(testX, testY),walkableTiles)) {
                 moved = true;
                 testY++;
             }
@@ -62,8 +64,8 @@ public class MazeSolver {
         return resultDuoNumbers;
     }
 
-    public static IntPosition findPath(IntPosition tileStartPos, IntPosition tileDestinationPos,int maxLevel) {
-        IntPosition earlyDetectionPath = findEarlyPaths(tileStartPos, tileDestinationPos, maxLevel);
+    public static IntPosition findPath(IntPosition tileStartPos, IntPosition tileDestinationPos,int maxLevel,Set<Integer> walkableTiles) {
+        IntPosition earlyDetectionPath = findEarlyPaths(tileStartPos, tileDestinationPos, maxLevel,walkableTiles);
         if (!earlyDetectionPath.equals(new IntPosition(Legal.NOT_LEGAL))) {
 
             return earlyDetectionPath;
@@ -71,20 +73,20 @@ public class MazeSolver {
         return tileStartPos;
     }
 
-    private static IntPosition findEarlyPaths(IntPosition tilePositionStart, IntPosition tilePositionDestination,int maxLevel) {
+    private static IntPosition findEarlyPaths(IntPosition tilePositionStart, IntPosition tilePositionDestination,int maxLevel,Set<Integer> walkableTiles) {
         if (tilePositionStart.equals(tilePositionDestination)) {
             return tilePositionDestination;
         }
 
         IntPosition directOrthogonal;
 
-        directOrthogonal =  pathDirectHorizontalLine(tilePositionStart, tilePositionDestination);
+        directOrthogonal =  pathDirectHorizontalLine(tilePositionStart, tilePositionDestination,walkableTiles);
         if (!directOrthogonal.equals(tilePositionStart)) {
             //System.out.println("Found pathDirectHorizontalLine ");
             return directOrthogonal;
         }
 
-        directOrthogonal = pathDirectVerticalLine(tilePositionStart, tilePositionDestination);
+        directOrthogonal = pathDirectVerticalLine(tilePositionStart, tilePositionDestination,walkableTiles);
         if (!directOrthogonal.equals(tilePositionStart)) {
             //System.out.println("Found pathDirectVerticalLine");
             return directOrthogonal;
@@ -92,7 +94,7 @@ public class MazeSolver {
 
         int deepnessLevel = 2;
         do {
-            directOrthogonal = pathNextLevel(tilePositionStart, tilePositionDestination, deepnessLevel);
+            directOrthogonal = pathNextLevel(tilePositionStart, tilePositionDestination, deepnessLevel,walkableTiles);
             if (!directOrthogonal.equals(tilePositionStart)) {
                 return directOrthogonal;
             }
@@ -101,9 +103,9 @@ public class MazeSolver {
         return new IntPosition(Legal.NOT_LEGAL);
     }
 
-    private static IntPosition pathDirectHorizontalLine(IntPosition tilePosStart, IntPosition tilePosDestination) {
+    private static IntPosition pathDirectHorizontalLine(IntPosition tilePosStart, IntPosition tilePosDestination,Set<Integer> walkableTiles) {
         IntPosition directOrthogonal = tilePosStart.clone();
-        IntDuoNumbers horizontalRange = getHorizontalWalkableRange(tilePosStart);
+        IntDuoNumbers horizontalRange = getHorizontalWalkableRange(tilePosStart,walkableTiles);
         if ((tilePosDestination.getX() >= horizontalRange.getLowest() && tilePosDestination.getX() <= horizontalRange.getHighest()) && (tilePosStart.getY() == tilePosDestination.getY())) {
             if (tilePosStart.getX() < tilePosDestination.getX()) {
                 directOrthogonal.addX(+1);
@@ -114,9 +116,9 @@ public class MazeSolver {
         return directOrthogonal;
     }
 
-    private static IntPosition pathDirectVerticalLine(IntPosition tilePosStart, IntPosition tilePosDestination) {
+    private static IntPosition pathDirectVerticalLine(IntPosition tilePosStart, IntPosition tilePosDestination,Set<Integer> walkableTiles) {
         IntPosition directOrthogonal = tilePosStart.clone();
-        IntDuoNumbers verticalRange = getVerticalWalkableRange(tilePosStart);
+        IntDuoNumbers verticalRange = getVerticalWalkableRange(tilePosStart,walkableTiles);
         if ((tilePosDestination.getY() >= verticalRange.getLowest() && tilePosDestination.getY() <= verticalRange.getHighest()) && (tilePosStart.getX() == tilePosDestination.getX())) {
             if (tilePosStart.getY() < tilePosDestination.getY()) {
                 directOrthogonal.addY(1);
@@ -127,15 +129,15 @@ public class MazeSolver {
         return directOrthogonal;
     }
 
-    private static IntPosition pathNextLevel(IntPosition tilePosStart, IntPosition tilePosDestination, int searchDeepnessLevel) {
+    private static IntPosition pathNextLevel(IntPosition tilePosStart, IntPosition tilePosDestination, int searchDeepnessLevel,Set<Integer> walkableTiles) {
         final int MAX_STEPS = 100000;
         int currentSteps = 0;
         IntPosition toTestTilePos;
-        IntDuoNumbers horizontalRange1 =  getHorizontalWalkableRange(tilePosStart);
+        IntDuoNumbers horizontalRange1 =  getHorizontalWalkableRange(tilePosStart,walkableTiles);
         int y0 = tilePosStart.getY();
         int x1 = horizontalRange1.getLowest();
         do {
-            IntDuoNumbers verticalRange1 = getVerticalWalkableRange(new IntPosition(x1, y0));
+            IntDuoNumbers verticalRange1 = getVerticalWalkableRange(new IntPosition(x1, y0), walkableTiles);
             int y1 = verticalRange1.getLowest();
             do {
                 toTestTilePos = new IntPosition(x1, y1);
@@ -144,43 +146,43 @@ public class MazeSolver {
                     return getNextTilePos(tilePosStart, toTestTilePos);
                 }
                 if (searchDeepnessLevel >= 3) {
-                    IntDuoNumbers horizontalRange2 = getHorizontalWalkableRange(new IntPosition(x1, y1));
+                    IntDuoNumbers horizontalRange2 = getHorizontalWalkableRange(new IntPosition(x1, y1),walkableTiles);
                     int x2 = horizontalRange2.getLowest();
                     do {
                         if (isAtTargetDepthAndPosition(searchDeepnessLevel, 3, new IntPosition(x2, y1), tilePosDestination))
                             return nextTilePos;
                         if (searchDeepnessLevel >= 4) {
-                            IntDuoNumbers verticalRange2 = getVerticalWalkableRange(new IntPosition(x2, y1));
+                            IntDuoNumbers verticalRange2 = getVerticalWalkableRange(new IntPosition(x2, y1),walkableTiles);
                             int y2 = verticalRange2.getLowest();
                             do {
                                 if (isAtTargetDepthAndPosition(searchDeepnessLevel, 4, new IntPosition(x2, y2), tilePosDestination))
                                     return nextTilePos;
                                 if (searchDeepnessLevel >= 5) {
-                                    IntDuoNumbers horizontalRange3 = getHorizontalWalkableRange(new IntPosition(x2, y2));
+                                    IntDuoNumbers horizontalRange3 = getHorizontalWalkableRange(new IntPosition(x2, y2),walkableTiles);
                                     int x3 = horizontalRange3.getLowest();
                                     do {
                                         if (isAtTargetDepthAndPosition(searchDeepnessLevel, 5, new IntPosition(x3, y2), tilePosDestination))
                                             return nextTilePos;
                                         if (searchDeepnessLevel >= 6) {
-                                            IntDuoNumbers verticalRange3 = getVerticalWalkableRange(new IntPosition(x3, y2));
+                                            IntDuoNumbers verticalRange3 = getVerticalWalkableRange(new IntPosition(x3, y2),walkableTiles);
                                             int y3 = verticalRange3.getLowest();
                                             do {
                                                 if (isAtTargetDepthAndPosition(searchDeepnessLevel, 6, new IntPosition(x3, y3), tilePosDestination))
                                                     return nextTilePos;
                                                 if (searchDeepnessLevel >= 7) {
-                                                    IntDuoNumbers horizontalRange4 = getHorizontalWalkableRange(new IntPosition(x3, y3));
+                                                    IntDuoNumbers horizontalRange4 = getHorizontalWalkableRange(new IntPosition(x3, y3),walkableTiles);
                                                     int x4 = horizontalRange4.getLowest();
                                                     do {
                                                         if (isAtTargetDepthAndPosition(searchDeepnessLevel, 7, new IntPosition(x4, y3), tilePosDestination))
                                                             return nextTilePos;
                                                         if (searchDeepnessLevel >= 8) {
-                                                            IntDuoNumbers verticalRange4 = getVerticalWalkableRange(new IntPosition(x4, y3));
+                                                            IntDuoNumbers verticalRange4 = getVerticalWalkableRange(new IntPosition(x4, y3),walkableTiles);
                                                             int y4 = verticalRange4.getLowest();
                                                             do {
                                                                 if (isAtTargetDepthAndPosition(searchDeepnessLevel, 8, new IntPosition(x4, y4), tilePosDestination))
                                                                     return nextTilePos;
                                                                 if (searchDeepnessLevel >= 9) {
-                                                                    IntDuoNumbers horizontalRange5 = getHorizontalWalkableRange(new IntPosition(x4, y4));
+                                                                    IntDuoNumbers horizontalRange5 = getHorizontalWalkableRange(new IntPosition(x4, y4),walkableTiles);
                                                                     int x5 = horizontalRange5.getLowest();
                                                                     do {
                                                                         if (isAtTargetDepthAndPosition(searchDeepnessLevel, 9, new IntPosition(x5, y4), tilePosDestination))
