@@ -129,7 +129,7 @@ public class TileManager {
         if (XPosTile >= TILE_MAP_COLS || YPosTile >= TILE_MAP_ROWS)
             return false;
 
-        return WALKABLE_TILES_PLAYER.contains(backgroundTileMap[XPosTile][YPosTile]);
+        return WALKABLE_TILES_PLAYER.contains(backgroundTileMap[XPosTile][YPosTile]); // todo range check uitvoeren
     }
 
     public boolean isTileWalkable(IntPosition tilePos,Set<Integer> walkableTiles) {
