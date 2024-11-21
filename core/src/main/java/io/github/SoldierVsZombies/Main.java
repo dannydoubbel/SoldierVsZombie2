@@ -136,7 +136,10 @@ public class Main extends ApplicationAdapter {
         do {
             startTilePosition = tileManager.getRandomWalkablePositionAround(startPosition, minStepsX, minStepsY, maxSteps, tileManager.WALKABLE_TILES_ENEMY);
             watchdog--;
-            if (watchdog <= 0) return;
+            if (watchdog <= 0) {
+                System.out.println("Watchdog addZombieAtRandomWalkablePositionAround ");
+                return;
+            }
         } while (!tileManager.isTileWalkable(startTilePosition, tileManager.WALKABLE_TILES_ENEMY));
 
         IntPosition startPixelPosition = getPixelPosFromTileCenterPos(startTilePosition);
@@ -249,7 +252,11 @@ public class Main extends ApplicationAdapter {
 
         spriteBatch.begin();
 
+        gameStateStoppedSprite.setPosition(new IntPosition(viewParameters.getLeftOffset() + 100, viewParameters.getTopOffset() + 100));
+        gameStatePausedSprite.setPosition(new IntPosition(viewParameters.getLeftOffset() + 1000, viewParameters.getTopOffset() + 100));
+
         if (!scoreBoardManager.getGameState().equals(GameState.RUNNING)) {
+            soundManager.playSoundEffect(SoundEffects.pressEnterTotBegin, 100);
             drawShortLifeTimeSpritesFromCenterPosition(gameStatePausedSprite);
             if (pressedKeys.fireSpace || pressedKeys.enter) {
                 scoreBoardManager.setGameState(GameState.RUNNING);
@@ -267,7 +274,7 @@ public class Main extends ApplicationAdapter {
             drawShortLifeTimeSpritesFromCenterPosition(gameStateStoppedSprite);
             scoreBoardManager.setGameState(GameState.STOPPED);
             // we must somehow can reset the game
-            if (pressedKeys.fireSpace || pressedKeys.enter) {
+            if (pressedKeys.enter) {
                 scoreBoardManager.setGameState(GameState.PAUSED);
                 scoreBoardManager.setHealth(100f);
                 scoreBoardManager.setLives(3);
@@ -643,12 +650,15 @@ public class Main extends ApplicationAdapter {
                 do {
                     tilePos = tileManager.getRandomWalkablePosition(tileManager.WALKABLE_TILES_PLAYER);
                     watchdog--;
-                    if (watchdog <= 0) return;
+                    if (watchdog <= 0) {
+                        System.out.println("Watchdog handleWoodToCollectCreation ");
+                        return;
+                    }
                 } while (tileManager.isPlayerHurtingTile(tilePos));
 
                 //if (tileManager.isTileWalkable(tilePos, tileManager.WALKABLE_TILES_PLAYER)) {
-                    IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
-                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_TO_COLLECT, pixelPos, 15000));
+                IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
+                shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.WOOD_TO_COLLECT, pixelPos, 15000));
                 //}
             }
         }
@@ -669,12 +679,13 @@ public class Main extends ApplicationAdapter {
                 do {
                     tilePos = tileManager.getRandomWalkablePosition(tileManager.WALKABLE_TILES_PLAYER);
                     watchdog--;
-                    if (watchdog <= 0) return;
+                    if (watchdog <= 0) {
+                        System.out.println("Watchdog handleBulletMagazineCreation");
+                        return;
+                    }
                 } while (tileManager.isPlayerHurtingTile(tilePos));
-                //if (tileManager.isTileWalkable(tilePos, tileManager.WALKABLE_TILES_PLAYER)) {
-                    IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
-                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.BULLET_MAGAZINE, pixelPos, 15000));
-                //}
+                IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
+                shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.BULLET_MAGAZINE, pixelPos, 15000));
             }
         }
     }
@@ -696,8 +707,19 @@ public class Main extends ApplicationAdapter {
 
     private void handleBackgroundHurtingPlayer() {
         if (tileManager.isPlayerHurtingTile(playerState.getPlayerTilePosition())) {
-            playerState.setPlayerHurts(true);
             scoreBoardManager.addHealth(-0.5f);
+            int tileNrUnderPlayer = tileManager.getTileNr(playerState.getPlayerTilePosition());
+            switch (tileNrUnderPlayer) {
+                case TileManager.TILE_LAVA : {
+                    soundManager.playSoundEffect(SoundEffects.lavaTooHot, 100f);
+                    break;
+                }
+                case TileManager.TILE_WATER : {
+                    soundManager.playSoundEffect(SoundEffects.drowning,100f);
+                    break;
+                }
+            }
+            playerState.setPlayerHurts(true);
         }
     }
 
@@ -715,14 +737,14 @@ public class Main extends ApplicationAdapter {
                 int watchdog = 20;
                 do {
                     tilePos = tileManager.getRandomWalkablePosition(tileManager.WALKABLE_TILES_PLAYER);
-                    tileManager.getRandomWalkablePosition(tileManager.WALKABLE_TILES_PLAYER);
                     watchdog--;
-                    if (watchdog <= 0) return;
+                    if (watchdog <= 0) {
+                        System.out.println("Watchdog handleMedicalKitCreation ");
+                        return;
+                    }
                 } while (tileManager.isPlayerHurtingTile(tilePos));
-                //if (tileManager.isTileWalkable(tilePos, tileManager.WALKABLE_TILES_PLAYER)) {
-                    IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
-                    shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.MEDICAL_KIT, pixelPos, 20000));
-                //}
+                IntPosition pixelPos = getPixelPosFromTileCenterPos(tilePos);
+                shortLifeTimeSpriteTypeManager.addShortLifeTimeSprite(new ShortLifeTimeSprite(ShortLifeTimeSpriteType.MEDICAL_KIT, pixelPos, 20000));
             }
         }
     }
@@ -1013,8 +1035,10 @@ public class Main extends ApplicationAdapter {
         if (pressedKeys.goRight && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY, tileManager.WALKABLE_TILES_PLAYER)) {
             playerState.setPlayerCurrentDirection(Directions.rt);
             playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
+            return;
 
-        } else if (playerState.getPlayerCurrentDirection().equals(Directions.rt)) {
+        }
+        if (playerState.getPlayerCurrentDirection().equals(Directions.rt)) {
             playerState.getPlayerCenterPos().addX(playerState.STEP_SIZE);
             if (playerState.getPlayerCenterPos().getX() >= playerState.getPlayerTargetCenterPos().getX()) {
                 playerState.getPlayerCenterPos().setX(playerState.getPlayerTargetCenterPos().getX());
@@ -1030,7 +1054,9 @@ public class Main extends ApplicationAdapter {
         if (pressedKeys.goLeft && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY, tileManager.WALKABLE_TILES_PLAYER)) {
             playerState.setPlayerCurrentDirection(Directions.lt);
             playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
-        } else if (playerState.getPlayerCurrentDirection().equals(Directions.lt)) {
+            return;
+        }
+        if (playerState.getPlayerCurrentDirection().equals(Directions.lt)) {
             playerState.getPlayerCenterPos().addX(-playerState.STEP_SIZE);
             if (playerState.getPlayerCenterPos().getX() <= playerState.getPlayerTargetCenterPos().getX()) {
                 playerState.getPlayerCenterPos().setX(playerState.getPlayerTargetCenterPos().getX());
@@ -1044,9 +1070,14 @@ public class Main extends ApplicationAdapter {
         int targetTileY = playerState.getYPosTilePlayer() + 1;
         boolean isValidStartCondition = !isPlayerWalking();
         if (pressedKeys.goUp && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY, tileManager.WALKABLE_TILES_PLAYER)) {
+            System.out.println("Going Up ");
+            System.out.println("Target pos : " + new IntPosition(targetTileX, targetTileY));
+            System.out.println("Walkable :" + tileManager.getTileNr(new IntPosition(targetTileX, targetTileY)));
             playerState.setPlayerCurrentDirection(Directions.up);
             playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
-        } else if (playerState.getPlayerCurrentDirection().equals(Directions.up)) {
+            return;
+        }
+        if (playerState.getPlayerCurrentDirection().equals(Directions.up)) {
             playerState.getPlayerCenterPos().addY(playerState.STEP_SIZE);
             if (playerState.getPlayerCenterPos().getY() >= playerState.getPlayerTargetCenterPos().getY()) {
                 playerState.getPlayerCenterPos().setY(playerState.getPlayerTargetCenterPos().getY());
@@ -1062,7 +1093,9 @@ public class Main extends ApplicationAdapter {
         if (pressedKeys.goDown && isValidStartCondition && tileManager.isTileWalkable(targetTileX, targetTileY, tileManager.WALKABLE_TILES_PLAYER)) {
             playerState.setPlayerCurrentDirection(Directions.dn);
             playerState.getPlayerTargetCenterPos().setPosition(getPixelPosFromTileCenterPos(new IntPosition(targetTileX, targetTileY)));
-        } else if (playerState.getPlayerCurrentDirection().equals(Directions.dn)) {
+            return;
+        }
+        if (playerState.getPlayerCurrentDirection().equals(Directions.dn)) {
             playerState.getPlayerCenterPos().addY(-playerState.STEP_SIZE);
             if (playerState.getPlayerCenterPos().getY() <= playerState.getPlayerTargetCenterPos().getY()) {
                 playerState.getPlayerCenterPos().setY(playerState.getPlayerTargetCenterPos().getY());
@@ -1142,7 +1175,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private boolean isPlayerWalking() {
-        return !(playerState.getPlayerCurrentDirection().getValue() == 0);
+        return !(playerState.getPlayerCurrentDirection().equals(Directions.no));// .getValue() == 0);
     }
 
     private void setPlayerFrame(int playerIndexFrame) {

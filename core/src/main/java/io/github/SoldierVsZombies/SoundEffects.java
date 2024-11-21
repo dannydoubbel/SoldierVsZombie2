@@ -14,7 +14,10 @@ public enum SoundEffects {
     youLose(10,"youLose","sound/youLose.mp3"),
     collectWoodFirst(11,"collectWoodFirst","sound/collectWoodFirst.mp3"),
     collectAmmunitionFirst(12,"collectAmmoFirst","sound/collectAmmunitionFirst.mp3"),
-    fireWood(13,"fireWood","sound/fireWood.mp3");
+    fireWood(13,"fireWood","sound/fireWood.mp3"),
+    pressEnterTotBegin(14,"pressEnterTotBegin","sound/pressEnterToBegin.mp3"),
+    lavaTooHot(15,"lavaTooHot","sound/lava.mp3"),
+    drowning(16,"drowning","sound/drowning.mp3");
 
     private final int value;
     private final String name;
